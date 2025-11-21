@@ -1,15 +1,15 @@
-import { useState } from 'react';
-import { Box, Typography, Button, Alert, LinearProgress } from '@mui/material';
-import DownloadIcon from '@mui/icons-material/Download';
-import PageHeader from '@/components/layout/PageHeader';
-import FileUpload from '@/components/import/FileUpload';
-import ImportProgress from '@/components/import/ImportProgress';
-import ImportSummary from '@/components/import/ImportSummary';
+import { useState } from "react";
+import { Box, Typography, Button, Alert, LinearProgress } from "@mui/material";
+import DownloadIcon from "@mui/icons-material/Download";
+import PageHeader from "@/components/layout/PageHeader";
+import FileUpload from "@/components/import/FileUpload";
+import ImportProgress from "@/components/import/ImportProgress";
+import ImportSummary from "@/components/import/ImportSummary";
 
 /**
  * Import state
  */
-type ImportState = 'idle' | 'uploading' | 'processing' | 'complete' | 'error';
+type ImportState = "idle" | "uploading" | "processing" | "complete" | "error";
 
 /**
  * Import stats from API response
@@ -31,33 +31,33 @@ interface ImportStats {
  * CSV upload with duplicate detection, AI classification, and progress tracking
  */
 export default function ImportPage() {
-  const [state, setState] = useState<ImportState>('idle');
+  const [state, setState] = useState<ImportState>("idle");
   const [progress, setProgress] = useState(0);
   const [stats, setStats] = useState<ImportStats | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   /**
    * Handle file upload
    */
   const handleFileUpload = async (file: File) => {
     // Reset state
-    setState('uploading');
+    setState("uploading");
     setProgress(0);
     setStats(null);
-    setErrorMessage('');
+    setErrorMessage("");
 
     try {
       // Read file content
       const fileContent = await file.text();
 
       setProgress(25);
-      setState('processing');
+      setState("processing");
 
       // Upload to API
-      const response = await fetch('/api/import/upload', {
-        method: 'POST',
+      const response = await fetch("/api/import/upload", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ csvContent: fileContent }),
       });
@@ -69,20 +69,20 @@ export default function ImportPage() {
       // Even if response is not ok (400), we still have stats with errors to display
       if (result.stats) {
         setStats(result.stats);
-        setState('complete');
+        setState("complete");
         setProgress(100);
       } else if (!response.ok) {
-        throw new Error(result.message || 'Upload failed');
+        throw new Error(result.message || "Upload failed");
       } else {
         // Success
         setStats(result.stats);
-        setState('complete');
+        setState("complete");
         setProgress(100);
       }
     } catch (error) {
-      console.error('[Import] Upload error:', error);
-      setErrorMessage(error instanceof Error ? error.message : 'Upload failed');
-      setState('error');
+      console.error("[Import] Upload error:", error);
+      setErrorMessage(error instanceof Error ? error.message : "Upload failed");
+      setState("error");
     }
   };
 
@@ -90,17 +90,17 @@ export default function ImportPage() {
    * Handle template download
    */
   const handleDownloadTemplate = () => {
-    window.open('/api/import/template', '_blank');
+    window.open("/api/import/template", "_blank");
   };
 
   /**
    * Handle import another file
    */
   const handleReset = () => {
-    setState('idle');
+    setState("idle");
     setProgress(0);
     setStats(null);
-    setErrorMessage('');
+    setErrorMessage("");
   };
 
   return (
@@ -108,7 +108,7 @@ export default function ImportPage() {
       <PageHeader
         title="Nhập dữ liệu CSV"
         subtitle="Tải lên file CSV xuất khẩu hàng hóa, tự động phân loại và phát hiện trùng lặp"
-        breadcrumbs={[{ label: 'Trang chủ', href: '/' }, { label: 'Nhập CSV' }]}
+        breadcrumbs={[{ label: "Trang chủ", href: "/" }, { label: "Nhập CSV" }]}
       />
 
       <Box sx={{ p: 3 }}>
@@ -131,29 +131,23 @@ export default function ImportPage() {
             variant="outlined"
             startIcon={<DownloadIcon />}
             onClick={handleDownloadTemplate}
-            disabled={state === 'uploading' || state === 'processing'}
+            disabled={state === "uploading" || state === "processing"}
           >
             Tải xuống file mẫu
           </Button>
         </Box>
 
         {/* File Upload */}
-        {state === 'idle' && (
-          <FileUpload
-            onFileSelect={handleFileUpload}
-            disabled={false}
-          />
+        {state === "idle" && (
+          <FileUpload onFileSelect={handleFileUpload} disabled={false} />
         )}
 
-        {state === 'error' && (
-          <FileUpload
-            onFileSelect={handleFileUpload}
-            disabled={false}
-          />
+        {state === "error" && (
+          <FileUpload onFileSelect={handleFileUpload} disabled={false} />
         )}
 
         {/* Progress */}
-        {(state === 'uploading' || state === 'processing') && (
+        {(state === "uploading" || state === "processing") && (
           <Box sx={{ mb: 3 }}>
             <ImportProgress progress={progress} state={state} />
             <LinearProgress
@@ -165,7 +159,7 @@ export default function ImportPage() {
         )}
 
         {/* Error */}
-        {state === 'error' && errorMessage && (
+        {state === "error" && errorMessage && (
           <Alert severity="error" sx={{ mb: 3 }}>
             <Typography variant="body2">
               <strong>Lỗi:</strong> {errorMessage}
@@ -174,7 +168,7 @@ export default function ImportPage() {
         )}
 
         {/* Summary */}
-        {state === 'complete' && stats && (
+        {state === "complete" && stats && (
           <Box>
             <ImportSummary stats={stats} />
             <Box sx={{ mt: 3 }}>

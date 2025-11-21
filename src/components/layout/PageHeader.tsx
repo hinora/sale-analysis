@@ -1,6 +1,6 @@
-import { Box, Typography, Breadcrumbs, Link as MuiLink } from '@mui/material';
-import Link from 'next/link';
-import { NavigateNext as NavigateNextIcon } from '@mui/icons-material';
+import { Box, Typography, Breadcrumbs, Link as MuiLink } from "@mui/material";
+import Link from "next/link";
+import { NavigateNext as NavigateNextIcon } from "@mui/icons-material";
 
 /**
  * Reusable page header component with breadcrumbs
@@ -15,7 +15,11 @@ export interface PageHeaderProps {
   breadcrumbs?: Array<{ label: string; href?: string }>;
 }
 
-export default function PageHeader({ title, subtitle, breadcrumbs }: PageHeaderProps) {
+export default function PageHeader({
+  title,
+  subtitle,
+  breadcrumbs,
+}: PageHeaderProps) {
   return (
     <Box sx={{ mb: 4 }}>
       {/* Breadcrumbs */}
@@ -29,7 +33,11 @@ export default function PageHeader({ title, subtitle, breadcrumbs }: PageHeaderP
 
             if (isLast || !crumb.href) {
               return (
-                <Typography key={crumb.label} color="text.primary" fontSize="0.875rem">
+                <Typography
+                  key={crumb.label}
+                  color="text.primary"
+                  fontSize="0.875rem"
+                >
                   {crumb.label}
                 </Typography>
               );
@@ -43,10 +51,10 @@ export default function PageHeader({ title, subtitle, breadcrumbs }: PageHeaderP
                 color="inherit"
                 fontSize="0.875rem"
                 sx={{
-                  cursor: 'pointer',
-                  textDecoration: 'none',
-                  '&:hover': {
-                    textDecoration: 'underline',
+                  cursor: "pointer",
+                  textDecoration: "none",
+                  "&:hover": {
+                    textDecoration: "underline",
                   },
                 }}
               >

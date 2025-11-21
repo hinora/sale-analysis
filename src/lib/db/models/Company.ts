@@ -1,4 +1,4 @@
-import { Schema, model, type Document } from 'mongoose';
+import { Schema, model, type Document } from "mongoose";
 
 /**
  * Company interface representing an importing company
@@ -53,13 +53,13 @@ const CompanySchema = new Schema<ICompany>(
       type: String,
       required: true,
       trim: true,
-      index: 'text', // Full-text search
+      index: "text", // Full-text search
     },
     address: {
       type: String,
       required: false,
       trim: true,
-      default: '',
+      default: "",
     },
   },
   {
@@ -81,51 +81,53 @@ CompanySchema.statics.withAggregates = async function (
 
   if (dateRange?.from || dateRange?.to) {
     matchStage.date = {};
-    if (dateRange.from) (matchStage.date as Record<string, unknown>).$gte = dateRange.from;
-    if (dateRange.to) (matchStage.date as Record<string, unknown>).$lte = dateRange.to;
+    if (dateRange.from)
+      (matchStage.date as Record<string, unknown>).$gte = dateRange.from;
+    if (dateRange.to)
+      (matchStage.date as Record<string, unknown>).$lte = dateRange.to;
   }
 
-  const { Transaction } = await import('./Transaction');
+  const { Transaction } = await import("./Transaction");
 
   return await Transaction.aggregate([
     { $match: matchStage },
     {
       $group: {
-        _id: '$company',
+        _id: "$company",
         totalTransactions: { $sum: 1 },
-        totalImportValue: { $sum: { $toDouble: '$totalValueUSD' } },
-        totalQuantity: { $sum: { $toDouble: '$quantity' } },
-        uniqueGoods: { $addToSet: '$goods' },
-        firstTransaction: { $min: '$date' },
-        lastTransaction: { $max: '$date' },
+        totalImportValue: { $sum: { $toDouble: "$totalValueUSD" } },
+        totalQuantity: { $sum: { $toDouble: "$quantity" } },
+        uniqueGoods: { $addToSet: "$goods" },
+        firstTransaction: { $min: "$date" },
+        lastTransaction: { $max: "$date" },
       },
     },
     {
       $lookup: {
-        from: 'companies',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'company',
+        from: "companies",
+        localField: "_id",
+        foreignField: "_id",
+        as: "company",
       },
     },
-    { $unwind: '$company' },
+    { $unwind: "$company" },
     {
       $project: {
-        _id: '$company._id',
-        name: '$company.name',
-        address: '$company.address',
+        _id: "$company._id",
+        name: "$company.name",
+        address: "$company.address",
         totalTransactions: 1,
         totalImportValue: 1,
         totalQuantity: 1,
-        uniqueGoodsCount: { $size: '$uniqueGoods' },
-        firstTransactionDate: '$firstTransaction',
-        lastTransactionDate: '$lastTransaction',
+        uniqueGoodsCount: { $size: "$uniqueGoods" },
+        firstTransactionDate: "$firstTransaction",
+        lastTransactionDate: "$lastTransaction",
       },
     },
   ]);
 };
 
 // Import Model type for static method
-import type { Model } from 'mongoose';
+import type { Model } from "mongoose";
 
-export const Company = model<ICompany, ICompanyModel>('Company', CompanySchema);
+export const Company = model<ICompany, ICompanyModel>("Company", CompanySchema);

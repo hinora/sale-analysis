@@ -722,6 +722,244 @@ docker-compose up --build app
 
 ---
 
+## 9. Background Job Architecture for AI Classification
+
+### Decision
+Implement **asynchronous background job** using Node.js script that processes goods with fallback classification, updating them with AI-generated categories and short names. Job can be triggered manually via API endpoint or scheduled via cron/system scheduler.
+
+### Rationale
+- Separates performance-critical CSV import from slow AI processing (constitution Principle III)
+- Allows imports to complete in <2 minutes while AI processing happens asynchronously
+- Users get immediate feedback on import success without waiting for AI
+- Failed AI classifications can be retried without affecting import success
+- Enables batch processing with rate limiting to avoid overwhelming Ollama
+- Simple architecture suitable for MVP (no need for Redis queue or worker pools initially)
+
+### Implementation Approach
+```typescript
+// src/lib/jobs/classify-goods.ts - Background job to classify goods with fallback classification
+export async function classifyGoodsJob(options = { batchSize: 10, limit: 100 }) {
+  // 1. Query goods where classifiedBy='fallback'
+  // 2. Process in batches of 10 to avoid overwhelming Ollama
+  // 3. For each goods: classify category + shorten name with AI
+  // 4. Update goods record: category, shortName, classifiedBy='llama3.1', classifiedAt
+  // 5. Log progress: processed/succeeded/failed counts
+  // 6. Rate limit: 1s pause between batches
+}
+
+// src/pages/api/jobs/classify-goods.ts - API endpoint to trigger job
+let jobRunning = false;
+let lastResult: JobResult | null = null;
+
+export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    // Return job status
+    return res.status(200).json({
+      running: jobRunning,
+      lastRun: lastResult?.completedAt,
+      lastResult: lastResult
+    });
+  }
+  
+  if (req.method === 'POST') {
+    // Check if job already running (prevent duplicate executions)
+    if (jobRunning) {
+      return res.status(409).json({ error: 'Job already running' });
+    }
+    
+    // Start job asynchronously (don't await - return 202 Accepted)
+    jobRunning = true;
+    classifyGoodsJob({ batchSize: 10, limit: 1000 })
+      .then(result => {
+        lastResult = { ...result, completedAt: new Date() };
+      })
+      .finally(() => {
+        jobRunning = false;
+      });
+    
+    return res.status(202).json({ message: 'Job started', status: 'running' });
+  }
+}
+```
+
+### Frontend Auto-Trigger with Interval Check
+```typescript
+// src/hooks/useBackgroundJobTrigger.ts - Custom hook for automatic job triggering
+import { useEffect, useRef } from 'react';
+
+interface JobStatus {
+  running: boolean;
+  lastRun?: string;
+  lastResult?: {
+    processed: number;
+    succeeded: number;
+    failed: number;
+    duration: number;
+  };
+}
+
+export function useBackgroundJobTrigger(intervalMinutes: number = 5) {
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const triggerJob = async () => {
+      try {
+        // Check job status first
+        const statusResponse = await fetch('/api/jobs/classify-goods');
+        const status: JobStatus = await statusResponse.json();
+        
+        // If already running, skip trigger
+        if (status.running) {
+          console.log('[BackgroundJob] Job already running, skipping trigger');
+          return;
+        }
+        
+        // Check if there are goods to process (optional optimization)
+        const goodsResponse = await fetch('/api/goods/unclassified-count');
+        const { count } = await goodsResponse.json();
+        
+        if (count === 0) {
+          console.log('[BackgroundJob] No unclassified goods, skipping trigger');
+          return;
+        }
+        
+        // Trigger job
+        console.log(`[BackgroundJob] Triggering job for ${count} unclassified goods`);
+        const triggerResponse = await fetch('/api/jobs/classify-goods', {
+          method: 'POST'
+        });
+        
+        if (triggerResponse.status === 202) {
+          console.log('[BackgroundJob] Job triggered successfully');
+        } else if (triggerResponse.status === 409) {
+          console.log('[BackgroundJob] Job already running (race condition)');
+        }
+      } catch (error) {
+        console.error('[BackgroundJob] Failed to trigger job:', error);
+      }
+    };
+
+    // Trigger immediately on mount
+    triggerJob();
+
+    // Set up interval
+    intervalRef.current = setInterval(triggerJob, intervalMinutes * 60 * 1000);
+
+    // Cleanup on unmount
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [intervalMinutes]);
+}
+
+// Usage in _app.tsx or main layout component
+function MyApp({ Component, pageProps }: AppProps) {
+  // Auto-trigger background job every 5 minutes
+  useBackgroundJobTrigger(5);
+  
+  return (
+    <ThemeProvider theme={theme}>
+      <Component {...pageProps} />
+    </ThemeProvider>
+  );
+}
+```
+
+### Alternative: Polling-Based Trigger in Layout Component
+```typescript
+// src/components/layout/Navigation.tsx - Add to main navigation component
+import { useEffect } from 'react';
+
+export function Navigation() {
+  useEffect(() => {
+    const checkAndTriggerJob = async () => {
+      try {
+        // Check status
+        const res = await fetch('/api/jobs/classify-goods');
+        const { running } = await res.json();
+        
+        // Only trigger if not running
+        if (!running) {
+          await fetch('/api/jobs/classify-goods', { method: 'POST' });
+        }
+      } catch (error) {
+        console.error('Failed to trigger background job:', error);
+      }
+    };
+
+    // Initial trigger
+    checkAndTriggerJob();
+
+    // Trigger every 5 minutes
+    const interval = setInterval(checkAndTriggerJob, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <AppBar position="static">
+      {/* ... navigation items ... */}
+    </AppBar>
+  );
+}
+```
+
+### Batch Processing Strategy
+1. **Query goods**: `Goods.find({ classifiedBy: 'fallback' }).limit(1000)`
+2. **Process in batches**: 10 goods per batch to manage Ollama load
+3. **Parallel within batch**: `Promise.allSettled()` for concurrent processing
+4. **Rate limiting**: 1-second pause between batches
+5. **Error isolation**: Failed classifications logged but don't stop job
+6. **Atomic updates**: Each goods record updated independently
+
+### Job Execution Options
+```bash
+# Option 1: Manual trigger via API
+curl -X POST http://localhost:3000/api/jobs/classify-goods
+
+# Option 2: Check job status
+curl http://localhost:3000/api/jobs/classify-goods
+
+# Option 3: System cron (add to crontab) - Optional
+0 * * * * curl -X POST http://localhost:3000/api/jobs/classify-goods
+
+# Option 4: Frontend auto-trigger (RECOMMENDED)
+# Automatic 5-minute interval check via useBackgroundJobTrigger hook
+# Runs in browser, checks status before triggering to prevent duplicates
+```
+
+### Frontend Auto-Trigger Architecture
+- **Hook-based**: `useBackgroundJobTrigger()` custom React hook
+- **Check before trigger**: GET /api/jobs/classify-goods to check if running
+- **Conditional trigger**: Only POST if not already running
+- **Optimization**: Query unclassified goods count to skip unnecessary triggers
+- **Error handling**: Graceful failure, logs errors without disrupting UI
+- **Cleanup**: Clears interval on component unmount
+- **Placement**: Added to _app.tsx or main layout component for global coverage
+
+### Alternatives Considered
+1. **Redis + Bull Queue** - Too complex for MVP, adds dependency
+2. **AWS Lambda** - Requires cloud deployment, doesn't fit Docker Compose setup
+3. **Worker Process Pool** - Overkill for current scale, harder to debug
+4. **Inline during import** - Already rejected, blocks imports
+
+### Performance Considerations
+- Batch size: 10 goods balances throughput and Ollama capacity
+- Rate limiting: 1s pause prevents Ollama overload
+- Memory: 1000 goods limit per run prevents memory issues
+- Concurrency: Parallel within batch, sequential between batches
+- Retries: Failed goods remain in fallback state for next run
+
+### Constitution Alignment
+- ✅ Principle I: Data Integrity - atomic updates, fallback preserved until success
+- ✅ Principle III: Performance - async processing maintains <2 min import target
+- ✅ Principle IV: User Experience - immediate import feedback, gradual improvement
+- ✅ Principle V: AI Integration - rate limiting prevents Ollama overload
+
+---
+
 ## Open Questions Resolved
 
 All technical unknowns from the Technical Context have been resolved. No [NEEDS CLARIFICATION] markers remain. The architecture is ready for Phase 1 design.

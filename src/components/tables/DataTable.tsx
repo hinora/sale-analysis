@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { FixedSizeList as List } from 'react-window';
+import { useState, useMemo } from "react";
+import { FixedSizeList as List } from "react-window";
 import {
   Table,
   TableBody,
@@ -11,7 +11,7 @@ import {
   Box,
   TablePagination,
   Typography,
-} from '@mui/material';
+} from "@mui/material";
 
 /**
  * Column definition for DataTable
@@ -20,7 +20,7 @@ export interface DataTableColumn<T = unknown> {
   id: string;
   label: string;
   minWidth?: number;
-  align?: 'left' | 'right' | 'center';
+  align?: "left" | "right" | "center";
   format?: (value: unknown, row: T) => string | number | React.ReactNode;
   sortable?: boolean;
 }
@@ -35,9 +35,9 @@ export interface DataTableProps<T = unknown> {
   maxHeight?: number;
   pagination?: boolean;
   rowsPerPageOptions?: number[];
-  onSort?: (columnId: string, direction: 'asc' | 'desc') => void;
+  onSort?: (columnId: string, direction: "asc" | "desc") => void;
   sortBy?: string;
-  sortDirection?: 'asc' | 'desc';
+  sortDirection?: "asc" | "desc";
   emptyMessage?: string;
   virtualized?: boolean; // Enable virtualization for large datasets
 }
@@ -59,8 +59,8 @@ export default function DataTable<T extends Record<string, unknown>>({
   rowsPerPageOptions = [10, 25, 50, 100],
   onSort,
   sortBy,
-  sortDirection = 'asc',
-  emptyMessage = 'Không có dữ liệu',
+  sortDirection = "asc",
+  emptyMessage = "Không có dữ liệu",
   virtualized = false,
 }: DataTableProps<T>) {
   const [page, setPage] = useState(0);
@@ -70,7 +70,9 @@ export default function DataTable<T extends Record<string, unknown>>({
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setRowsPerPage(Number.parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -88,8 +90,8 @@ export default function DataTable<T extends Record<string, unknown>>({
       {columns.map((column) => {
         const value = row[column.id];
         return (
-          <TableCell key={column.id} align={column.align || 'left'}>
-            {column.format ? column.format(value, row) : String(value ?? '')}
+          <TableCell key={column.id} align={column.align || "left"}>
+            {column.format ? column.format(value, row) : String(value ?? "")}
           </TableCell>
         );
       })}
@@ -97,7 +99,13 @@ export default function DataTable<T extends Record<string, unknown>>({
   );
 
   // Virtualized row renderer for react-window
-  const VirtualRow = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+  const VirtualRow = ({
+    index,
+    style,
+  }: {
+    index: number;
+    style: React.CSSProperties;
+  }) => {
     const row = paginatedRows[index];
     return (
       <div style={style}>
@@ -112,9 +120,9 @@ export default function DataTable<T extends Record<string, unknown>>({
     return (
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
           minHeight: 200,
           p: 3,
         }}
@@ -127,7 +135,7 @@ export default function DataTable<T extends Record<string, unknown>>({
   }
 
   return (
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+    <Paper sx={{ width: "100%", overflow: "hidden" }}>
       <TableContainer sx={{ maxHeight: virtualized ? undefined : maxHeight }}>
         <Table stickyHeader>
           <TableHead>
@@ -135,23 +143,25 @@ export default function DataTable<T extends Record<string, unknown>>({
               {columns.map((column) => (
                 <TableCell
                   key={column.id}
-                  align={column.align || 'left'}
+                  align={column.align || "left"}
                   style={{ minWidth: column.minWidth }}
                 >
                   {column.sortable && onSort ? (
                     <Box
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        userSelect: 'none',
-                        '&:hover': {
-                          color: 'primary.main',
+                        display: "flex",
+                        alignItems: "center",
+                        cursor: "pointer",
+                        userSelect: "none",
+                        "&:hover": {
+                          color: "primary.main",
                         },
                       }}
                       onClick={() => {
                         const newDirection =
-                          sortBy === column.id && sortDirection === 'asc' ? 'desc' : 'asc';
+                          sortBy === column.id && sortDirection === "asc"
+                            ? "desc"
+                            : "asc";
                         onSort(column.id, newDirection);
                       }}
                     >
@@ -160,7 +170,7 @@ export default function DataTable<T extends Record<string, unknown>>({
                       </Typography>
                       {sortBy === column.id && (
                         <Typography variant="caption" sx={{ ml: 0.5 }}>
-                          {sortDirection === 'asc' ? '↑' : '↓'}
+                          {sortDirection === "asc" ? "↑" : "↓"}
                         </Typography>
                       )}
                     </Box>
@@ -173,7 +183,9 @@ export default function DataTable<T extends Record<string, unknown>>({
               ))}
             </TableRow>
           </TableHead>
-          {!virtualized && <TableBody>{paginatedRows.map(renderRow)}</TableBody>}
+          {!virtualized && (
+            <TableBody>{paginatedRows.map(renderRow)}</TableBody>
+          )}
         </Table>
 
         {/* Virtualized rendering for large datasets */}

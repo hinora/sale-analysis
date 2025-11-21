@@ -26,6 +26,28 @@ A business analyst receives a new export data CSV file from Vietnamese customs a
 
 ---
 
+### User Story 1.5 - Background AI Classification Job (Priority: P1)
+
+A system administrator or automated scheduler needs to process goods that were imported with fallback classification ("Other" category and truncated names) and update them with proper AI-generated categories and short names. This background job runs asynchronously without blocking CSV imports, ensuring that goods eventually receive intelligent classification while maintaining fast import performance.
+
+**Why this priority**: Separates performance-critical import path from slow AI processing. Users get immediate import success, while goods quality improves over time through background processing. Essential for production use with large datasets.
+
+**Independent Test**: Can be fully tested by importing CSV with new goods, verifying they start with "Other" category and truncated names, triggering the background job (manual or scheduled), and confirming goods are updated with proper AI categories and short names without affecting existing transactions.
+
+**Acceptance Scenarios**:
+
+1. **Given** goods imported with fallback classification (classifiedBy = 'fallback'), **When** background job runs, **Then** system queries all goods with classifiedBy='fallback' and processes them in batches
+2. **Given** a batch of unclassified goods, **When** background job processes them, **Then** each goods record is updated with AI-generated category (via Ollama llama3.1) and shortName (via Ollama mistral)
+3. **Given** background job is processing goods, **When** AI classification succeeds, **Then** goods record is updated with new category, shortName, classifiedBy='llama3.1', and classifiedAt=current timestamp
+4. **Given** background job encounters an AI error, **When** classification fails, **Then** goods record remains with fallback classification and error is logged for retry without crashing the job
+5. **Given** background job is running, **When** new CSV imports occur simultaneously, **Then** imports complete successfully without blocking on the background job, and newly imported goods are queued for future processing
+6. **Given** all goods are processed, **When** background job runs again, **Then** it finds zero goods with classifiedBy='fallback' and completes immediately without unnecessary work
+7. **Given** a goods record already has AI classification, **When** background job processes it, **Then** it skips the goods to avoid re-classifying already processed records
+8. **Given** user has application open in browser, **When** 5 minutes pass, **Then** frontend automatically checks job status and triggers classification if not already running
+9. **Given** background job is already running, **When** frontend auto-trigger attempts to start job, **Then** API returns 409 status and frontend skips trigger without error
+
+---
+
 ### User Story 2 - Transaction Query and Analysis (Priority: P1)
 
 A business analyst needs to review historical export transactions to identify patterns, analyze specific time periods, or investigate particular companies or products. They require flexible filtering and sorting capabilities to slice the data in multiple ways and quickly find relevant transactions.
@@ -104,7 +126,7 @@ A business strategist wants to ask complex analytical questions about the export
 ### Edge Cases
 
 - **What happens when a CSV file exceeds 100MB or contains 100,000+ rows?** System must stream process the file in chunks to avoid memory issues, show progress during upload/processing, and handle timeouts gracefully
-- **What happens when the AI classification service is unavailable or slow?** AI classification has been disabled during CSV import for performance. System uses fallback classification ("Other" category and simple name truncation) to ensure fast import. AI classification can be added as a separate batch process after import if needed.
+- **What happens when the AI classification service is unavailable or slow?** AI classification has been disabled during CSV import for performance. System uses fallback classification ("Other" category and simple name truncation) to ensure fast import. A background job runs asynchronously to process unclassified goods and update them with proper AI-generated categories and short names.
 - **What happens when two users upload CSVs with overlapping data simultaneously?** System must use database-level locking or unique constraints on declaration numbers to prevent race conditions creating duplicates
 - **What happens when a goods name in Vietnamese has special characters or is extremely long (>500 characters)?** System must handle UTF-8 Vietnamese characters correctly. Simple truncation shortens names to 100 characters maximum while preserving original raw name.
 - **What happens when a company name appears with slight variations (e.g., "CÔNG TY ABC" vs "Cty ABC")?** System treats them as different companies by default; user can manually merge duplicates through a company management interface (future enhancement)
@@ -124,8 +146,8 @@ A business strategist wants to ask complex analytical questions about the export
 - **FR-004**: System MUST detect duplicate declaration numbers within the uploaded CSV file before processing and skip duplicates, keeping only the first occurrence
 - **FR-005**: System MUST detect duplicate declaration numbers against existing database records and skip importing transactions that already exist
 - **FR-006**: System MUST preserve all raw data from the CSV exactly as provided, storing original values before any transformations or AI processing
-- **FR-007**: System MUST classify each new goods name (`Tên hàng`) into a category using AI when first encountered
-- **FR-008**: System MUST generate a shortened version of each goods name using AI while preserving the raw name in the database
+- **FR-007**: System MUST classify goods names (`Tên hàng`) into categories using AI via a background job that processes goods marked with fallback classification
+- **FR-008**: System MUST generate a shortened version of each goods name using AI via a background job, while preserving the raw name in the database
 - **FR-009**: System MUST check if a goods name already exists in the database and reuse the existing category and short name instead of re-classifying, ensuring consistency across imports
 - **FR-010**: System MUST provide a downloadable CSV template file that exactly matches the structure of `sale-raw-data-small.csv` including column headers in Vietnamese and example data rows
 - **FR-011**: System MUST display an import summary after processing showing: total rows in file, successful imports, duplicates skipped (within file), duplicates skipped (against database), validation errors, and goods newly classified

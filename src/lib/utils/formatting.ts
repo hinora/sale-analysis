@@ -7,9 +7,9 @@
  * Format number as Vietnamese currency (VND)
  */
 export function formatVND(value: number): string {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
   }).format(value);
 }
 
@@ -17,9 +17,9 @@ export function formatVND(value: number): string {
  * Format number as USD currency
  */
 export function formatUSD(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
   }).format(value);
 }
 
@@ -27,7 +27,7 @@ export function formatUSD(value: number): string {
  * Format number with thousands separator (Vietnamese locale)
  */
 export function formatNumber(value: number, decimals = 0): string {
-  return new Intl.NumberFormat('vi-VN', {
+  return new Intl.NumberFormat("vi-VN", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(value);
@@ -36,7 +36,11 @@ export function formatNumber(value: number, decimals = 0): string {
 /**
  * Format number with unit (e.g., "1,234 kg", "5.67 m³")
  */
-export function formatNumberWithUnit(value: number, unit: string, decimals = 2): string {
+export function formatNumberWithUnit(
+  value: number,
+  unit: string,
+  decimals = 2,
+): string {
   return `${formatNumber(value, decimals)} ${unit}`;
 }
 
@@ -60,11 +64,11 @@ export function formatCompactNumber(value: number): string {
  * Format date in Vietnamese format (DD/MM/YYYY)
  */
 export function formatDate(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('vi-VN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+  const d = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("vi-VN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   }).format(d);
 }
 
@@ -72,14 +76,14 @@ export function formatDate(date: Date | string): string {
  * Format date with time (DD/MM/YYYY HH:mm:ss)
  */
 export function formatDateTime(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('vi-VN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+  const d = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("vi-VN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   }).format(d);
 }
 
@@ -87,7 +91,7 @@ export function formatDateTime(date: Date | string): string {
  * Format date as relative time (e.g., "2 ngày trước", "5 giờ trước")
  */
 export function formatRelativeTime(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  const d = typeof date === "string" ? new Date(date) : date;
   const now = new Date();
   const diff = now.getTime() - d.getTime();
 
@@ -103,24 +107,27 @@ export function formatRelativeTime(date: Date | string): string {
   if (days > 0) return `${days} ngày trước`;
   if (hours > 0) return `${hours} giờ trước`;
   if (minutes > 0) return `${minutes} phút trước`;
-  return 'Vừa xong';
+  return "Vừa xong";
 }
 
 /**
  * Format month-year (MM/YYYY)
  */
 export function formatMonthYear(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('vi-VN', {
-    year: 'numeric',
-    month: '2-digit',
+  const d = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("vi-VN", {
+    year: "numeric",
+    month: "2-digit",
   }).format(d);
 }
 
 /**
  * Format date range
  */
-export function formatDateRange(from: Date | string, to: Date | string): string {
+export function formatDateRange(
+  from: Date | string,
+  to: Date | string,
+): string {
   return `${formatDate(from)} - ${formatDate(to)}`;
 }
 
@@ -151,7 +158,7 @@ export function formatFileSize(bytes: number): string {
  * Parse Vietnamese date string (DD/MM/YYYY) to Date object
  */
 export function parseVietnameseDate(dateString: string): Date | null {
-  const parts = dateString.split('/');
+  const parts = dateString.split("/");
   if (parts.length !== 3) return null;
 
   const day = Number.parseInt(parts[0], 10);
@@ -163,7 +170,11 @@ export function parseVietnameseDate(dateString: string): Date | null {
   }
 
   const date = new Date(year, month, day);
-  if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) {
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month ||
+    date.getDate() !== day
+  ) {
     return null; // Invalid date
   }
 

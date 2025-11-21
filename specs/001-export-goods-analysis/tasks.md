@@ -88,6 +88,33 @@ AI classification (Ollama llama3.1 + mistral) was disabled in the CSV import end
 
 ---
 
+## Phase 3.5: User Story 1.5 - Background AI Classification Job (Priority: P1) 🎯 MVP
+
+**Goal**: Process goods with fallback classification asynchronously to update them with AI-generated categories and short names
+
+**Independent Test**: Import CSV with new goods (fallback classification), run background job manually or via cron, verify goods updated with proper AI categories and shortNames, confirm transactions reference updated goods
+
+### Implementation for User Story 1.5
+
+- [X] T032a [P] [US1.5] Create background job script in src/lib/jobs/classify-goods.ts with batch processing logic
+- [X] T032b [P] [US1.5] Implement query to find goods where classifiedBy='fallback' with pagination support
+- [X] T032c [P] [US1.5] Add batch processing loop to classify goods in chunks (e.g., 10 goods per batch to avoid overwhelming Ollama)
+- [X] T032d [P] [US1.5] Integrate aiClassifier.classifyGoods() and aiNameShortener.shortenName() for each goods record
+- [X] T032e [P] [US1.5] Update goods record with new category, shortName, classifiedBy='llama3.1', classifiedAt timestamp
+- [X] T032f [US1.5] Add error handling with logging for AI failures (don't crash job, continue with next goods)
+- [X] T032g [US1.5] Create API endpoint POST /api/jobs/classify-goods to trigger job manually (for testing/admin)
+- [X] T032h [US1.5] Add GET /api/jobs/classify-goods endpoint to check job status (running/idle + last result)
+- [X] T032i [US1.5] Create useBackgroundJobTrigger React hook in src/hooks/useBackgroundJobTrigger.ts for auto-trigger
+- [X] T032j [US1.5] Integrate hook in _app.tsx to automatically trigger job every 5 minutes with status check
+- [X] T032k [US1.5] Add optional GET /api/goods/unclassified-count endpoint for optimization (skip trigger if count=0)
+- [X] T032l [US1.5] Add job status tracking (running boolean + lastResult object) in API endpoint
+- [X] T032m [US1.5] Add logging for job execution: start time, goods processed, successes, failures, duration
+- [X] T032n [US1.5] Test concurrent CSV import while job running to ensure no blocking or race conditions
+
+**Checkpoint**: User Story 1.5 complete - Background AI classification job processes fallback goods asynchronously
+
+---
+
 ## Phase 4: User Story 2 - Transaction Query (Priority: P1)
 
 **Goal**: Enable flexible transaction filtering, sorting, and pagination with URL persistence

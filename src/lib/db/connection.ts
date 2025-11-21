@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 interface ConnectionOptions {
   maxRetries?: number;
@@ -31,9 +31,14 @@ class DatabaseConnection {
     }
 
     const { maxRetries = 5, retryDelay = 2000 } = options;
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://mongodb:27017/export-goods';
+    const mongoUri =
+      process.env.MONGODB_URI || "mongodb://mongodb:27017/export-goods";
 
-    this.connectionPromise = this.connectWithRetry(mongoUri, maxRetries, retryDelay);
+    this.connectionPromise = this.connectWithRetry(
+      mongoUri,
+      maxRetries,
+      retryDelay,
+    );
 
     try {
       const result = await this.connectionPromise;
@@ -49,10 +54,12 @@ class DatabaseConnection {
     uri: string,
     maxRetries: number,
     retryDelay: number,
-    attempt: number = 1
+    attempt: number = 1,
   ): Promise<typeof mongoose> {
     try {
-      console.log(`[MongoDB] Connecting to database (attempt ${attempt}/${maxRetries})...`);
+      console.log(
+        `[MongoDB] Connecting to database (attempt ${attempt}/${maxRetries})...`,
+      );
 
       const connection = await mongoose.connect(uri, {
         serverSelectionTimeoutMS: 5000,
@@ -62,18 +69,18 @@ class DatabaseConnection {
       console.log(`[MongoDB] Successfully connected to database`);
 
       // Setup connection event handlers
-      mongoose.connection.on('error', (error: Error) => {
-        console.error('[MongoDB] Connection error:', error);
+      mongoose.connection.on("error", (error: Error) => {
+        console.error("[MongoDB] Connection error:", error);
         this.isConnected = false;
       });
 
-      mongoose.connection.on('disconnected', () => {
-        console.warn('[MongoDB] Disconnected from database');
+      mongoose.connection.on("disconnected", () => {
+        console.warn("[MongoDB] Disconnected from database");
         this.isConnected = false;
       });
 
-      mongoose.connection.on('reconnected', () => {
-        console.log('[MongoDB] Reconnected to database');
+      mongoose.connection.on("reconnected", () => {
+        console.log("[MongoDB] Reconnected to database");
         this.isConnected = true;
       });
 
@@ -85,7 +92,7 @@ class DatabaseConnection {
         throw new Error(
           `Failed to connect to MongoDB after ${maxRetries} attempts: ${
             error instanceof Error ? error.message : String(error)
-          }`
+          }`,
         );
       }
 
@@ -94,7 +101,12 @@ class DatabaseConnection {
       await new Promise((resolve) => setTimeout(resolve, retryDelay));
 
       // Exponential backoff for retries
-      return this.connectWithRetry(uri, maxRetries, retryDelay * 1.5, attempt + 1);
+      return this.connectWithRetry(
+        uri,
+        maxRetries,
+        retryDelay * 1.5,
+        attempt + 1,
+      );
     }
   }
 
@@ -103,7 +115,7 @@ class DatabaseConnection {
       await mongoose.disconnect();
       this.isConnected = false;
       this.connectionPromise = null;
-      console.log('[MongoDB] Disconnected from database');
+      console.log("[MongoDB] Disconnected from database");
     }
   }
 
@@ -125,9 +137,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
 }
 
 // Helper function to ensure connection for API routes
-export async function withDatabase<T>(
-  handler: () => Promise<T>
-): Promise<T> {
+export async function withDatabase<T>(handler: () => Promise<T>): Promise<T> {
   await connectToDatabase();
   return handler();
 }

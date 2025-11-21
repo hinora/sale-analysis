@@ -1,33 +1,33 @@
-import Papa from 'papaparse';
+import Papa from "papaparse";
 
 /**
  * CSV row interface matching the expected format
  */
 export interface CSVRow {
-  'Năm': string;
-  'Tháng': string;
-  'Ngày': string;
-  'Tên Cty nhập khẩu': string;
-  'Địa chỉ Cty nhập khẩu': string;
-  'HS code': string;
-  'Tên hàng': string;
-  'Thuế suất XNK': string;
-  'Đơn vị tính': string;
-  'Số Lượng': string;
-  'Đơn giá Nguyên tệ': string;
-  'Đơn giá khai báo(USD)': string;
-  'Trị giá USD': string;
-  'Nguyên tệ': string;
-  'Tỷ giá nguyên tệ': string;
-  'Tỷ giá USD': string;
-  'Mã phương thức thanh toán': string;
-  'Điều kiện giao hàng': string;
-  'Phương tiện vận chuyển': string;
-  'Tên nuớc xuất khẩu': string;
-  'Tên nước nhập khẩu': string;
-  'Chi cục hải quan': string;
-  'Loại hình': string;
-  'Số tờ khai': string;
+  Năm: string;
+  Tháng: string;
+  Ngày: string;
+  "Tên Cty nhập khẩu": string;
+  "Địa chỉ Cty nhập khẩu": string;
+  "HS code": string;
+  "Tên hàng": string;
+  "Thuế suất XNK": string;
+  "Đơn vị tính": string;
+  "Số Lượng": string;
+  "Đơn giá Nguyên tệ": string;
+  "Đơn giá khai báo(USD)": string;
+  "Trị giá USD": string;
+  "Nguyên tệ": string;
+  "Tỷ giá nguyên tệ": string;
+  "Tỷ giá USD": string;
+  "Mã phương thức thanh toán": string;
+  "Điều kiện giao hàng": string;
+  "Phương tiện vận chuyển": string;
+  "Tên nuớc xuất khẩu": string;
+  "Tên nước nhập khẩu": string;
+  "Chi cục hải quan": string;
+  "Loại hình": string;
+  "Số tờ khai": string;
   [key: string]: string; // Allow additional fields
 }
 
@@ -96,7 +96,7 @@ export class CSVParser {
           });
         },
         error: (error) => {
-          console.error('[CSVParser] Parse error:', error);
+          console.error("[CSVParser] Parse error:", error);
           reject(new Error(`CSV parse error: ${error.message}`));
         },
       });
@@ -145,7 +145,10 @@ export class CSVParser {
         skipEmptyLines: true,
         chunk: async (results, parser) => {
           rowCount += results.data.length;
-          processedSize += results.data.reduce((sum, row) => sum + JSON.stringify(row).length, 0);
+          processedSize += results.data.reduce(
+            (sum, row) => sum + JSON.stringify(row).length,
+            0,
+          );
 
           const progress = Math.min((processedSize / totalSize) * 100, 99);
 
@@ -161,11 +164,13 @@ export class CSVParser {
           }
         },
         complete: () => {
-          console.log(`[CSVParser] Stream processing complete. Total rows: ${rowCount}`);
+          console.log(
+            `[CSVParser] Stream processing complete. Total rows: ${rowCount}`,
+          );
           resolve();
         },
         error: (error) => {
-          console.error('[CSVParser] Stream error:', error);
+          console.error("[CSVParser] Stream error:", error);
           reject(new Error(`CSV stream error: ${error.message}`));
         },
       });

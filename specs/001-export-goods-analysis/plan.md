@@ -33,6 +33,7 @@ Build a comprehensive export goods analysis application that imports Vietnamese 
 - **Classification consistency**: Reuse existing classifications - COMPLIANT
 - **Reversible transformations**: Keep raw alongside processed - COMPLIANT
 - **Performance priority**: AI disabled during import, use fallback ("Other" category + simple truncation) - COMPLIANT
+- **Background processing**: Async job processes fallback goods with AI classification after import - COMPLIANT
 
 ### Principle II: Type Safety & Schema Validation ✅
 - **TypeScript strict mode**: Enabled throughout - COMPLIANT
@@ -83,6 +84,7 @@ specs/001-export-goods-analysis/
 │   ├── transactions-api.yaml
 │   ├── goods-api.yaml
 │   ├── companies-api.yaml
+│   ├── jobs-api.yaml
 │   └── ai-analysis-api.yaml
 └── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
@@ -116,6 +118,8 @@ src/
 │       ├── companies/
 │       │   ├── list.ts             # Query companies
 │       │   └── [id].ts             # Get company detail with transactions
+│       ├── jobs/
+│       │   └── classify-goods.ts   # Trigger background AI classification job
 │       └── ai/
 │           ├── feed-data.ts        # Load data into AI context
 │           ├── query.ts            # Process natural language queries
@@ -160,6 +164,10 @@ src/
 │   │   ├── classifier.ts           # Goods classification logic
 │   │   ├── name-shortener.ts       # Name shortening with AI
 │   │   └── query-handler.ts        # Natural language query processing
+│   ├── jobs/
+│   │   └── classify-goods.ts       # Background job for AI classification
+│   ├── hooks/
+│   │   └── useBackgroundJobTrigger.ts  # React hook for auto-triggering background job
 │   ├── utils/
 │   │   ├── validation.ts           # Zod schemas for API validation
 │   │   ├── formatting.ts           # Number/date formatting utilities
@@ -247,9 +255,10 @@ All technical unknowns resolved. Key decisions documented:
 ### Phase 1: Design (Complete)
 All design artifacts generated:
 - **5 Mongoose schemas** defined with validations and indexes
-- **5 API contract files** (OpenAPI 3.0.3 format) covering all endpoints
+- **6 API contract files** (OpenAPI 3.0.3 format) covering all endpoints including background jobs
 - **Developer quickstart guide** with Docker setup instructions *(updated 2025-11-20)*
 - **Agent context updated** for GitHub Copilot
+- **Background job architecture** documented in research.md *(added 2025-11-21)*
 
 ### Docker Configuration (Added 2025-11-20)
 Complete Docker deployment setup:
@@ -324,7 +333,7 @@ The planning phase is complete. To continue with implementation:
 
 ---
 
-**Planning Status**: ✅ **COMPLETE** (Updated with Docker deployment)  
+**Planning Status**: ✅ **COMPLETE** (Updated with Docker deployment + Background Jobs)  
 **Branch**: `001-export-goods-analysis`  
 **Date Completed**: 2025-11-20  
-**Last Updated**: 2025-11-20 (Docker configuration added)
+**Last Updated**: 2025-11-21 (Background AI classification job added)

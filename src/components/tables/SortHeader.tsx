@@ -1,4 +1,4 @@
-import { TableCell, TableSortLabel, Box, Typography } from '@mui/material';
+import { TableCell, TableSortLabel, Box, Typography } from "@mui/material";
 
 /**
  * Props for SortHeader component
@@ -7,9 +7,9 @@ export interface SortHeaderProps {
   id: string;
   label: string;
   active: boolean;
-  direction: 'asc' | 'desc';
+  direction: "asc" | "desc";
   onSort: (columnId: string) => void;
-  align?: 'left' | 'right' | 'center';
+  align?: "left" | "right" | "center";
   minWidth?: number;
 }
 
@@ -26,7 +26,7 @@ export default function SortHeader({
   active,
   direction,
   onSort,
-  align = 'left',
+  align = "left",
   minWidth,
 }: SortHeaderProps) {
   const handleSort = () => {
@@ -37,13 +37,13 @@ export default function SortHeader({
     <TableCell align={align} style={{ minWidth }}>
       <TableSortLabel
         active={active}
-        direction={active ? direction : 'asc'}
+        direction={active ? direction : "asc"}
         onClick={handleSort}
         sx={{
-          '& .MuiTableSortLabel-icon': {
+          "& .MuiTableSortLabel-icon": {
             opacity: 0.5,
           },
-          '&.Mui-active .MuiTableSortLabel-icon': {
+          "&.Mui-active .MuiTableSortLabel-icon": {
             opacity: 1,
           },
         }}
@@ -56,17 +56,17 @@ export default function SortHeader({
             component="span"
             sx={{
               border: 0,
-              clip: 'rect(0 0 0 0)',
+              clip: "rect(0 0 0 0)",
               height: 1,
               margin: -1,
-              overflow: 'hidden',
+              overflow: "hidden",
               padding: 0,
-              position: 'absolute',
+              position: "absolute",
               top: 20,
               width: 1,
             }}
           >
-            {direction === 'desc' ? 'sorted descending' : 'sorted ascending'}
+            {direction === "desc" ? "sorted descending" : "sorted ascending"}
           </Box>
         )}
       </TableSortLabel>

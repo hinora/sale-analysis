@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import { useRouter } from 'next/router';
+import Link from "next/link";
+import { useRouter } from "next/router";
 import {
   AppBar,
   Toolbar,
@@ -7,14 +7,14 @@ import {
   Box,
   Button,
   Container,
-} from '@mui/material';
+} from "@mui/material";
 import {
   UploadFile as UploadIcon,
   Search as SearchIcon,
   Category as CategoryIcon,
   Business as BusinessIcon,
   Psychology as AIIcon,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 /**
  * Main navigation component with links to all features
@@ -27,11 +27,11 @@ export default function Navigation() {
   const router = useRouter();
 
   const navItems = [
-    { label: 'Nhập CSV', href: '/import', icon: <UploadIcon /> },
-    { label: 'Tra cứu giao dịch', href: '/transactions', icon: <SearchIcon /> },
-    { label: 'Danh mục hàng hóa', href: '/goods', icon: <CategoryIcon /> },
-    { label: 'Phân tích công ty', href: '/companies', icon: <BusinessIcon /> },
-    { label: 'AI Phân tích', href: '/ai-analysis', icon: <AIIcon /> },
+    { label: "Nhập CSV", href: "/import", icon: <UploadIcon /> },
+    { label: "Tra cứu giao dịch", href: "/transactions", icon: <SearchIcon /> },
+    { label: "Danh mục hàng hóa", href: "/goods", icon: <CategoryIcon /> },
+    { label: "Phân tích công ty", href: "/companies", icon: <BusinessIcon /> },
+    { label: "AI Phân tích", href: "/ai-analysis", icon: <AIIcon /> },
   ];
 
   return (
@@ -46,12 +46,12 @@ export default function Navigation() {
             sx={{
               flexGrow: 0,
               fontWeight: 700,
-              letterSpacing: '.1rem',
-              color: 'white',
-              cursor: 'pointer',
+              letterSpacing: ".1rem",
+              color: "white",
+              cursor: "pointer",
               mr: 4,
-              textDecoration: 'none',
-              '&:hover': {
+              textDecoration: "none",
+              "&:hover": {
                 opacity: 0.9,
               },
             }}
@@ -60,7 +60,7 @@ export default function Navigation() {
           </Typography>
 
           {/* Navigation Links */}
-          <Box sx={{ flexGrow: 1, display: 'flex', gap: 1 }}>
+          <Box sx={{ flexGrow: 1, display: "flex", gap: 1 }}>
             {navItems.map((item) => {
               const isActive = router.pathname === item.href;
               return (
@@ -70,13 +70,15 @@ export default function Navigation() {
                   href={item.href}
                   startIcon={item.icon}
                   sx={{
-                    color: 'white',
-                    backgroundColor: isActive ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    color: "white",
+                    backgroundColor: isActive
+                      ? "rgba(255, 255, 255, 0.15)"
+                      : "transparent",
+                    "&:hover": {
+                      backgroundColor: "rgba(255, 255, 255, 0.1)",
                     },
                     fontWeight: isActive ? 600 : 400,
-                    textDecoration: 'none',
+                    textDecoration: "none",
                   }}
                 >
                   {item.label}

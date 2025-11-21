@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Zod validation schemas for API requests
@@ -19,7 +19,7 @@ export const DateRangeSchema = baseDateRangeSchema.refine(
     return true;
   },
   {
-    message: 'From date must be before or equal to To date',
+    message: "From date must be before or equal to To date",
   },
 );
 
@@ -32,7 +32,7 @@ export const PaginationSchema = z.object({
 // Sort schema
 export const SortSchema = z.object({
   field: z.string(),
-  order: z.enum(['asc', 'desc']).default('desc'),
+  order: z.enum(["asc", "desc"]).default("desc"),
 });
 
 // Transaction filter schema
@@ -74,7 +74,9 @@ export const AISessionCreateSchema = z.object({
     dateFrom: z.string().datetime().optional(),
     dateTo: z.string().datetime().optional(),
   }),
-  ollamaModel: z.enum(['llama3.1', 'llama2', 'mistral', 'codellama']).default('llama3.1'),
+  ollamaModel: z
+    .enum(["llama3.1", "llama2", "mistral", "codellama"])
+    .default("llama3.1"),
 });
 
 // AI message schema
@@ -86,7 +88,10 @@ export const AIMessageSchema = z.object({
 // CSV upload schema
 export const CSVUploadSchema = z.object({
   filename: z.string().min(1),
-  size: z.number().min(1).max(50 * 1024 * 1024), // 50MB max
+  size: z
+    .number()
+    .min(1)
+    .max(50 * 1024 * 1024), // 50MB max
   mimeType: z.string().regex(/^text\/(csv|plain)$/),
 });
 

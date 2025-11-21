@@ -1,4 +1,4 @@
-import { Schema, model, type Document } from 'mongoose';
+import { Schema, model, type Document } from "mongoose";
 
 /**
  * AISession interface for managing AI training sessions and conversation state
@@ -23,13 +23,13 @@ export interface IAISession extends Document {
 
   // Conversation history
   messages: {
-    role: 'user' | 'assistant';
+    role: "user" | "assistant";
     content: string;
     timestamp: Date;
   }[];
 
   // Status
-  status: 'pending' | 'loading' | 'ready' | 'error';
+  status: "pending" | "loading" | "ready" | "error";
   errorMessage?: string;
 
   // Expiration
@@ -52,7 +52,7 @@ const AISessionSchema = new Schema<IAISession>(
       type: String,
       required: true,
       index: true,
-      default: 'anonymous', // MVP: single user
+      default: "anonymous", // MVP: single user
     },
     filterCriteria: {
       companies: [String],
@@ -70,18 +70,18 @@ const AISessionSchema = new Schema<IAISession>(
     ollamaModel: {
       type: String,
       required: true,
-      enum: ['llama3.1', 'llama2', 'mistral', 'codellama'],
-      default: 'llama3.1',
+      enum: ["llama3.1", "llama2", "mistral", "codellama"],
+      default: "llama3.1",
     },
     ollamaContext: {
       type: String,
-      default: '',
+      default: "",
     },
     messages: [
       {
         role: {
           type: String,
-          enum: ['user', 'assistant'],
+          enum: ["user", "assistant"],
           required: true,
         },
         content: {
@@ -96,9 +96,9 @@ const AISessionSchema = new Schema<IAISession>(
     ],
     status: {
       type: String,
-      enum: ['pending', 'loading', 'ready', 'error'],
+      enum: ["pending", "loading", "ready", "error"],
       required: true,
-      default: 'pending',
+      default: "pending",
     },
     errorMessage: {
       type: String,
@@ -117,4 +117,4 @@ const AISessionSchema = new Schema<IAISession>(
 // TTL index for automatic cleanup of expired sessions
 AISessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-export const AISession = model<IAISession>('AISession', AISessionSchema);
+export const AISession = model<IAISession>("AISession", AISessionSchema);

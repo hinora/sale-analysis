@@ -1,9 +1,9 @@
-import type React from 'react';
-import { Box, Paper, Typography, Grid, Alert, Divider } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import WarningIcon from '@mui/icons-material/Warning';
-import ErrorIcon from '@mui/icons-material/Error';
-import InfoIcon from '@mui/icons-material/Info';
+import type React from "react";
+import { Box, Paper, Typography, Grid, Alert, Divider } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import WarningIcon from "@mui/icons-material/Warning";
+import ErrorIcon from "@mui/icons-material/Error";
+import InfoIcon from "@mui/icons-material/Info";
 
 interface ImportStats {
   totalRows: number;
@@ -33,7 +33,7 @@ export default function ImportSummary({ stats }: ImportSummaryProps) {
       {/* Success/Warning Header */}
       {!hasErrors && (
         <Alert
-          severity={hasWarnings ? 'warning' : 'success'}
+          severity={hasWarnings ? "warning" : "success"}
           icon={hasWarnings ? <WarningIcon /> : <CheckCircleIcon />}
           sx={{ mb: 3 }}
         >
@@ -121,12 +121,20 @@ export default function ImportSummary({ stats }: ImportSummaryProps) {
 
           {/* New Companies */}
           <Grid item xs={12} sm={6} md={3}>
-            <StatItem label="Doanh nghiệp mới" value={stats.newCompanies} color="info" />
+            <StatItem
+              label="Doanh nghiệp mới"
+              value={stats.newCompanies}
+              color="info"
+            />
           </Grid>
 
           {/* New Goods */}
           <Grid item xs={12} sm={6} md={3}>
-            <StatItem label="Hàng hóa mới" value={stats.newGoods} color="info" />
+            <StatItem
+              label="Hàng hóa mới"
+              value={stats.newGoods}
+              color="info"
+            />
           </Grid>
         </Grid>
       </Paper>
@@ -166,7 +174,7 @@ export default function ImportSummary({ stats }: ImportSummaryProps) {
 interface StatItemProps {
   label: string;
   value: number;
-  color: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
+  color: "primary" | "secondary" | "success" | "warning" | "error" | "info";
   icon?: React.ReactNode;
 }
 
@@ -174,14 +182,14 @@ function StatItem({ label, value, color, icon }: StatItemProps) {
   const IconComponent = icon as React.ReactElement;
 
   return (
-    <Box sx={{ textAlign: 'center' }}>
+    <Box sx={{ textAlign: "center" }}>
       {icon && (
         <Box sx={{ mb: 1, color: `${color}.main`, fontSize: 32 }}>
           {IconComponent}
         </Box>
       )}
       <Typography variant="h4" color={`${color}.main`} fontWeight="bold">
-        {value.toLocaleString('vi-VN')}
+        {value.toLocaleString("vi-VN")}
       </Typography>
       <Typography variant="body2" color="text.secondary">
         {label}

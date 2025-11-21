@@ -1,4 +1,4 @@
-import { Schema, model, type Document } from 'mongoose';
+import { Schema, model, type Document } from "mongoose";
 
 /**
  * Transaction interface representing a single export declaration record
@@ -87,13 +87,13 @@ const TransactionSchema = new Schema<ITransaction>(
     },
     company: {
       type: Schema.Types.ObjectId,
-      ref: 'Company',
+      ref: "Company",
       required: true,
       index: true,
     },
     goods: {
       type: Schema.Types.ObjectId,
-      ref: 'Goods',
+      ref: "Goods",
       required: true,
       index: true,
     },
@@ -106,7 +106,7 @@ const TransactionSchema = new Schema<ITransaction>(
     goodsRawName: {
       type: String,
       required: true,
-      index: 'text', // Full-text search
+      index: "text", // Full-text search
     },
     quantity: {
       type: Schema.Types.Decimal128,
@@ -172,7 +172,7 @@ const TransactionSchema = new Schema<ITransaction>(
     importCountry: {
       type: String,
       required: false,
-      default: '',
+      default: "",
       trim: true,
     },
     customsOffice: {
@@ -204,4 +204,7 @@ const TransactionSchema = new Schema<ITransaction>(
 );
 
 // Export model
-export const Transaction = model<ITransaction>('Transaction', TransactionSchema);
+export const Transaction = model<ITransaction>(
+  "Transaction",
+  TransactionSchema,
+);

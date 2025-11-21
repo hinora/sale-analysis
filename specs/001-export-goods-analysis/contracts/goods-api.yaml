@@ -172,6 +172,36 @@ paths:
                     items:
                       $ref: '#/components/schemas/Category'
 
+  /goods/unclassified-count:
+    get:
+      summary: Get count of unclassified goods
+      description: |
+        Returns the count of goods with fallback classification (classifiedBy='fallback').
+        Used by frontend to optimize background job triggering - skip trigger if count is zero.
+      operationId: getUnclassifiedGoodsCount
+      tags:
+        - Goods
+      responses:
+        '200':
+          description: Unclassified goods count retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - count
+                properties:
+                  count:
+                    type: integer
+                    description: Number of goods with fallback classification
+                    example: 142
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   schemas:
     GoodsListResponse:

@@ -1,5 +1,5 @@
-import { getOllamaClient } from './ollama-client';
-import { Category } from '../db/models/Category';
+import { getOllamaClient } from "./ollama-client";
+import { Category } from "../db/models/Category";
 
 /**
  * Classification result
@@ -15,7 +15,7 @@ export interface ClassificationResult {
  * Assigns categories to goods based on their raw names
  */
 export class AIClassifier {
-  private modelName = 'llama3.1';
+  private modelName = "llama3.1";
   private ollamaClient = getOllamaClient();
 
   /**
@@ -33,11 +33,11 @@ export class AIClassifier {
 
       return this.parseClassificationResponse(response.response);
     } catch (error) {
-      console.error('[AIClassifier] Classification error:', error);
+      console.error("[AIClassifier] Classification error:", error);
       return {
-        category: 'Other',
+        category: "Other",
         confidence: 0,
-        reasoning: 'Classification failed',
+        reasoning: "Classification failed",
       };
     }
   }
@@ -45,7 +45,9 @@ export class AIClassifier {
   /**
    * Classify multiple goods names in batch
    */
-  async classifyBatch(goodsNames: string[]): Promise<Map<string, ClassificationResult>> {
+  async classifyBatch(
+    goodsNames: string[],
+  ): Promise<Map<string, ClassificationResult>> {
     const results = new Map<string, ClassificationResult>();
 
     // Process in parallel with limit
@@ -59,7 +61,9 @@ export class AIClassifier {
         results.set(batch[j], batchResults[j]);
       }
 
-      console.log(`[AIClassifier] Classified ${i + batch.length}/${goodsNames.length} goods`);
+      console.log(
+        `[AIClassifier] Classified ${i + batch.length}/${goodsNames.length} goods`,
+      );
     }
 
     return results;
@@ -102,25 +106,25 @@ Classification:`;
       // Try to extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        throw new Error('No JSON found in response');
+        throw new Error("No JSON found in response");
       }
 
       const parsed = JSON.parse(jsonMatch[0]);
       return {
-        category: parsed.category || 'Other',
+        category: parsed.category || "Other",
         confidence: parsed.confidence || 0.5,
-        reasoning: parsed.reasoning || '',
+        reasoning: parsed.reasoning || "",
       };
     } catch (error) {
-      console.error('[AIClassifier] Parse error:', error);
-      console.error('[AIClassifier] Response:', response);
+      console.error("[AIClassifier] Parse error:", error);
+      console.error("[AIClassifier] Response:", response);
 
       // Fallback: try to extract category from text
       const categoryMatch = response.match(/category[:\s]+["']?(\w+[\w\s&]*)/i);
       return {
-        category: categoryMatch ? categoryMatch[1] : 'Other',
+        category: categoryMatch ? categoryMatch[1] : "Other",
         confidence: 0.5,
-        reasoning: 'Parsed from text response',
+        reasoning: "Parsed from text response",
       };
     }
   }
@@ -142,11 +146,11 @@ Classification:`;
 
       return category._id.toString();
     } catch (error) {
-      console.error('[AIClassifier] Category creation error:', error);
+      console.error("[AIClassifier] Category creation error:", error);
       // Return default "Other" category
       const defaultCategory = await Category.findOneAndUpdate(
-        { name: 'Other' },
-        { name: 'Other', description: 'Uncategorized products' },
+        { name: "Other" },
+        { name: "Other", description: "Uncategorized products" },
         { upsert: true, new: true },
       );
       return defaultCategory._id.toString();

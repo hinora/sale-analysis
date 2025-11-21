@@ -1,0 +1,176 @@
+openapi: 3.0.3
+info:
+  title: Background Jobs API
+  description: API endpoints for managing background processing jobs
+  version: 1.0.0
+  contact:
+    name: Export Goods Analysis Team
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+tags:
+  - name: Jobs
+    description: Background job management endpoints
+
+paths:
+  /jobs/classify-goods:
+    post:
+      tags:
+        - Jobs
+      summary: Trigger AI classification job
+      description: |
+        Starts an asynchronous background job to process goods with fallback classification,
+        updating them with AI-generated categories and short names. The job runs independently
+        and does not block the API response.
+        
+        **Job Behavior:**
+        - Queries goods where `classifiedBy='fallback'`
+        - Processes up to 1000 goods per execution
+        - Batch size: 10 goods per batch
+        - Rate limiting: 1-second pause between batches
+        - Errors logged but don't stop job execution
+        
+        **Returns immediately with 202 Accepted** - job continues in background.
+      operationId: triggerClassifyGoodsJob
+      responses:
+        '202':
+          description: Background classification job started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - status
+                properties:
+                  message:
+                    type: string
+                    example: "Background classification job started"
+                  status:
+                    type: string
+                    enum: [running]
+                    example: "running"
+        '409':
+          description: Job already running (cannot start duplicate job)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Job already running"
+        '500':
+          description: Failed to start job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Failed to start job"
+                message: "Database connection failed"
+
+    get:
+      tags:
+        - Jobs
+      summary: Get job status
+      description: |
+        Returns the current status of the background classification job including
+        whether it's running and results from the last completed run.
+      operationId: getClassifyGoodsJobStatus
+      responses:
+        '200':
+          description: Job status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - running
+                properties:
+                  running:
+                    type: boolean
+                    description: Whether job is currently executing
+                    example: false
+                  lastRun:
+                    type: string
+                    format: date-time
+                    description: Timestamp of last job execution
+                    example: "2025-11-21T10:30:00Z"
+                  lastResult:
+                    type: object
+                    description: Results from last completed job run
+                    properties:
+                      processed:
+                        type: integer
+                        description: Total number of goods processed
+                        example: 150
+                      succeeded:
+                        type: integer
+                        description: Number of goods successfully classified
+                        example: 142
+                      failed:
+                        type: integer
+                        description: Number of goods that failed classification
+                        example: 8
+                      duration:
+                        type: number
+                        format: float
+                        description: Job execution duration in seconds
+                        example: 145.67
+        '500':
+          description: Failed to retrieve job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Job already running"
+        message:
+          type: string
+          description: Additional error details
+          example: "Cannot start job while another instance is running"
+
+  examples:
+    JobStartedResponse:
+      summary: Job successfully started
+      value:
+        message: "Background classification job started"
+        status: "running"
+
+    JobRunningError:
+      summary: Job already running
+      value:
+        error: "Job already running"
+
+    JobStatusRunning:
+      summary: Job currently running
+      value:
+        running: true
+        lastRun: "2025-11-21T10:30:00Z"
+        lastResult:
+          processed: 150
+          succeeded: 142
+          failed: 8
+          duration: 145.67
+
+    JobStatusIdle:
+      summary: Job idle with previous results
+      value:
+        running: false
+        lastRun: "2025-11-21T10:30:00Z"
+        lastResult:
+          processed: 150
+          succeeded: 142
+          failed: 8
+          duration: 145.67

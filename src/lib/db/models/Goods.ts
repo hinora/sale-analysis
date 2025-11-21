@@ -1,4 +1,4 @@
-import { Schema, model, type Document, type Model } from 'mongoose';
+import { Schema, model, type Document, type Model } from "mongoose";
 
 /**
  * Goods interface representing a unique product/commodity being exported
@@ -62,7 +62,7 @@ const GoodsSchema = new Schema<IGoods>(
       required: true,
       unique: true,
       trim: true,
-      index: 'text', // Full-text search
+      index: "text", // Full-text search
     },
     shortName: {
       type: String,
@@ -72,7 +72,7 @@ const GoodsSchema = new Schema<IGoods>(
     },
     category: {
       type: Schema.Types.ObjectId,
-      ref: 'Category',
+      ref: "Category",
       required: true,
       index: true,
     },
@@ -109,60 +109,62 @@ GoodsSchema.statics.withAggregates = async function (
 
   if (dateRange?.from || dateRange?.to) {
     matchStage.date = {};
-    if (dateRange.from) (matchStage.date as Record<string, unknown>).$gte = dateRange.from;
-    if (dateRange.to) (matchStage.date as Record<string, unknown>).$lte = dateRange.to;
+    if (dateRange.from)
+      (matchStage.date as Record<string, unknown>).$gte = dateRange.from;
+    if (dateRange.to)
+      (matchStage.date as Record<string, unknown>).$lte = dateRange.to;
   }
 
-  const { Transaction } = await import('./Transaction');
+  const { Transaction } = await import("./Transaction");
 
   return await Transaction.aggregate([
     { $match: matchStage },
     {
       $group: {
-        _id: '$goods',
-        totalQuantity: { $sum: { $toDouble: '$quantity' } },
-        totalValue: { $sum: { $toDouble: '$totalValueUSD' } },
+        _id: "$goods",
+        totalQuantity: { $sum: { $toDouble: "$quantity" } },
+        totalValue: { $sum: { $toDouble: "$totalValueUSD" } },
         transactionCount: { $sum: 1 },
-        avgPrice: { $avg: { $toDouble: '$unitPriceUSD' } },
-        firstExport: { $min: '$date' },
-        lastExport: { $max: '$date' },
+        avgPrice: { $avg: { $toDouble: "$unitPriceUSD" } },
+        firstExport: { $min: "$date" },
+        lastExport: { $max: "$date" },
       },
     },
     {
       $lookup: {
-        from: 'goods',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'goods',
+        from: "goods",
+        localField: "_id",
+        foreignField: "_id",
+        as: "goods",
       },
     },
-    { $unwind: '$goods' },
+    { $unwind: "$goods" },
     {
       $lookup: {
-        from: 'categories',
-        localField: 'goods.category',
-        foreignField: '_id',
-        as: 'category',
+        from: "categories",
+        localField: "goods.category",
+        foreignField: "_id",
+        as: "category",
       },
     },
-    { $unwind: '$category' },
+    { $unwind: "$category" },
     {
       $project: {
-        _id: '$goods._id',
-        rawName: '$goods.rawName',
-        shortName: '$goods.shortName',
-        hsCode: '$goods.hsCode',
-        categoryId: '$category._id',
-        categoryName: '$category.name',
-        totalQuantityExported: '$totalQuantity',
-        totalValueExported: '$totalValue',
+        _id: "$goods._id",
+        rawName: "$goods.rawName",
+        shortName: "$goods.shortName",
+        hsCode: "$goods.hsCode",
+        categoryId: "$category._id",
+        categoryName: "$category.name",
+        totalQuantityExported: "$totalQuantity",
+        totalValueExported: "$totalValue",
         transactionCount: 1,
-        averageUnitPrice: '$avgPrice',
-        firstExportDate: '$firstExport',
-        lastExportDate: '$lastExport',
+        averageUnitPrice: "$avgPrice",
+        firstExportDate: "$firstExport",
+        lastExportDate: "$lastExport",
       },
     },
   ]);
 };
 
-export const Goods = model<IGoods, IGoodsModel>('Goods', GoodsSchema);
+export const Goods = model<IGoods, IGoodsModel>("Goods", GoodsSchema);

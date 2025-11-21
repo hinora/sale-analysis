@@ -1,4 +1,4 @@
-import type { CSVRow } from './parser';
+import type { CSVRow } from "./parser";
 
 /**
  * Deduplication result
@@ -28,10 +28,10 @@ export class CSVDeduplicator {
    * Declaration number alone is not enough - one declaration can have multiple line items
    */
   private createCompositeKey(row: CSVRow): string {
-    const declarationNumber = row['Số tờ khai']?.trim() || '';
-    const hsCode = row['HS code']?.trim() || '';
-    const goodsName = row['Tên hàng']?.trim() || '';
-    
+    const declarationNumber = row["Số tờ khai"]?.trim() || "";
+    const hsCode = row["HS code"]?.trim() || "";
+    const goodsName = row["Tên hàng"]?.trim() || "";
+
     return `${declarationNumber}|${hsCode}|${goodsName}`;
   }
 
@@ -61,7 +61,7 @@ export class CSVDeduplicator {
     // Second pass: identify unique and duplicates
     for (const row of rows) {
       const key = this.createCompositeKey(row);
-      const declarationNumber = row['Số tờ khai']?.trim();
+      const declarationNumber = row["Số tờ khai"]?.trim();
 
       if (!key || !declarationNumber) {
         // Skip rows without required fields
@@ -120,9 +120,9 @@ export class CSVDeduplicator {
     const existingRows: CSVRow[] = [];
 
     for (const row of rows) {
-      const declarationNumber = row['Số tờ khai']?.trim();
+      const declarationNumber = row["Số tờ khai"]?.trim();
       const compositeKey = this.createCompositeKey(row);
-      
+
       // Check if this specific line item exists (not just the declaration)
       if (declarationNumber && existingDeclarationNumbers.has(compositeKey)) {
         existingRows.push(row);

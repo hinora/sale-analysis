@@ -1,4 +1,4 @@
-import { getOllamaClient } from './ollama-client';
+import { getOllamaClient } from "./ollama-client";
 
 /**
  * Name shortening result
@@ -15,7 +15,7 @@ export interface ShortenResult {
  * Generates concise goods names (max 100 characters)
  */
 export class AINameShortener {
-  private modelName = 'mistral';
+  private modelName = "mistral";
   private ollamaClient = getOllamaClient();
   private maxLength = 100;
 
@@ -51,9 +51,9 @@ export class AINameShortener {
         compressionRatio: shortName.length / goodsName.length,
       };
     } catch (error) {
-      console.error('[AINameShortener] Shortening error:', error);
+      console.error("[AINameShortener] Shortening error:", error);
       // Fallback: simple truncation
-      const truncated = goodsName.slice(0, this.maxLength - 3) + '...';
+      const truncated = goodsName.slice(0, this.maxLength - 3) + "...";
       return {
         shortName: truncated,
         originalLength: goodsName.length,
@@ -66,7 +66,9 @@ export class AINameShortener {
   /**
    * Shorten multiple goods names in batch
    */
-  async shortenBatch(goodsNames: string[]): Promise<Map<string, ShortenResult>> {
+  async shortenBatch(
+    goodsNames: string[],
+  ): Promise<Map<string, ShortenResult>> {
     const results = new Map<string, ShortenResult>();
 
     // Process in parallel with limit
@@ -80,7 +82,9 @@ export class AINameShortener {
         results.set(batch[j], batchResults[j]);
       }
 
-      console.log(`[AINameShortener] Shortened ${i + batch.length}/${goodsNames.length} names`);
+      console.log(
+        `[AINameShortener] Shortened ${i + batch.length}/${goodsNames.length} names`,
+      );
     }
 
     return results;
@@ -111,18 +115,18 @@ Provide ONLY the shortened name, nothing else:`;
     // Clean up response
     let shortName = response
       .trim()
-      .replace(/^["']|["']$/g, '') // Remove quotes
-      .replace(/\n.*/g, '') // Take only first line
+      .replace(/^["']|["']$/g, "") // Remove quotes
+      .replace(/\n.*/g, "") // Take only first line
       .trim();
 
     // If too long, truncate
     if (shortName.length > this.maxLength) {
-      shortName = shortName.slice(0, this.maxLength - 3) + '...';
+      shortName = shortName.slice(0, this.maxLength - 3) + "...";
     }
 
     // If empty or too short, use fallback
     if (!shortName || shortName.length < 3) {
-      throw new Error('Invalid short name generated');
+      throw new Error("Invalid short name generated");
     }
 
     return shortName;
@@ -137,7 +141,7 @@ Provide ONLY the shortened name, nothing else:`;
     }
 
     // Try to find a natural break point (comma, semicolon, dash)
-    const breakChars = [',', ';', '-', '('];
+    const breakChars = [",", ";", "-", "("];
     for (const char of breakChars) {
       const index = goodsName.indexOf(char);
       if (index > 20 && index < this.maxLength) {
@@ -146,7 +150,7 @@ Provide ONLY the shortened name, nothing else:`;
     }
 
     // Simple truncation
-    return goodsName.slice(0, this.maxLength - 3) + '...';
+    return goodsName.slice(0, this.maxLength - 3) + "...";
   }
 
   /**

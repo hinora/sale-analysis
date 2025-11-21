@@ -50,17 +50,19 @@ export class OllamaClient {
   private baseUrl: string;
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || process.env.OLLAMA_HOST || 'http://ollama:11434';
+    this.baseUrl = baseUrl || process.env.OLLAMA_HOST || "http://ollama:11434";
   }
 
   /**
    * Generate a response from the AI model
    */
-  async generate(options: OllamaGenerateOptions): Promise<OllamaGenerateResponse> {
+  async generate(
+    options: OllamaGenerateOptions,
+  ): Promise<OllamaGenerateResponse> {
     const response = await fetch(`${this.baseUrl}/api/generate`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: options.model,
@@ -77,7 +79,9 @@ export class OllamaClient {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Ollama API error: ${response.status} ${response.statusText} - ${errorText}`);
+      throw new Error(
+        `Ollama API error: ${response.status} ${response.statusText} - ${errorText}`,
+      );
     }
 
     return await response.json();
@@ -88,11 +92,13 @@ export class OllamaClient {
    */
   async listModels(): Promise<OllamaModel[]> {
     const response = await fetch(`${this.baseUrl}/api/tags`, {
-      method: 'GET',
+      method: "GET",
     });
 
     if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Ollama API error: ${response.status} ${response.statusText}`,
+      );
     }
 
     const data = await response.json();
@@ -116,9 +122,9 @@ export class OllamaClient {
    */
   async pullModel(modelName: string): Promise<void> {
     const response = await fetch(`${this.baseUrl}/api/pull`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         name: modelName,
@@ -126,7 +132,9 @@ export class OllamaClient {
     });
 
     if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Ollama API error: ${response.status} ${response.statusText}`,
+      );
     }
 
     // Stream response for progress updates
@@ -139,7 +147,7 @@ export class OllamaClient {
         if (done) break;
 
         const chunk = decoder.decode(value);
-        const lines = chunk.split('\n').filter((line) => line.trim());
+        const lines = chunk.split("\n").filter((line) => line.trim());
 
         for (const line of lines) {
           try {
@@ -161,7 +169,7 @@ export class OllamaClient {
   async healthCheck(): Promise<boolean> {
     try {
       const response = await fetch(`${this.baseUrl}/api/tags`, {
-        method: 'GET',
+        method: "GET",
       });
       return response.ok;
     } catch {

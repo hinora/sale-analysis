@@ -1,5 +1,5 @@
-import { createTheme } from '@mui/material/styles';
-import { viVN } from '@mui/material/locale';
+import { createTheme } from "@mui/material/styles";
+import { viVN } from "@mui/material/locale";
 
 /**
  * Material-UI theme configuration for Export Goods Analysis application
@@ -12,93 +12,93 @@ import { viVN } from '@mui/material/locale';
 export const theme = createTheme(
   {
     palette: {
-      mode: 'light',
+      mode: "light",
       primary: {
-        main: '#1976d2', // Blue
-        light: '#42a5f5',
-        dark: '#1565c0',
-        contrastText: '#fff',
+        main: "#1976d2", // Blue
+        light: "#42a5f5",
+        dark: "#1565c0",
+        contrastText: "#fff",
       },
       secondary: {
-        main: '#388e3c', // Green
-        light: '#66bb6a',
-        dark: '#2e7d32',
-        contrastText: '#fff',
+        main: "#388e3c", // Green
+        light: "#66bb6a",
+        dark: "#2e7d32",
+        contrastText: "#fff",
       },
       error: {
-        main: '#d32f2f',
-        light: '#ef5350',
-        dark: '#c62828',
+        main: "#d32f2f",
+        light: "#ef5350",
+        dark: "#c62828",
       },
       warning: {
-        main: '#ed6c02',
-        light: '#ff9800',
-        dark: '#e65100',
+        main: "#ed6c02",
+        light: "#ff9800",
+        dark: "#e65100",
       },
       info: {
-        main: '#0288d1',
-        light: '#03a9f4',
-        dark: '#01579b',
+        main: "#0288d1",
+        light: "#03a9f4",
+        dark: "#01579b",
       },
       success: {
-        main: '#2e7d32',
-        light: '#4caf50',
-        dark: '#1b5e20',
+        main: "#2e7d32",
+        light: "#4caf50",
+        dark: "#1b5e20",
       },
       background: {
-        default: '#f5f5f5',
-        paper: '#ffffff',
+        default: "#f5f5f5",
+        paper: "#ffffff",
       },
     },
     typography: {
       fontFamily: [
-        '-apple-system',
-        'BlinkMacSystemFont',
+        "-apple-system",
+        "BlinkMacSystemFont",
         '"Segoe UI"',
-        'Roboto',
+        "Roboto",
         '"Helvetica Neue"',
-        'Arial',
-        'sans-serif',
+        "Arial",
+        "sans-serif",
         '"Apple Color Emoji"',
         '"Segoe UI Emoji"',
         '"Segoe UI Symbol"',
-      ].join(','),
+      ].join(","),
       h1: {
-        fontSize: '2.5rem',
+        fontSize: "2.5rem",
         fontWeight: 600,
         lineHeight: 1.2,
       },
       h2: {
-        fontSize: '2rem',
+        fontSize: "2rem",
         fontWeight: 600,
         lineHeight: 1.3,
       },
       h3: {
-        fontSize: '1.75rem',
+        fontSize: "1.75rem",
         fontWeight: 600,
         lineHeight: 1.4,
       },
       h4: {
-        fontSize: '1.5rem',
+        fontSize: "1.5rem",
         fontWeight: 500,
         lineHeight: 1.4,
       },
       h5: {
-        fontSize: '1.25rem',
+        fontSize: "1.25rem",
         fontWeight: 500,
         lineHeight: 1.5,
       },
       h6: {
-        fontSize: '1rem',
+        fontSize: "1rem",
         fontWeight: 500,
         lineHeight: 1.5,
       },
       body1: {
-        fontSize: '1rem',
+        fontSize: "1rem",
         lineHeight: 1.5,
       },
       body2: {
-        fontSize: '0.875rem',
+        fontSize: "0.875rem",
         lineHeight: 1.43,
       },
     },
@@ -110,7 +110,7 @@ export const theme = createTheme(
       MuiButton: {
         styleOverrides: {
           root: {
-            textTransform: 'none', // Disable uppercase transformation
+            textTransform: "none", // Disable uppercase transformation
             fontWeight: 500,
           },
         },
@@ -118,20 +118,20 @@ export const theme = createTheme(
       MuiCard: {
         styleOverrides: {
           root: {
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
           },
         },
       },
       MuiTextField: {
         defaultProps: {
-          variant: 'outlined',
-          size: 'medium',
+          variant: "outlined",
+          size: "medium",
         },
       },
       MuiPaper: {
         styleOverrides: {
           root: {
-            backgroundImage: 'none', // Disable MUI elevation gradient
+            backgroundImage: "none", // Disable MUI elevation gradient
           },
         },
       },

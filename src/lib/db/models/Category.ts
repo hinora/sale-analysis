@@ -1,4 +1,4 @@
-import { Schema, model, type Document } from 'mongoose';
+import { Schema, model, type Document } from "mongoose";
 
 /**
  * Category interface representing AI-generated taxonomy of goods types
@@ -28,7 +28,7 @@ const CategorySchema = new Schema<ICategory>(
     description: {
       type: String,
       trim: true,
-      default: '',
+      default: "",
     },
   },
   {
@@ -38,4 +38,4 @@ const CategorySchema = new Schema<ICategory>(
   },
 );
 
-export const Category = model<ICategory>('Category', CategorySchema);
+export const Category = model<ICategory>("Category", CategorySchema);

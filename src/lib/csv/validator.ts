@@ -1,4 +1,4 @@
-import type { CSVRow } from './parser';
+import type { CSVRow } from "./parser";
 
 /**
  * Validation error
@@ -23,30 +23,30 @@ export interface ValidationResult {
  * Required CSV columns (in actual order from file)
  */
 const REQUIRED_COLUMNS = [
-  'Năm',
-  'Tháng',
-  'Ngày',
-  'Tên Cty nhập khẩu',
+  "Năm",
+  "Tháng",
+  "Ngày",
+  "Tên Cty nhập khẩu",
   // 'Địa chỉ Cty nhập khẩu', // Optional - many records don't have it
-  'HS code',
-  'Tên hàng',
-  'Thuế suất XNK',
-  'Đơn vị tính',
-  'Số Lượng',
-  'Đơn giá Nguyên tệ',
-  'Đơn giá khai báo(USD)',
-  'Trị giá USD',
-  'Nguyên tệ',
-  'Tỷ giá nguyên tệ',
-  'Tỷ giá USD',
-  'Mã phương thức thanh toán',
-  'Điều kiện giao hàng',
-  'Phương tiện vận chuyển',
-  'Tên nuớc xuất khẩu',
+  "HS code",
+  "Tên hàng",
+  "Thuế suất XNK",
+  "Đơn vị tính",
+  "Số Lượng",
+  "Đơn giá Nguyên tệ",
+  "Đơn giá khai báo(USD)",
+  "Trị giá USD",
+  "Nguyên tệ",
+  "Tỷ giá nguyên tệ",
+  "Tỷ giá USD",
+  "Mã phương thức thanh toán",
+  "Điều kiện giao hàng",
+  "Phương tiện vận chuyển",
+  "Tên nuớc xuất khẩu",
   // 'Tên nước nhập khẩu', // Optional - some records have it empty
-  'Chi cục hải quan',
-  'Loại hình',
-  'Số tờ khai',
+  "Chi cục hải quan",
+  "Loại hình",
+  "Số tờ khai",
 ];
 
 /**
@@ -73,7 +73,7 @@ export class CSVValidator {
 
     // Check for extra columns (warnings only)
     for (const header of headers) {
-      if (!REQUIRED_COLUMNS.includes(header) && header.trim() !== '') {
+      if (!REQUIRED_COLUMNS.includes(header) && header.trim() !== "") {
         warnings.push({
           row: 0,
           field: header,
@@ -98,74 +98,74 @@ export class CSVValidator {
     // Validate required fields are not empty
     for (const field of REQUIRED_COLUMNS) {
       const value = row[field];
-      if (!value || value.trim() === '') {
+      if (!value || value.trim() === "") {
         errors.push({
           row: rowIndex,
           field,
           message: `Trường bắt buộc trống: ${field}`,
-          value: value || '',
+          value: value || "",
         });
       }
     }
 
     // Validate date fields
-    const year = Number.parseInt(row['Năm'], 10);
-    const month = Number.parseInt(row['Tháng'], 10);
-    const day = Number.parseInt(row['Ngày'], 10);
+    const year = Number.parseInt(row["Năm"], 10);
+    const month = Number.parseInt(row["Tháng"], 10);
+    const day = Number.parseInt(row["Ngày"], 10);
 
     if (Number.isNaN(year) || year < 2000 || year > 2100) {
       errors.push({
         row: rowIndex,
-        field: 'Năm',
-        message: `Năm không hợp lệ: ${row['Năm']}`,
-        value: row['Năm'],
+        field: "Năm",
+        message: `Năm không hợp lệ: ${row["Năm"]}`,
+        value: row["Năm"],
       });
     }
 
     if (Number.isNaN(month) || month < 1 || month > 12) {
       errors.push({
         row: rowIndex,
-        field: 'Tháng',
-        message: `Tháng không hợp lệ: ${row['Tháng']}`,
-        value: row['Tháng'],
+        field: "Tháng",
+        message: `Tháng không hợp lệ: ${row["Tháng"]}`,
+        value: row["Tháng"],
       });
     }
 
     if (Number.isNaN(day) || day < 1 || day > 31) {
       errors.push({
         row: rowIndex,
-        field: 'Ngày',
-        message: `Ngày không hợp lệ: ${row['Ngày']}`,
-        value: row['Ngày'],
+        field: "Ngày",
+        message: `Ngày không hợp lệ: ${row["Ngày"]}`,
+        value: row["Ngày"],
       });
     }
 
     // Validate numeric fields
     const numericFields = [
-      'Số Lượng',
-      'Đơn giá Nguyên tệ',
-      'Đơn giá khai báo(USD)',
-      'Trị giá USD',
-      'Tỷ giá nguyên tệ',
-      'Tỷ giá USD',
-      'Thuế suất XNK',
+      "Số Lượng",
+      "Đơn giá Nguyên tệ",
+      "Đơn giá khai báo(USD)",
+      "Trị giá USD",
+      "Tỷ giá nguyên tệ",
+      "Tỷ giá USD",
+      "Thuế suất XNK",
     ];
 
     for (const field of numericFields) {
       const value = row[field];
-      if (value && value.trim() !== '') {
+      if (value && value.trim() !== "") {
         const trimmed = value.trim();
-        
+
         // Skip dash/hyphen values (represent empty/zero)
-        if (trimmed === '-' || trimmed === '—') {
+        if (trimmed === "-" || trimmed === "—") {
           continue;
         }
-        
+
         // Handle European number format: 24.410,00 → 24410.00
         // Remove periods (thousands separator), replace comma with period (decimal)
-        const normalizedValue = trimmed.replace(/\./g, '').replace(/,/g, '.');
+        const normalizedValue = trimmed.replace(/\./g, "").replace(/,/g, ".");
         const numValue = Number.parseFloat(normalizedValue);
-        
+
         if (Number.isNaN(numValue)) {
           errors.push({
             row: rowIndex,
@@ -185,14 +185,28 @@ export class CSVValidator {
     }
 
     // Validate delivery terms enum (C&F is legacy term for CFR)
-    const validDeliveryTerms = ['FOB', 'CFR', 'C&F', 'CIF', 'DAF', 'DAP', 'EXW', 'FCA', 'CPT', 'CIP', 'DDP', 'DDU', 'OTHER'];
-    const deliveryTerms = row['Điều kiện giao hàng']?.toUpperCase();
+    const validDeliveryTerms = [
+      "FOB",
+      "CFR",
+      "C&F",
+      "CIF",
+      "DAF",
+      "DAP",
+      "EXW",
+      "FCA",
+      "CPT",
+      "CIP",
+      "DDP",
+      "DDU",
+      "OTHER",
+    ];
+    const deliveryTerms = row["Điều kiện giao hàng"]?.toUpperCase();
     if (deliveryTerms && !validDeliveryTerms.includes(deliveryTerms)) {
       errors.push({
         row: rowIndex,
-        field: 'Điều kiện giao hàng',
+        field: "Điều kiện giao hàng",
         message: `Điều kiện giao hàng không hợp lệ: ${deliveryTerms}`,
-        value: row['Điều kiện giao hàng'],
+        value: row["Điều kiện giao hàng"],
       });
     }
 

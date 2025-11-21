@@ -1,5 +1,5 @@
-import { Box, TextField, Button, Paper, Grid } from '@mui/material';
-import { Clear as ClearIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Box, TextField, Button, Paper, Grid } from "@mui/material";
+import { Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 
 /**
  * Filter field definition
@@ -7,7 +7,7 @@ import { Clear as ClearIcon, Search as SearchIcon } from '@mui/icons-material';
 export interface FilterField {
   id: string;
   label: string;
-  type: 'text' | 'select' | 'date' | 'dateRange' | 'custom';
+  type: "text" | "select" | "date" | "dateRange" | "custom";
   placeholder?: string;
   options?: Array<{ value: string; label: string }>;
   customComponent?: React.ReactNode;
@@ -43,16 +43,16 @@ export default function FilterBar({
   loading = false,
 }: FilterBarProps) {
   const handleKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' && !loading) {
+    if (event.key === "Enter" && !loading) {
       onSearch();
     }
   };
 
   const renderFilter = (filter: FilterField) => {
-    const value = values[filter.id] || '';
+    const value = values[filter.id] || "";
 
     switch (filter.type) {
-      case 'text':
+      case "text":
         return (
           <TextField
             fullWidth
@@ -66,7 +66,7 @@ export default function FilterBar({
           />
         );
 
-      case 'select':
+      case "select":
         return (
           <TextField
             fullWidth
@@ -89,7 +89,7 @@ export default function FilterBar({
           </TextField>
         );
 
-      case 'date':
+      case "date":
         return (
           <TextField
             fullWidth
@@ -105,7 +105,7 @@ export default function FilterBar({
           />
         );
 
-      case 'custom':
+      case "custom":
         return filter.customComponent;
 
       default:
@@ -124,7 +124,7 @@ export default function FilterBar({
 
         {/* Action buttons */}
         <Grid item xs={12} sm={6} md={4} lg={3}>
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
             <Button
               variant="contained"
               startIcon={<SearchIcon />}

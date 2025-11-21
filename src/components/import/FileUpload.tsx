@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
-import type React from 'react';
-import { Box, Paper, Typography } from '@mui/material';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { useCallback, useState } from "react";
+import type React from "react";
+import { Box, Paper, Typography } from "@mui/material";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
@@ -11,7 +11,10 @@ interface FileUploadProps {
 /**
  * Drag-and-drop file upload component
  */
-export default function FileUpload({ onFileSelect, disabled = false }: FileUploadProps) {
+export default function FileUpload({
+  onFileSelect,
+  disabled = false,
+}: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
 
   /**
@@ -27,10 +30,10 @@ export default function FileUpload({ onFileSelect, disabled = false }: FileUploa
       const files = e.dataTransfer.files;
       if (files.length > 0) {
         const file = files[0];
-        if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+        if (file.type === "text/csv" || file.name.endsWith(".csv")) {
           onFileSelect(file);
         } else {
-          alert('Vui lòng chọn file CSV (.csv)');
+          alert("Vui lòng chọn file CSV (.csv)");
         }
       }
     },
@@ -72,20 +75,20 @@ export default function FileUpload({ onFileSelect, disabled = false }: FileUploa
       onDragLeave={handleDragLeave}
       sx={{
         p: 6,
-        textAlign: 'center',
-        border: '2px dashed',
-        borderColor: isDragging ? 'primary.main' : 'divider',
-        backgroundColor: isDragging ? 'action.hover' : 'background.paper',
-        cursor: disabled ? 'not-allowed' : 'pointer',
+        textAlign: "center",
+        border: "2px dashed",
+        borderColor: isDragging ? "primary.main" : "divider",
+        backgroundColor: isDragging ? "action.hover" : "background.paper",
+        cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.5 : 1,
-        transition: 'all 0.2s',
-        '&:hover': {
-          borderColor: disabled ? 'divider' : 'primary.main',
-          backgroundColor: disabled ? 'background.paper' : 'action.hover',
+        transition: "all 0.2s",
+        "&:hover": {
+          borderColor: disabled ? "divider" : "primary.main",
+          backgroundColor: disabled ? "background.paper" : "action.hover",
         },
       }}
     >
-      <CloudUploadIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+      <CloudUploadIcon sx={{ fontSize: 64, color: "primary.main", mb: 2 }} />
 
       <Typography variant="h6" gutterBottom>
         Kéo thả file CSV vào đây
@@ -101,20 +104,20 @@ export default function FileUpload({ onFileSelect, disabled = false }: FileUploa
           accept=".csv"
           onChange={handleFileChange}
           disabled={disabled}
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
         />
         <Box
           component="span"
           sx={{
-            display: 'inline-block',
+            display: "inline-block",
             px: 3,
             py: 1.5,
             borderRadius: 1,
-            backgroundColor: 'primary.main',
-            color: 'white',
-            cursor: disabled ? 'not-allowed' : 'pointer',
-            '&:hover': {
-              backgroundColor: disabled ? 'primary.main' : 'primary.dark',
+            backgroundColor: "primary.main",
+            color: "white",
+            cursor: disabled ? "not-allowed" : "pointer",
+            "&:hover": {
+              backgroundColor: disabled ? "primary.main" : "primary.dark",
             },
           }}
         >
@@ -122,7 +125,11 @@ export default function FileUpload({ onFileSelect, disabled = false }: FileUploa
         </Box>
       </Box>
 
-      <Typography variant="caption" display="block" sx={{ mt: 2, color: 'text.secondary' }}>
+      <Typography
+        variant="caption"
+        display="block"
+        sx={{ mt: 2, color: "text.secondary" }}
+      >
         Chỉ chấp nhận file CSV (tối đa 100MB)
       </Typography>
     </Paper>
