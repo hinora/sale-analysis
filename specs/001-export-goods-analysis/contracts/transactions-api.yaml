@@ -1,0 +1,389 @@
+openapi: 3.0.3
+info:
+  title: Transactions API - Export Goods Analysis
+  description: API endpoints for querying and filtering export transactions
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+paths:
+  /transactions:
+    get:
+      summary: List transactions
+      description: Retrieves transactions with filtering, sorting, and pagination
+      operationId: listTransactions
+      tags:
+        - Transactions
+      parameters:
+        - name: company
+          in: query
+          schema:
+            type: string
+          description: Filter by company name (partial match, case-insensitive)
+          example: "MV CAPE"
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter transactions from this date (inclusive)
+          example: "2024-01-01"
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter transactions to this date (inclusive)
+          example: "2024-12-31"
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by goods category ID
+          example: "6501234567890abcdef12345"
+        - name: goods
+          in: query
+          schema:
+            type: string
+          description: Filter by specific goods ID
+          example: "6501234567890abcdef12346"
+        - name: hsCode
+          in: query
+          schema:
+            type: string
+          description: Filter by HS code
+          example: "03023400"
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [date, unitPriceUSD, quantity, totalValueUSD]
+            default: date
+          description: Field to sort by
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 100
+            default: 50
+          description: Number of records per page
+      responses:
+        '200':
+          description: Transactions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionListResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /transactions/{id}:
+    get:
+      summary: Get transaction by ID
+      description: Retrieves a single transaction with full details
+      operationId: getTransaction
+      tags:
+        - Transactions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Transaction ID
+      responses:
+        '200':
+          description: Transaction retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /transactions/export:
+    post:
+      summary: Export filtered transactions
+      description: Exports filtered transactions as CSV file
+      operationId: exportTransactions
+      tags:
+        - Transactions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filters:
+                  $ref: '#/components/schemas/TransactionFilters'
+                format:
+                  type: string
+                  enum: [csv, excel]
+                  default: csv
+      responses:
+        '200':
+          description: CSV file generated
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid export request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    TransactionListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        summary:
+          type: object
+          properties:
+            totalValue:
+              type: number
+              format: double
+              example: 1250000.50
+            totalQuantity:
+              type: number
+              format: double
+              example: 50000.0
+            averageUnitPrice:
+              type: number
+              format: double
+              example: 25.0
+
+    Transaction:
+      type: object
+      required:
+        - _id
+        - declarationNumber
+        - date
+        - company
+        - goods
+        - quantity
+        - unitPriceUSD
+        - totalValueUSD
+      properties:
+        _id:
+          type: string
+          example: "6501234567890abcdef12347"
+        declarationNumber:
+          type: string
+          example: "306709194540"
+        date:
+          type: string
+          format: date-time
+          example: "2024-09-02T00:00:00Z"
+        year:
+          type: integer
+          example: 2024
+        month:
+          type: integer
+          example: 9
+        day:
+          type: integer
+          example: 2
+        company:
+          $ref: '#/components/schemas/CompanyReference'
+        goods:
+          $ref: '#/components/schemas/GoodsReference'
+        hsCode:
+          type: string
+          example: "03023400"
+        quantity:
+          type: number
+          format: double
+          example: 10.0
+        unit:
+          type: string
+          example: "Kilogam"
+        unitPriceOriginal:
+          type: number
+          format: double
+          example: 3.00
+        unitPriceUSD:
+          type: number
+          format: double
+          example: 3.00
+        totalValueUSD:
+          type: number
+          format: double
+          example: 30.0
+        originalCurrency:
+          type: string
+          example: "USD"
+        deliveryTerms:
+          type: string
+          enum: [FOB, CFR, CIF, DAF, DAP, EXW, FCA, CPT, CIP, DDP, DDU, OTHER]
+          example: "FOB"
+        transportMode:
+          type: string
+          example: "Đường biển (hàng rời, lỏng...)"
+        exportCountry:
+          type: string
+          example: "Viet Nam"
+        importCountry:
+          type: string
+          example: "Viet Nam"
+        customsOffice:
+          type: string
+          example: "Chi cục HQ CK Cảng Dung Quất"
+        exportType:
+          type: string
+          example: "Xuất khẩu hàng khác"
+        rawData:
+          type: object
+          description: Original CSV row data preserved
+
+    CompanyReference:
+      type: object
+      required:
+        - _id
+        - name
+      properties:
+        _id:
+          type: string
+          example: "6501234567890abcdef12345"
+        name:
+          type: string
+          example: "MV CAPE SAMPAGITA"
+        address:
+          type: string
+          example: "123 Main Street, City"
+
+    GoodsReference:
+      type: object
+      required:
+        - _id
+        - shortName
+        - category
+      properties:
+        _id:
+          type: string
+          example: "6501234567890abcdef12346"
+        rawName:
+          type: string
+          example: "CÁ NGỦ MẮT TO TƯƠI NGUYÊN CON#&VN"
+        shortName:
+          type: string
+          example: "Cá ngừ mắt to tươi nguyên con"
+        category:
+          $ref: '#/components/schemas/CategoryReference'
+
+    CategoryReference:
+      type: object
+      required:
+        - _id
+        - name
+      properties:
+        _id:
+          type: string
+          example: "6501234567890abcdef12348"
+        name:
+          type: string
+          example: "Frozen Seafood"
+
+    TransactionFilters:
+      type: object
+      properties:
+        company:
+          type: string
+        fromDate:
+          type: string
+          format: date
+        toDate:
+          type: string
+          format: date
+        category:
+          type: string
+        goods:
+          type: string
+        hsCode:
+          type: string
+
+    Pagination:
+      type: object
+      required:
+        - page
+        - pageSize
+        - totalRecords
+        - totalPages
+      properties:
+        page:
+          type: integer
+          example: 1
+        pageSize:
+          type: integer
+          example: 50
+        totalRecords:
+          type: integer
+          example: 1000
+        totalPages:
+          type: integer
+          example: 20
+        hasNextPage:
+          type: boolean
+          example: true
+        hasPreviousPage:
+          type: boolean
+          example: false
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: string
+
+tags:
+  - name: Transactions
+    description: Transaction query and export operations

@@ -1,0 +1,397 @@
+openapi: 3.0.3
+info:
+  title: AI Analysis API - Export Goods Analysis
+  description: API endpoints for AI-powered natural language analysis with user-controlled training data
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+paths:
+  /ai/session:
+    post:
+      summary: Create AI analysis session
+      description: Creates a new AI analysis session with configurable model
+      operationId: createAISession
+      tags:
+        - AI Analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model:
+                  type: string
+                  enum: [llama3.1, llama2, mistral, codellama]
+                  default: llama3.1
+                  description: Ollama model to use for analysis
+      responses:
+        '201':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AISession'
+        '500':
+          description: Failed to create session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /ai/session/{sessionId}:
+    get:
+      summary: Get AI session status
+      description: Retrieves current status of an AI analysis session
+      operationId: getAISession
+      tags:
+        - AI Analysis
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Session ID
+      responses:
+        '200':
+          description: Session status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AISession'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete AI session
+      description: Clears AI session and releases resources
+      operationId: deleteAISession
+      tags:
+        - AI Analysis
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Session deleted
+        '404':
+          description: Session not found
+
+  /ai/session/{sessionId}/feed-data:
+    post:
+      summary: Feed data to AI
+      description: Loads selected transactions into AI context for analysis
+      operationId: feedDataToAI
+      tags:
+        - AI Analysis
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - filters
+              properties:
+                filters:
+                  $ref: '#/components/schemas/DataSelectionFilters'
+      responses:
+        '200':
+          description: Data feed initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "loading"
+                  transactionCount:
+                    type: integer
+                    example: 5000
+                    description: Number of transactions being fed to AI
+                  estimatedTimeSeconds:
+                    type: integer
+                    example: 30
+        '400':
+          description: Invalid filters or data selection exceeds 10K limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
+
+  /ai/session/{sessionId}/query:
+    post:
+      summary: Query AI with natural language
+      description: Sends a natural language question to the AI and receives analysis
+      operationId: queryAI
+      tags:
+        - AI Analysis
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - question
+              properties:
+                question:
+                  type: string
+                  example: "Which company most imported?"
+                  description: Natural language question
+      responses:
+        '200':
+          description: AI response generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIResponse'
+        '400':
+          description: Invalid question or session not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
+
+  /ai/session/{sessionId}/conversation:
+    get:
+      summary: Get conversation history
+      description: Retrieves the full conversation history for this session
+      operationId: getConversationHistory
+      tags:
+        - AI Analysis
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Conversation history retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+        '404':
+          description: Session not found
+
+  /ai/suggested-questions:
+    get:
+      summary: Get suggested analytical questions
+      description: Retrieves pre-built question templates for common analyses
+      operationId: getSuggestedQuestions
+      tags:
+        - AI Analysis
+      responses:
+        '200':
+          description: Suggested questions retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  questions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "top-companies"
+                        category:
+                          type: string
+                          example: "Company Analysis"
+                        question:
+                          type: string
+                          example: "Which company most imported?"
+                        description:
+                          type: string
+                          example: "Identifies the company with highest total import value"
+
+components:
+  schemas:
+    AISession:
+      type: object
+      required:
+        - sessionId
+        - status
+        - model
+      properties:
+        sessionId:
+          type: string
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        userId:
+          type: string
+          example: "anonymous"
+        status:
+          type: string
+          enum: [pending, loading, ready, error]
+          example: "ready"
+          description: Current session status
+        model:
+          type: string
+          example: "llama3.1"
+          description: Ollama model being used
+        trainingDataCount:
+          type: integer
+          example: 5000
+          description: Number of transactions in AI context
+        filterCriteria:
+          $ref: '#/components/schemas/DataSelectionFilters'
+        errorMessage:
+          type: string
+          description: Error details if status is 'error'
+        expiresAt:
+          type: string
+          format: date-time
+          example: "2024-11-20T15:30:00Z"
+          description: Session expiration time (30 minutes from creation)
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-11-20T15:00:00Z"
+
+    DataSelectionFilters:
+      type: object
+      properties:
+        companies:
+          type: array
+          items:
+            type: string
+          description: Array of company IDs to include
+        categories:
+          type: array
+          items:
+            type: string
+          description: Array of category IDs to include
+        goods:
+          type: array
+          items:
+            type: string
+          description: Array of goods IDs to include
+        dateFrom:
+          type: string
+          format: date
+          example: "2024-01-01"
+        dateTo:
+          type: string
+          format: date
+          example: "2024-12-31"
+
+    AIResponse:
+      type: object
+      required:
+        - answer
+        - timestamp
+      properties:
+        answer:
+          type: string
+          example: "Based on the data, MV CAPE SAMPAGITA is the company that most imported, with a total import value of $3,500,000 USD across 250 transactions. This represents 35% of the total import value in the selected period."
+          description: AI-generated answer with data citations
+        dataCitations:
+          type: array
+          description: Specific data points referenced in the answer
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [company, goods, transaction, statistic]
+              reference:
+                type: string
+                example: "MV CAPE SAMPAGITA"
+              value:
+                type: string
+                example: "$3,500,000"
+              declarationNumbers:
+                type: array
+                items:
+                  type: string
+                description: Specific transaction declaration numbers cited
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.95
+          description: AI confidence score (if available)
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-11-20T15:05:30Z"
+        processingTimeMs:
+          type: integer
+          example: 3500
+          description: Time taken to generate response
+
+    Message:
+      type: object
+      required:
+        - role
+        - content
+        - timestamp
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+          example: "user"
+        content:
+          type: string
+          example: "Which company most imported?"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-11-20T15:05:00Z"
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: "DataLimitExceeded"
+        message:
+          type: string
+          example: "Selected data exceeds 10,000 transaction limit"
+        details:
+          type: string
+
+tags:
+  - name: AI Analysis
+    description: AI-powered natural language analysis operations

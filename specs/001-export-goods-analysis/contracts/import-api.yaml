@@ -1,0 +1,297 @@
+openapi: 3.0.3
+info:
+  title: Import API - Export Goods Analysis
+  description: API endpoints for CSV file import, validation, and processing
+  version: 1.0.0
+  contact:
+    name: Export Goods Analysis Team
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+paths:
+  /import/template:
+    get:
+      summary: Download CSV template
+      description: Downloads a CSV template file matching the exact structure of sale-raw-data-small.csv for user reference
+      operationId: downloadTemplate
+      tags:
+        - Import
+      responses:
+        '200':
+          description: CSV template file
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+              example: |
+                Năm;Tháng;Ngày;Tên Cty nhập khẩu;Địa chỉ Cty nhập khẩu;HS code;Tên hàng;...
+                2024;9;9/2/24;MV CAPE SAMPAGITA;;03023400;CÁ NGỦ MẮT TO TƯƠI NGUYÊN CON#&VN;...
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: attachment; filename="export-data-template.csv"
+
+  /import/validate:
+    post:
+      summary: Validate CSV file
+      description: Validates uploaded CSV file structure without importing data
+      operationId: validateCSV
+      tags:
+        - Import
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV file to validate
+      responses:
+        '200':
+          description: Validation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  totalRows:
+                    type: integer
+                    example: 1000
+                  requiredColumnsPresent:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Năm", "Tháng", "Ngày", "Số tờ khai", "Tên hàng"]
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /import/upload:
+    post:
+      summary: Upload and process CSV file
+      description: Uploads CSV file, detects duplicates, classifies goods with AI, and imports transactions
+      operationId: uploadCSV
+      tags:
+        - Import
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV file to import
+                skipDuplicates:
+                  type: boolean
+                  default: true
+                  description: Whether to skip duplicate records
+      responses:
+        '200':
+          description: Import completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportSummary'
+        '400':
+          description: Invalid file or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Import processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /import/status/{importId}:
+    get:
+      summary: Get import status
+      description: Retrieves the status and progress of an ongoing import operation
+      operationId: getImportStatus
+      tags:
+        - Import
+      parameters:
+        - name: importId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the import operation
+      responses:
+        '200':
+          description: Import status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportStatus'
+        '404':
+          description: Import not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    ImportSummary:
+      type: object
+      required:
+        - totalRows
+        - imported
+        - duplicatesInFile
+        - duplicatesInDatabase
+        - validationErrors
+        - newGoodsClassified
+        - processingTimeMs
+      properties:
+        totalRows:
+          type: integer
+          description: Total rows in uploaded CSV
+          example: 1000
+        imported:
+          type: integer
+          description: Successfully imported transactions
+          example: 950
+        duplicatesInFile:
+          type: integer
+          description: Duplicate declaration numbers found within the CSV file
+          example: 30
+        duplicatesInDatabase:
+          type: integer
+          description: Duplicate declaration numbers found in existing database
+          example: 20
+        validationErrors:
+          type: integer
+          description: Rows with validation errors
+          example: 0
+        newGoodsClassified:
+          type: integer
+          description: New goods classified by AI
+          example: 45
+        existingGoodsReused:
+          type: integer
+          description: Goods that reused existing classifications
+          example: 905
+        processingTimeMs:
+          type: integer
+          description: Total processing time in milliseconds
+          example: 45000
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              row:
+                type: integer
+              declarationNumber:
+                type: string
+              message:
+                type: string
+          example:
+            - row: 15
+              declarationNumber: "306709194540"
+              message: "Invalid date format"
+
+    ImportStatus:
+      type: object
+      required:
+        - importId
+        - status
+        - progress
+      properties:
+        importId:
+          type: string
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [pending, validating, processing, classifying, importing, completed, error]
+          example: "processing"
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Progress percentage
+          example: 65.5
+        currentPhase:
+          type: string
+          example: "Classifying goods with AI"
+        rowsProcessed:
+          type: integer
+          example: 655
+        totalRows:
+          type: integer
+          example: 1000
+        estimatedTimeRemainingSeconds:
+          type: integer
+          example: 15
+        summary:
+          $ref: '#/components/schemas/ImportSummary'
+
+    ValidationError:
+      type: object
+      required:
+        - valid
+        - errors
+      properties:
+        valid:
+          type: boolean
+          example: false
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: "Số tờ khai"
+              message:
+                type: string
+                example: "Required column missing"
+              rows:
+                type: array
+                items:
+                  type: integer
+                example: [1, 2, 3]
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: "ImportError"
+        message:
+          type: string
+          example: "Failed to process CSV file"
+        details:
+          type: string
+          example: "AI classification service unavailable"
+
+tags:
+  - name: Import
+    description: CSV file import operations

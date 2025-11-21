@@ -1,0 +1,364 @@
+openapi: 3.0.3
+info:
+  title: Goods Catalog API - Export Goods Analysis
+  description: API endpoints for querying goods catalog with aggregated statistics
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+paths:
+  /goods:
+    get:
+      summary: List goods
+      description: Retrieves goods catalog with aggregated statistics, filtering, and sorting
+      operationId: listGoods
+      tags:
+        - Goods
+      parameters:
+        - name: company
+          in: query
+          schema:
+            type: string
+          description: Filter goods exported by this company
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter goods exported from this date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter goods exported to this date
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category ID
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search goods by name (full-text search)
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [totalValueExported, totalQuantityExported, averageUnitPrice, transactionCount, lastExportDate]
+            default: totalValueExported
+          description: Field to sort by
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Goods catalog retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoodsListResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /goods/{id}:
+    get:
+      summary: Get goods detail
+      description: Retrieves detailed information about a specific good including all related transactions
+      operationId: getGoodsDetail
+      tags:
+        - Goods
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Goods ID
+      responses:
+        '200':
+          description: Goods detail retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoodsDetail'
+        '404':
+          description: Goods not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /goods/{id}/transactions:
+    get:
+      summary: Get transactions for goods
+      description: Retrieves all transactions involving this specific good
+      operationId: getGoodsTransactions
+      tags:
+        - Goods
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Transactions retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '404':
+          description: Goods not found
+
+  /categories:
+    get:
+      summary: List all categories
+      description: Retrieves all goods categories with counts
+      operationId: listCategories
+      tags:
+        - Categories
+      responses:
+        '200':
+          description: Categories retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+
+components:
+  schemas:
+    GoodsListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Goods'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    Goods:
+      type: object
+      required:
+        - _id
+        - rawName
+        - shortName
+        - category
+        - hsCode
+      properties:
+        _id:
+          type: string
+          example: "6501234567890abcdef12346"
+        rawName:
+          type: string
+          example: "CÁ NGỦ MẮT TO TƯƠI NGUYÊN CON#&VN"
+        shortName:
+          type: string
+          example: "Cá ngừ mắt to tươi nguyên con"
+        category:
+          $ref: '#/components/schemas/Category'
+        hsCode:
+          type: string
+          example: "03023400"
+        totalQuantityExported:
+          type: number
+          format: double
+          example: 5000.0
+          description: Aggregated total quantity across all transactions
+        totalValueExported:
+          type: number
+          format: double
+          example: 125000.0
+          description: Aggregated total value (USD) across all transactions
+        transactionCount:
+          type: integer
+          example: 150
+          description: Number of transactions involving this good
+        averageUnitPrice:
+          type: number
+          format: double
+          example: 25.0
+          description: Average unit price (USD)
+        firstExportDate:
+          type: string
+          format: date
+          example: "2024-01-15"
+        lastExportDate:
+          type: string
+          format: date
+          example: "2024-09-30"
+        classifiedBy:
+          type: string
+          example: "llama3.1"
+          description: AI model used for classification
+        classifiedAt:
+          type: string
+          format: date-time
+          example: "2024-10-01T10:30:00Z"
+
+    GoodsDetail:
+      allOf:
+        - $ref: '#/components/schemas/Goods'
+        - type: object
+          properties:
+            topCompanies:
+              type: array
+              description: Top 5 companies importing this good
+              items:
+                type: object
+                properties:
+                  company:
+                    $ref: '#/components/schemas/CompanyReference'
+                  totalQuantity:
+                    type: number
+                  totalValue:
+                    type: number
+                  transactionCount:
+                    type: integer
+            monthlyTrend:
+              type: array
+              description: Export volume trend by month
+              items:
+                type: object
+                properties:
+                  month:
+                    type: string
+                    example: "2024-09"
+                  quantity:
+                    type: number
+                  value:
+                    type: number
+                  transactionCount:
+                    type: integer
+
+    Category:
+      type: object
+      required:
+        - _id
+        - name
+      properties:
+        _id:
+          type: string
+          example: "6501234567890abcdef12348"
+        name:
+          type: string
+          example: "Frozen Seafood"
+        description:
+          type: string
+          example: "Frozen fish, shellfish, and other seafood products"
+        goodsCount:
+          type: integer
+          example: 45
+          description: Number of goods in this category
+        totalExportValue:
+          type: number
+          format: double
+          example: 2500000.0
+          description: Total export value of all goods in category
+
+    CompanyReference:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+
+    Transaction:
+      type: object
+      properties:
+        _id:
+          type: string
+        declarationNumber:
+          type: string
+        date:
+          type: string
+          format: date-time
+        company:
+          $ref: '#/components/schemas/CompanyReference'
+        quantity:
+          type: number
+        unitPriceUSD:
+          type: number
+        totalValueUSD:
+          type: number
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalRecords:
+          type: integer
+        totalPages:
+          type: integer
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+tags:
+  - name: Goods
+    description: Goods catalog operations
+  - name: Categories
+    description: Category management

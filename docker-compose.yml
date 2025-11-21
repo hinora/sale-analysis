@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: export-goods-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongodb:27017/export-goods
+      - OLLAMA_HOST=http://ollama:11434
+      - NEXT_TELEMETRY_DISABLED=1
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./specs:/app/specs
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - mongodb
+      - ollama
+    networks:
+      - export-goods-network
+    restart: unless-stopped
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7
+    container_name: export-goods-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=export-goods
+    volumes:
+      - mongodb-data:/data/db
+      - mongodb-config:/data/configdb
+    networks:
+      - export-goods-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Ollama AI Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: export-goods-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - export-goods-network
+    restart: unless-stopped
+    # Uncomment for GPU support (NVIDIA)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Model Downloader (runs once to pull AI models)
+  ollama-setup:
+    image: ollama/ollama:latest
+    container_name: export-goods-ollama-setup
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - export-goods-network
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      echo 'Pulling llama3.1 model...' &&
+      ollama pull llama3.1 &&
+      echo 'Pulling mistral model...' &&
+      ollama pull mistral &&
+      echo 'Models downloaded successfully!'
+      "
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    restart: "no"
+
+networks:
+  export-goods-network:
+    driver: bridge
+
+volumes:
+  mongodb-data:
+    driver: local
+  mongodb-config:
+    driver: local
+  ollama-data:
+    driver: local

@@ -1,0 +1,102 @@
+import { z } from 'zod';
+
+/**
+ * Zod validation schemas for API requests
+ * Ensures type safety and data validation at runtime
+ */
+
+// Date range validation
+const baseDateRangeSchema = z.object({
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+});
+
+export const DateRangeSchema = baseDateRangeSchema.refine(
+  (data) => {
+    if (data.from && data.to) {
+      return new Date(data.from) <= new Date(data.to);
+    }
+    return true;
+  },
+  {
+    message: 'From date must be before or equal to To date',
+  },
+);
+
+// Pagination schema
+export const PaginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+// Sort schema
+export const SortSchema = z.object({
+  field: z.string(),
+  order: z.enum(['asc', 'desc']).default('desc'),
+});
+
+// Transaction filter schema
+export const TransactionFilterSchema = z.object({
+  company: z.string().optional(),
+  goods: z.string().optional(),
+  category: z.string().optional(),
+  hsCode: z.string().optional(),
+  customsOffice: z.string().optional(),
+  exportCountry: z.string().optional(),
+  importCountry: z.string().optional(),
+  minValue: z.coerce.number().min(0).optional(),
+  maxValue: z.coerce.number().min(0).optional(),
+  dateRange: DateRangeSchema.optional(),
+});
+
+// Company filter schema
+export const CompanyFilterSchema = z.object({
+  name: z.string().optional(),
+  address: z.string().optional(),
+  dateRange: DateRangeSchema.optional(),
+});
+
+// Goods filter schema
+export const GoodsFilterSchema = z.object({
+  rawName: z.string().optional(),
+  shortName: z.string().optional(),
+  category: z.string().optional(),
+  hsCode: z.string().optional(),
+  dateRange: DateRangeSchema.optional(),
+});
+
+// AI session creation schema
+export const AISessionCreateSchema = z.object({
+  filterCriteria: z.object({
+    companies: z.array(z.string()).optional(),
+    categories: z.array(z.string()).optional(),
+    goods: z.array(z.string()).optional(),
+    dateFrom: z.string().datetime().optional(),
+    dateTo: z.string().datetime().optional(),
+  }),
+  ollamaModel: z.enum(['llama3.1', 'llama2', 'mistral', 'codellama']).default('llama3.1'),
+});
+
+// AI message schema
+export const AIMessageSchema = z.object({
+  sessionId: z.string().uuid(),
+  message: z.string().min(1).max(1000),
+});
+
+// CSV upload schema
+export const CSVUploadSchema = z.object({
+  filename: z.string().min(1),
+  size: z.number().min(1).max(50 * 1024 * 1024), // 50MB max
+  mimeType: z.string().regex(/^text\/(csv|plain)$/),
+});
+
+// Export types
+export type DateRange = z.infer<typeof DateRangeSchema>;
+export type Pagination = z.infer<typeof PaginationSchema>;
+export type Sort = z.infer<typeof SortSchema>;
+export type TransactionFilter = z.infer<typeof TransactionFilterSchema>;
+export type CompanyFilter = z.infer<typeof CompanyFilterSchema>;
+export type GoodsFilter = z.infer<typeof GoodsFilterSchema>;
+export type AISessionCreate = z.infer<typeof AISessionCreateSchema>;
+export type AIMessage = z.infer<typeof AIMessageSchema>;
+export type CSVUpload = z.infer<typeof CSVUploadSchema>;

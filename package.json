@@ -12,13 +12,23 @@
   "dependencies": {
     "next": "16.0.3",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "mongoose": "^8.0.0",
+    "@mui/material": "^6.0.0",
+    "@mui/icons-material": "^6.0.0",
+    "@emotion/react": "^11.13.0",
+    "@emotion/styled": "^11.13.0",
+    "zod": "^3.22.0",
+    "react-window": "^1.8.10",
+    "papaparse": "^5.4.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@types/react-window": "^1.8.8",
+    "@types/papaparse": "^5.3.14"
   }
 }

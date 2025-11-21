@@ -1,0 +1,338 @@
+openapi: 3.0.3
+info:
+  title: Companies API - Export Goods Analysis
+  description: API endpoints for company intelligence dashboard with aggregated statistics
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+paths:
+  /companies:
+    get:
+      summary: List companies
+      description: Retrieves companies with aggregated import statistics, filtering, and sorting
+      operationId: listCompanies
+      tags:
+        - Companies
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter companies that imported goods in this category
+        - name: goods
+          in: query
+          schema:
+            type: string
+          description: Filter companies that imported this specific good
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter companies active from this date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter companies active to this date
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search companies by name (full-text search)
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [totalImportValue, totalQuantity, transactionCount, uniqueGoodsCount, lastTransactionDate]
+            default: totalImportValue
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Companies retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyListResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /companies/{id}:
+    get:
+      summary: Get company detail
+      description: Retrieves detailed information about a specific company including import patterns and trends
+      operationId: getCompanyDetail
+      tags:
+        - Companies
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Company ID
+      responses:
+        '200':
+          description: Company detail retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyDetail'
+        '404':
+          description: Company not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /companies/{id}/transactions:
+    get:
+      summary: Get transactions for company
+      description: Retrieves all transactions for a specific company
+      operationId: getCompanyTransactions
+      tags:
+        - Companies
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Transactions retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '404':
+          description: Company not found
+
+components:
+  schemas:
+    CompanyListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    Company:
+      type: object
+      required:
+        - _id
+        - name
+        - address
+      properties:
+        _id:
+          type: string
+          example: "6501234567890abcdef12345"
+        name:
+          type: string
+          example: "MV CAPE SAMPAGITA"
+        address:
+          type: string
+          example: "123 Main Street, City, Country"
+        totalTransactions:
+          type: integer
+          example: 250
+          description: Total number of import transactions
+        totalImportValue:
+          type: number
+          format: double
+          example: 3500000.0
+          description: Total import value (USD) across all transactions
+        totalQuantity:
+          type: number
+          format: double
+          example: 150000.0
+          description: Total quantity imported across all transactions
+        uniqueGoodsCount:
+          type: integer
+          example: 35
+          description: Number of unique goods imported
+        mostFrequentCategory:
+          type: string
+          example: "Frozen Seafood"
+          description: Category with most transactions
+        firstTransactionDate:
+          type: string
+          format: date
+          example: "2024-01-01"
+        lastTransactionDate:
+          type: string
+          format: date
+          example: "2024-09-30"
+
+    CompanyDetail:
+      allOf:
+        - $ref: '#/components/schemas/Company'
+        - type: object
+          properties:
+            topGoods:
+              type: array
+              description: Top 10 goods imported by this company
+              items:
+                type: object
+                properties:
+                  goods:
+                    $ref: '#/components/schemas/GoodsReference'
+                  totalQuantity:
+                    type: number
+                  totalValue:
+                    type: number
+                  transactionCount:
+                    type: integer
+                  averagePrice:
+                    type: number
+            categoryBreakdown:
+              type: array
+              description: Import value breakdown by category
+              items:
+                type: object
+                properties:
+                  category:
+                    type: string
+                  totalValue:
+                    type: number
+                  percentage:
+                    type: number
+                    description: Percentage of total import value
+                  transactionCount:
+                    type: integer
+            monthlyTrend:
+              type: array
+              description: Import activity trend by month
+              items:
+                type: object
+                properties:
+                  month:
+                    type: string
+                    example: "2024-09"
+                  totalValue:
+                    type: number
+                  totalQuantity:
+                    type: number
+                  transactionCount:
+                    type: integer
+            averageOrderValue:
+              type: number
+              description: Average transaction value (USD)
+            totalSuppliers:
+              type: integer
+              description: Number of distinct export countries
+            topExportCountries:
+              type: array
+              items:
+                type: object
+                properties:
+                  country:
+                    type: string
+                  transactionCount:
+                    type: integer
+
+    GoodsReference:
+      type: object
+      properties:
+        _id:
+          type: string
+        shortName:
+          type: string
+        category:
+          type: string
+
+    Transaction:
+      type: object
+      properties:
+        _id:
+          type: string
+        declarationNumber:
+          type: string
+        date:
+          type: string
+          format: date-time
+        goods:
+          $ref: '#/components/schemas/GoodsReference'
+        quantity:
+          type: number
+        unitPriceUSD:
+          type: number
+        totalValueUSD:
+          type: number
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalRecords:
+          type: integer
+        totalPages:
+          type: integer
+        hasNextPage:
+          type: boolean
+        hasPreviousPage:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+tags:
+  - name: Companies
+    description: Company intelligence and analytics operations
