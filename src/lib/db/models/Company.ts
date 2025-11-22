@@ -1,4 +1,5 @@
-import { Schema, model, type Document } from "mongoose";
+/** biome-ignore-all lint/complexity/useArrowFunction: <explanation> */
+import { Schema, model, models, type Document, type Model } from "mongoose";
 
 /**
  * Company interface representing an importing company
@@ -127,7 +128,6 @@ CompanySchema.statics.withAggregates = async function (
   ]);
 };
 
-// Import Model type for static method
-import type { Model } from "mongoose";
-
-export const Company = model<ICompany, ICompanyModel>("Company", CompanySchema);
+export const Company =
+  (models.Company as Model<ICompany, ICompanyModel>) ||
+  model<ICompany, ICompanyModel>("Company", CompanySchema);

@@ -1,4 +1,4 @@
-import { Schema, model, type Document } from "mongoose";
+import { Schema, model, models, type Document, type Model } from "mongoose";
 
 /**
  * Transaction interface representing a single export declaration record
@@ -204,7 +204,6 @@ const TransactionSchema = new Schema<ITransaction>(
 );
 
 // Export model
-export const Transaction = model<ITransaction>(
-  "Transaction",
-  TransactionSchema,
-);
+export const Transaction =
+  (models.Transaction as Model<ITransaction>) ||
+  model<ITransaction>("Transaction", TransactionSchema);

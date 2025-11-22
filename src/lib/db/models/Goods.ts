@@ -1,4 +1,5 @@
-import { Schema, model, type Document, type Model } from "mongoose";
+/** biome-ignore-all lint/complexity/useArrowFunction: <explanation> */
+import { Schema, model, models, type Document, type Model } from "mongoose";
 
 /**
  * Goods interface representing a unique product/commodity being exported
@@ -167,4 +168,6 @@ GoodsSchema.statics.withAggregates = async function (
   ]);
 };
 
-export const Goods = model<IGoods, IGoodsModel>("Goods", GoodsSchema);
+export const Goods =
+  (models.Goods as Model<IGoods, IGoodsModel>) ||
+  model<IGoods, IGoodsModel>("Goods", GoodsSchema);

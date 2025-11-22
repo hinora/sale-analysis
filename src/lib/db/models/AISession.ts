@@ -1,4 +1,4 @@
-import { Schema, model, type Document } from "mongoose";
+import { Schema, model, models, type Document, type Model } from "mongoose";
 
 /**
  * AISession interface for managing AI training sessions and conversation state
@@ -117,4 +117,6 @@ const AISessionSchema = new Schema<IAISession>(
 // TTL index for automatic cleanup of expired sessions
 AISessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-export const AISession = model<IAISession>("AISession", AISessionSchema);
+export const AISession =
+  (models.AISession as Model<IAISession>) ||
+  model<IAISession>("AISession", AISessionSchema);

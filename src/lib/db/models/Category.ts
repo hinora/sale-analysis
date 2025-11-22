@@ -1,4 +1,4 @@
-import { Schema, model, type Document } from "mongoose";
+import { Schema, model, models, type Document, type Model } from "mongoose";
 
 /**
  * Category interface representing AI-generated taxonomy of goods types
@@ -38,4 +38,6 @@ const CategorySchema = new Schema<ICategory>(
   },
 );
 
-export const Category = model<ICategory>("Category", CategorySchema);
+export const Category =
+  (models.Category as Model<ICategory>) ||
+  model<ICategory>("Category", CategorySchema);
