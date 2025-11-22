@@ -1,3 +1,4 @@
+/** biome-ignore-all assist/source/organizeImports: <explanation> */
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { ThemeProvider, CssBaseline, Box } from "@mui/material";

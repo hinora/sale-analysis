@@ -145,14 +145,14 @@ AI classification (Ollama llama3.1 + mistral) was disabled in the CSV import end
 
 ### Implementation for User Story 3
 
-- [ ] T042 [P] [US3] Implement GET /api/goods/list endpoint in src/pages/api/goods/list.ts with aggregation pipeline
-- [ ] T043 [P] [US3] Implement GET /api/goods/[id] endpoint in src/pages/api/goods/[id].ts for goods detail
-- [ ] T044 [US3] Create goods catalog page UI in src/pages/goods.tsx with filters and aggregated table
-- [ ] T045 [US3] Add aggregation logic to calculate totalQuantityExported, totalValueExported, transactionCount per goods
-- [ ] T046 [US3] Integrate FilterBar with goods-specific filters (company, date range, category)
-- [ ] T047 [US3] Connect goods page to list API with aggregated data display
-- [ ] T048 [US3] Implement goods detail modal/page showing all transactions for selected goods
-- [ ] T049 [US3] Add sorting by aggregated metrics (export value, quantity, transaction count, average price)
+- [X] T042 [P] [US3] Implement GET /api/goods/list endpoint in src/pages/api/goods/list.ts with aggregation pipeline
+- [X] T043 [P] [US3] Implement GET /api/goods/[id] endpoint in src/pages/api/goods/[id].ts for goods detail
+- [X] T044 [US3] Create goods catalog page UI in src/pages/goods.tsx with filters and aggregated table
+- [X] T045 [US3] Add aggregation logic to calculate totalQuantityExported, totalValueExported, transactionCount per goods
+- [X] T046 [US3] Integrate FilterBar with goods-specific filters (company, date range, category)
+- [X] T047 [US3] Connect goods page to list API with aggregated data display
+- [X] T048 [US3] Implement goods detail modal/page showing all transactions for selected goods
+- [X] T049 [US3] Add sorting by aggregated metrics (export value, quantity, transaction count, average price)
 
 **Checkpoint**: User Story 3 complete - Goods catalog with aggregations and drill-down functional
 
