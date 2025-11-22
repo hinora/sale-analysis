@@ -79,7 +79,7 @@ export default async function handler(
       console.log("[API] Background classification job triggered");
 
       // Run job asynchronously (don't await - return 202 immediately)
-      classifyGoodsJob({ batchSize: 10, limit: 1000 })
+      classifyGoodsJob({ batchSize: 1, limit: 1000 })
         .then((result) => {
           lastResult = result;
           lastRunDate = new Date();

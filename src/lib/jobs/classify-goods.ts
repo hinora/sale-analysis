@@ -37,7 +37,7 @@ export interface ClassifyGoodsJobOptions {
 export async function classifyGoodsJob(
   options: ClassifyGoodsJobOptions = {},
 ): Promise<ClassifyGoodsJobResult> {
-  const { batchSize = 10, limit = 1000 } = options;
+  const { batchSize = 1, limit = 1000 } = options;
   const startTime = Date.now();
 
   let processed = 0;

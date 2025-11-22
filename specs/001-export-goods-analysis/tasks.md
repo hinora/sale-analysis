@@ -123,15 +123,15 @@ AI classification (Ollama llama3.1 + mistral) was disabled in the CSV import end
 
 ### Implementation for User Story 2
 
-- [ ] T033 [P] [US2] Implement GET /api/transactions/list endpoint in src/pages/api/transactions/list.ts with filter/sort/pagination
-- [ ] T034 [US2] Create transactions page UI in src/pages/transactions.tsx with filter controls and table
-- [ ] T035 [P] [US2] Create DateRangePicker component in src/components/common/DateRangePicker.tsx for date filters
-- [ ] T036 [P] [US2] Create CompanyAutocomplete component in src/components/common/CompanyAutocomplete.tsx for company search
-- [ ] T037 [P] [US2] Create CategorySelect component in src/components/common/CategorySelect.tsx for category dropdown
-- [ ] T038 [US2] Integrate FilterBar component with transaction-specific filters (company, date, category, goods)
-- [ ] T039 [US2] Connect transactions page to list API with filter/sort/pagination state management
-- [ ] T040 [US2] Implement URL query parameter persistence using next/router for filter/sort state
-- [ ] T041 [US2] Add virtualized table rendering for >100 rows using react-window in DataTable
+- [X] T033 [P] [US2] Implement GET /api/transactions/list endpoint in src/pages/api/transactions/list.ts with filter/sort/pagination
+- [X] T034 [US2] Create transactions page UI in src/pages/transactions.tsx with filter controls and table
+- [X] T035 [P] [US2] Create DateRangePicker component in src/components/common/DateRangePicker.tsx for date filters
+- [X] T036 [P] [US2] Create CompanyAutocomplete component in src/components/common/CompanyAutocomplete.tsx for company search
+- [X] T037 [P] [US2] Create CategorySelect component in src/components/common/CategorySelect.tsx for category dropdown
+- [X] T038 [US2] Integrate FilterBar component with transaction-specific filters (company, date, category, goods)
+- [X] T039 [US2] Connect transactions page to list API with filter/sort/pagination state management
+- [X] T040 [US2] Implement URL query parameter persistence using next/router for filter/sort state
+- [X] T041 [US2] Add virtualized table rendering for >100 rows using react-window in DataTable (Already implemented with virtualized prop)
 
 **Checkpoint**: User Story 2 complete - Transaction query page fully functional with filters and sorting
 
