@@ -142,9 +142,9 @@ A business strategist wants to ask complex analytical questions about the export
 
 - **FR-001**: System MUST accept CSV files with semicolon (`;`) as the delimiter, matching the Vietnamese customs export format shown in `sale-raw-data-small.csv`
 - **FR-002**: System MUST validate that uploaded CSV files contain all required columns: `Năm, Tháng, Ngày, Tên Cty nhập khẩu, Địa chỉ Cty nhập khẩu, HS code, Tên hàng, Đơn vị tính, Số Lượng, Đơn giá khai báo(USD), Trị giá USD, Nguyên tệ, Số tờ khai` (minimum required fields)
-- **FR-003**: System MUST use the `Số tờ khai` (declaration number) field as the unique identifier for transactions to detect duplicates
-- **FR-004**: System MUST detect duplicate declaration numbers within the uploaded CSV file before processing and skip duplicates, keeping only the first occurrence
-- **FR-005**: System MUST detect duplicate declaration numbers against existing database records and skip importing transactions that already exist
+- **FR-003**: System MUST use a composite key of 8 columns to detect duplicate transactions: `Số tờ khai` (declaration number), `HS code`, `Tên hàng` (goods name), `Tên Cty nhập khẩu` (company name), `Trị giá USD` (total value USD), `Tỷ giá USD` (USD rate), `Mã phương thức thanh toán` (payment method), `Điều kiện giao hàng` (delivery terms)
+- **FR-004**: System MUST detect duplicate transactions within the uploaded CSV file using the 8-column composite key before processing and skip duplicates, keeping only the first occurrence
+- **FR-005**: System MUST detect duplicate transactions against existing database records using the 8-column composite key and skip importing transactions that already exist
 - **FR-006**: System MUST preserve all raw data from the CSV exactly as provided, storing original values before any transformations or AI processing
 - **FR-007**: System MUST classify goods names (`Tên hàng`) into categories using AI via a background job that processes goods marked with fallback classification
 - **FR-008**: System MUST generate a shortened version of each goods name using AI via a background job, while preserving the raw name in the database
@@ -216,7 +216,7 @@ A business strategist wants to ask complex analytical questions about the export
 ### Measurable Outcomes
 
 - **SC-001**: Users can upload a CSV file with 10,000 transactions and complete the import process (including duplicate detection and fallback classification) in under 2 minutes
-- **SC-002**: The system correctly identifies and skips 100% of duplicate declaration numbers both within CSV files and against existing database records, with zero false positives or false negatives
+- **SC-002**: The system correctly identifies and skips 100% of duplicate transactions (using 8-column composite key) both within CSV files and against existing database records, with zero false positives or false negatives
 - **SC-003**: AI goods classification maintains 95%+ consistency (same raw name always receives same category) across multiple imports over time
 - **SC-004**: Users can apply filters and sort criteria on any data display page (transactions, goods, companies) and see results update within 2 seconds for datasets up to 100,000 records
 - **SC-005**: The downloaded CSV template file exactly matches the `sale-raw-data-small.csv` format with 100% column header accuracy (all Vietnamese field names correct)
@@ -229,7 +229,7 @@ A business strategist wants to ask complex analytical questions about the export
 ### Assumptions
 
 1. All CSV files will follow the Vietnamese customs export format with semicolon delimiters as shown in `sale-raw-data-small.csv`
-2. The `Số tờ khai` (declaration number) field is always present and truly unique across all export declarations
+2. The combination of 8 key columns (`Số tờ khai`, `HS code`, `Tên hàng`, `Tên Cty nhập khẩu`, `Trị giá USD`, `Tỷ giá USD`, `Mã phương thức thanh toán`, `Điều kiện giao hàng`) is always present and truly unique to identify distinct transactions, as a single declaration number can contain multiple line items
 3. An AI service (e.g., Ollama running locally) is available and configured for goods classification and natural language query processing
 4. Goods classification by AI will produce reasonable category assignments that align with business understanding of product types (e.g., frozen seafood, agricultural products, manufactured goods)
 5. The application will initially support Vietnamese language for field labels and data, with English as secondary language (future enhancement)

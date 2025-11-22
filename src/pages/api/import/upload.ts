@@ -121,7 +121,7 @@ export default async function handler(
     const fileDedupeResult = deduplicator.deduplicate(parseResult.data);
 
     // Check for duplicates in database using composite keys
-    // Query for existing transactions by declaration number, then check HS code + goods
+    // Query for existing transactions by declaration number, then build full composite key
     const uniqueDeclarationNumbers = Array.from(
       new Set(
         fileDedupeResult.uniqueRows.map((row: CSVRow) => row["Số tờ khai"]),
@@ -130,13 +130,21 @@ export default async function handler(
 
     const existingTransactions = await Transaction.find({
       declarationNumber: { $in: uniqueDeclarationNumbers },
-    }).select("declarationNumber hsCode goodsRawName");
+    })
+      .select(
+        "declarationNumber hsCode goodsRawName totalValueUSD usdRate paymentMethod deliveryTerms",
+      )
+      .populate("company", "name");
 
-    // Build composite key set from existing transactions
+    // Build composite key set from existing transactions (8 columns)
     const existingCompositeKeys = new Set(
-      existingTransactions.map(
-        (t) => `${t.declarationNumber}|${t.hsCode}|${t.goodsRawName}`,
-      ),
+      existingTransactions.map((t) => {
+        const companyDoc = t.company as { name?: string } | null;
+        const companyName = companyDoc?.name || "";
+        const totalValueUSD = t.totalValueUSD?.toString() || "";
+        const usdRate = t.usdRate?.toString() || "";
+        return `${t.declarationNumber}|${t.hsCode}|${t.goodsRawName}|${companyName}|${totalValueUSD}|${usdRate}|${t.paymentMethod}|${t.deliveryTerms}`;
+      }),
     );
 
     const dbDedupeResult = deduplicator.filterDatabaseDuplicates(

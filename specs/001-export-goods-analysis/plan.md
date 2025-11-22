@@ -27,8 +27,8 @@ Build a comprehensive export goods analysis application that imports Vietnamese 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 ### Principle I: Data Integrity & Fallback Classification ✅
-- **Unique identifier**: `Số tờ khai` (declaration number) as primary key - COMPLIANT
-- **Duplicate detection**: Two-level (within file + database) - COMPLIANT
+- **Unique identifier**: 8-column composite key (`Số tờ khai`, `HS code`, `Tên hàng`, `Tên Cty nhập khẩu`, `Trị giá USD`, `Tỷ giá USD`, `Mã phương thức thanh toán`, `Điều kiện giao hàng`) as transaction identifier - COMPLIANT
+- **Duplicate detection**: Two-level (within file + database) using 8-column composite key - COMPLIANT
 - **Raw data preservation**: Store original CSV row blob - COMPLIANT
 - **Classification consistency**: Reuse existing classifications - COMPLIANT
 - **Reversible transformations**: Keep raw alongside processed - COMPLIANT

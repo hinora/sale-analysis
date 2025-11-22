@@ -19,20 +19,32 @@ export interface DeduplicationResult {
 
 /**
  * Deduplicator logic using composite key for duplicate detection
- * Identifies duplicates based on: declaration number + HS code + goods name
- * (A single declaration can have multiple line items with different goods)
+ * Identifies duplicates based on 8 key columns:
+ * - Số tờ khai (declaration number)
+ * - HS code
+ * - Tên hàng (goods name)
+ * - Tên Cty nhập khẩu (company name)
+ * - Trị giá USD (total value USD)
+ * - Tỷ giá USD (USD rate)
+ * - Mã phương thức thanh toán (payment method)
+ * - Điều kiện giao hàng (delivery terms)
  */
 export class CSVDeduplicator {
   /**
    * Create composite key for uniqueness check
-   * Declaration number alone is not enough - one declaration can have multiple line items
+   * Uses 8 columns to identify truly unique transaction records
    */
   private createCompositeKey(row: CSVRow): string {
     const declarationNumber = row["Số tờ khai"]?.trim() || "";
     const hsCode = row["HS code"]?.trim() || "";
     const goodsName = row["Tên hàng"]?.trim() || "";
+    const companyName = row["Tên Cty nhập khẩu"]?.trim() || "";
+    const totalValueUSD = row["Trị giá USD"]?.trim() || "";
+    const usdRate = row["Tỷ giá USD"]?.trim() || "";
+    const paymentMethod = row["Mã phương thức thanh toán"]?.trim() || "";
+    const deliveryTerms = row["Điều kiện giao hàng"]?.trim() || "";
 
-    return `${declarationNumber}|${hsCode}|${goodsName}`;
+    return `${declarationNumber}|${hsCode}|${goodsName}|${companyName}|${totalValueUSD}|${usdRate}|${paymentMethod}|${deliveryTerms}`;
   }
 
   /**

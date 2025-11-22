@@ -779,9 +779,10 @@ export const AISession = model<IAISession>('AISession', AISessionSchema);
 ### Constitution Compliance
 
 1. **Duplicate Detection** (Principle I):
-   - Composite key duplicate detection using `declarationNumber + hsCode + goodsName` (one declaration can have 20+ line items)
-   - Application logic detects within-file duplicates before insertion using composite keys
+   - Composite key duplicate detection using 8 columns: `declarationNumber + hsCode + goodsName + companyName + totalValueUSD + usdRate + paymentMethod + deliveryTerms` (one declaration can have 20+ line items with same goods but different values/terms)
+   - Application logic detects within-file duplicates before insertion using 8-column composite keys
    - No unique constraint on declarationNumber alone (would incorrectly prevent valid multi-item declarations)
+   - The 8-column key provides precise duplicate detection accounting for variations in pricing, payment terms, and delivery conditions
 
 2. **Raw Data Preservation** (Principle I):
    - `Transaction.rawData` field stores entire CSV row as JSON
