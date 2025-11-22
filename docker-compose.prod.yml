@@ -1,27 +1,21 @@
 version: '3.8'
 
 services:
-  # Next.js Application
+  # Next.js Application (Production)
   app:
     build:
       context: .
       dockerfile: Dockerfile
-      target: development
-    container_name: export-goods-app
+      target: production
+    container_name: export-goods-app-prod
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - MONGODB_URI=mongodb://mongodb:27017/export-goods
       - OLLAMA_HOST=http://ollama:11434
-      - AI_MODEL=deepseek-r1:1.5b
+      - AI_MODEL=deepseek-r1:14b
       - NEXT_TELEMETRY_DISABLED=1
-    volumes:
-      - ./src:/app/src
-      - ./public:/app/public
-      - ./specs:/app/specs
-      - /app/node_modules
-      - /app/.next
     depends_on:
       - mongodb
       - ollama
@@ -32,7 +26,7 @@ services:
   # MongoDB Database
   mongodb:
     image: mongo:7
-    container_name: export-goods-mongodb
+    container_name: export-goods-mongodb-prod
     ports:
       - "27017:27017"
     environment:
@@ -52,7 +46,7 @@ services:
   # Ollama AI Service
   ollama:
     image: ollama/ollama:latest
-    container_name: export-goods-ollama
+    container_name: export-goods-ollama-prod
     ports:
       - "11434:11434"
     volumes:
@@ -77,7 +71,7 @@ services:
   # Model Downloader (runs once to pull AI models)
   ollama-setup:
     image: ollama/ollama:latest
-    container_name: export-goods-ollama-setup
+    container_name: export-goods-ollama-setup-prod
     depends_on:
       ollama:
         condition: service_healthy
@@ -86,8 +80,8 @@ services:
     entrypoint: /bin/sh
     command: >
       -c "
-      echo 'Pulling deepseek-r1:1.5b model for development...' &&
-      ollama pull deepseek-r1:1.5b &&
+      echo 'Pulling deepseek-r1:14b model for production...' &&
+      ollama pull deepseek-r1:14b &&
       echo 'Model downloaded successfully!'
       "
     environment:

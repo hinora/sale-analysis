@@ -64,8 +64,8 @@
 - [X] T020 [P] [US1] Create CSV streaming parser in src/lib/csv/parser.ts using papaparse with 1000-row chunks
 - [X] T021 [P] [US1] Create CSV validator in src/lib/csv/validator.ts to check required columns and data types
 - [X] T022 [P] [US1] Create deduplicator logic in src/lib/csv/deduplicator.ts using Set for in-file duplicates
-- [X] T023 [P] [US1] Create AI goods classifier in src/lib/ai/classifier.ts to assign categories using Ollama llama3.1 (NOTE: Disabled in import for performance)
-- [X] T024 [P] [US1] Create AI name shortener in src/lib/ai/name-shortener.ts to generate concise goods names using Ollama mistral (NOTE: Disabled in import for performance)
+- [X] T023 [P] [US1] Create AI goods classifier in src/lib/ai/classifier.ts to assign categories using Ollama deepseek-r1 (NOTE: Disabled in import for performance)
+- [X] T024 [P] [US1] Create AI name shortener in src/lib/ai/name-shortener.ts to generate concise goods names using Ollama deepseek-r1 (NOTE: Disabled in import for performance)
 - [X] T025 [US1] Implement POST /api/import/upload endpoint in src/pages/api/import/upload.ts with multipart file handling
 - [X] T026 [US1] Implement GET /api/import/template endpoint in src/pages/api/import/template.ts to serve CSV template
 - [X] T027 [US1] Create import page UI in src/pages/import.tsx with drag-drop file upload
@@ -76,13 +76,14 @@
 - [X] T032 [US1] Copy sale-raw-data-small.csv to public/templates/export-data-template.csv for download
 
 **Technical Decision - Performance Optimization** (2025-11-21):
-AI classification (Ollama llama3.1 + mistral) was disabled in the CSV import endpoint to dramatically improve import speed. The original approach with AI processing was too slow for large files. Current implementation:
+AI classification (Ollama deepseek-r1) was disabled in the CSV import endpoint to dramatically improve import speed. The original approach with AI processing was too slow for large files. Current implementation:
 - Uses fallback classification: All goods assigned to "Other" category
 - Uses simple name truncation: `simpleShortenName()` instead of AI-generated short names  
 - Import speed: Reduced from ~5 minutes to <2 minutes for 10K rows
 - AI tools (classifier.ts, name-shortener.ts) remain available for future batch processing or manual re-classification if needed
 - Trade-off: Fast import with basic classification vs. slow import with intelligent AI categorization
 - Decision rationale: User testing showed import performance was critical blocker for production use
+- **Model Selection** (2025-11-22): Uses deepseek-r1:1.5b for development, deepseek-r1:14b for production (controlled via AI_MODEL env var)
 
 **Checkpoint**: User Story 1 complete - CSV import with fast fallback classification fully functional (AI disabled for performance)
 
@@ -99,8 +100,8 @@ AI classification (Ollama llama3.1 + mistral) was disabled in the CSV import end
 - [X] T032a [P] [US1.5] Create background job script in src/lib/jobs/classify-goods.ts with batch processing logic
 - [X] T032b [P] [US1.5] Implement query to find goods where classifiedBy='fallback' with pagination support
 - [X] T032c [P] [US1.5] Add batch processing loop to classify goods in chunks (e.g., 10 goods per batch to avoid overwhelming Ollama)
-- [X] T032d [P] [US1.5] Integrate aiClassifier.classifyGoods() and aiNameShortener.shortenName() for each goods record
-- [X] T032e [P] [US1.5] Update goods record with new category, shortName, classifiedBy='llama3.1', classifiedAt timestamp
+- [X] T032d [P] [US1.5] Integrate aiClassifier.classifyGoods() and aiNameShortener.shortenName() for each goods record using deepseek-r1
+- [X] T032e [P] [US1.5] Update goods record with new category, shortName, classifiedBy='deepseek-r1', classifiedAt timestamp
 - [X] T032f [US1.5] Add error handling with logging for AI failures (don't crash job, continue with next goods)
 - [X] T032g [US1.5] Create API endpoint POST /api/jobs/classify-goods to trigger job manually (for testing/admin)
 - [X] T032h [US1.5] Add GET /api/jobs/classify-goods endpoint to check job status (running/idle + last result)

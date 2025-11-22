@@ -56,7 +56,7 @@ The application uses Docker Compose to orchestrate three services:
 
 ### 4. Ollama-Setup Service (One-time)
 - **Purpose**: Download AI models on first run
-- **Models**: llama3.1, mistral
+- **Models**: deepseek-r1:1.5b (development), deepseek-r1:14b (production)
 - **Restart**: Never (exits after completion)
 
 ## Quick Start
@@ -267,21 +267,21 @@ docker-compose exec mongodb mongorestore --db=export-goods /tmp/backup/export-go
 docker-compose exec ollama ollama list
 
 # Pull additional model
-docker-compose exec ollama ollama pull llama2
+docker-compose exec ollama ollama pull deepseek-r1:14b
 
 # Remove model
-docker-compose exec ollama ollama rm mistral
+docker-compose exec ollama ollama rm deepseek-r1:1.5b
 
 # Test model
-docker-compose exec ollama ollama run llama3.1 "Hello, how are you?"
+docker-compose exec ollama ollama run deepseek-r1:1.5b "Hello, how are you?"
 ```
 
 ### Model Storage
 
 Models are stored in the `ollama-data` volume:
-- **llama3.1**: ~4.7GB
-- **mistral**: ~4.1GB
-- Total: ~8-9GB
+- **deepseek-r1:1.5b**: ~1GB
+- **deepseek-r1:14b**: ~8GB
+- Total: ~9GB (both models)
 
 ```bash
 # Check volume size
@@ -433,8 +433,8 @@ docker network inspect sale-analysis_export-goods-network
 docker-compose exec ollama ollama list
 
 # Re-download models
-docker-compose exec ollama ollama pull llama3.1
-docker-compose exec ollama ollama pull mistral
+docker-compose exec ollama ollama pull deepseek-r1:1.5b
+docker-compose exec ollama ollama pull deepseek-r1:14b
 
 # Check Ollama logs
 docker-compose logs ollama

@@ -30,7 +30,7 @@ Successfully implemented a comprehensive background job system that asynchronous
 1. Query goods where `classifiedBy='fallback'` with limit (default 1000)
 2. Process in batches (default 10 per batch)
 3. For each goods: classify category + shorten name with AI
-4. Update goods: `category`, `shortName`, `classifiedBy='llama3.1'`, `classifiedAt`
+4. Update goods: `category`, `shortName`, `classifiedBy='deepseek-r1'`, `classifiedAt`
 5. Log progress and errors
 6. Pause 1s between batches
 

@@ -26,9 +26,9 @@ export interface ClassifyGoodsJobOptions {
  * Background job to classify goods with fallback classification
  *
  * Processes goods where classifiedBy='fallback' and updates them with:
- * - AI-generated category (via Ollama llama3.1)
- * - AI-generated short name (via Ollama mistral)
- * - Updated classifiedBy field ('llama3.1')
+ * - AI-generated category (via Ollama DeepSeek-R1)
+ * - AI-generated short name (via Ollama DeepSeek-R1)
+ * - Updated classifiedBy field ('deepseek-r1')
  * - Updated classifiedAt timestamp
  *
  * @param options - Job configuration options
@@ -100,7 +100,7 @@ export async function classifyGoodsJob(
             await Goods.findByIdAndUpdate(goods._id, {
               category: categoryId,
               shortName: shortenResult.shortName,
-              classifiedBy: "llama3.1",
+              classifiedBy: "deepseek-r1",
               classifiedAt: new Date(),
             });
 

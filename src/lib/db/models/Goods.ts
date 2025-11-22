@@ -12,7 +12,7 @@ export interface IGoods extends Document {
   hsCode: string; // Primary HS code (most common)
 
   // AI classification metadata
-  classifiedBy: string; // Model used (e.g., 'llama3.1')
+  classifiedBy: string; // Model used (e.g., 'deepseek-r1')
   classifiedAt: Date;
 
   // Metadata

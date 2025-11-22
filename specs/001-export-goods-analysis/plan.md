@@ -244,7 +244,7 @@ Dockerfile                          # Next.js app container
 All technical unknowns resolved. Key decisions documented:
 - CSV processing: papaparse with streaming
 - Duplicate detection: Two-phase (Set + MongoDB unique index)
-- AI integration: Ollama with llama3.1/mistral models
+- AI integration: Ollama with deepseek-r1 models (1.5b for dev, 14b for prod)
 - Database: MongoDB 7 + Mongoose with strategic indexes
 - Frontend virtualization: react-window for large datasets
 - API validation: Zod for runtime type checking
@@ -287,7 +287,7 @@ The application uses Docker Compose to orchestrate three services:
 **Services**:
 1. **app** - Next.js application (Node.js 18+)
 2. **mongodb** - MongoDB 7+ database with persistent volume
-3. **ollama** - Ollama AI service with llama3.1 and mistral models
+3. **ollama** - Ollama AI service with deepseek-r1 models (1.5b for dev, 14b for prod)
 
 **Quick Start with Docker**:
 ```bash

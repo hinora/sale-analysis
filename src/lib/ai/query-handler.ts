@@ -142,9 +142,11 @@ export class QueryHandler {
   private ollamaClient: OllamaClient;
   private model: string;
 
-  constructor(model = "llama3.1") {
+  constructor(model?: string) {
     this.ollamaClient = new OllamaClient();
-    this.model = model;
+    // Use environment variable or default based on NODE_ENV
+    this.model = model || process.env.AI_MODEL || 
+      (process.env.NODE_ENV === "production" ? "deepseek-r1:14b" : "deepseek-r1:1.5b");
   }
 
   /**

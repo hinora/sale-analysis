@@ -75,8 +75,8 @@ export const AISessionCreateSchema = z.object({
     dateTo: z.string().datetime().optional(),
   }),
   ollamaModel: z
-    .enum(["llama3.1", "llama2", "mistral", "codellama"])
-    .default("llama3.1"),
+    .enum(["deepseek-r1:1.5b", "deepseek-r1:14b", "deepseek-r1:70b"])
+    .default("deepseek-r1:1.5b"),
 });
 
 // AI message schema
