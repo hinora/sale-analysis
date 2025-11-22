@@ -53,7 +53,7 @@ interface CompanyOption {
  * />
  * ```
  */
-export function CompanyAutocomplete({
+export default function CompanyAutocomplete({
   value,
   onChange,
   label = 'Công ty',

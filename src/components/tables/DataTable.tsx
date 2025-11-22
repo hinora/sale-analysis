@@ -79,7 +79,7 @@ export default function DataTable<T extends Record<string, unknown>>({
 
   // Calculate paginated rows
   const paginatedRows = useMemo(() => {
-    if (!pagination) return rows;
+    if (!rows || !pagination) return rows || [];
     const start = page * rowsPerPage;
     return rows.slice(start, start + rowsPerPage);
   }, [rows, page, rowsPerPage, pagination]);

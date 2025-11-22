@@ -166,14 +166,14 @@ AI classification (Ollama llama3.1 + mistral) was disabled in the CSV import end
 
 ### Implementation for User Story 4
 
-- [ ] T050 [P] [US4] Implement GET /api/companies/list endpoint in src/pages/api/companies/list.ts with aggregation pipeline
-- [ ] T051 [P] [US4] Implement GET /api/companies/[id] endpoint in src/pages/api/companies/[id].ts for company detail
-- [ ] T052 [US4] Create company dashboard page UI in src/pages/companies.tsx with filters and aggregated table
-- [ ] T053 [US4] Add aggregation logic to calculate totalImportValue, uniqueGoodsCount, transactionCount per company
-- [ ] T054 [US4] Integrate FilterBar with company-specific filters (goods category, date range)
-- [ ] T055 [US4] Connect companies page to list API with aggregated data display
-- [ ] T056 [US4] Implement company detail modal/page showing all transactions and goods breakdown
-- [ ] T057 [US4] Add sorting by aggregated metrics (import value, transaction count, unique goods count)
+- [X] T050 [P] [US4] Implement GET /api/companies/list endpoint in src/pages/api/companies/list.ts with aggregation pipeline
+- [X] T051 [P] [US4] Implement GET /api/companies/[id] endpoint in src/pages/api/companies/[id].ts for company detail
+- [X] T052 [US4] Create company dashboard page UI in src/pages/companies.tsx with filters and aggregated table
+- [X] T053 [US4] Add aggregation logic to calculate totalImportValue, uniqueGoodsCount, transactionCount per company
+- [X] T054 [US4] Integrate FilterBar with company-specific filters (goods category, date range)
+- [X] T055 [US4] Connect companies page to list API with aggregated data display
+- [X] T056 [US4] Implement company detail modal/page showing all transactions and goods breakdown
+- [X] T057 [US4] Add sorting by aggregated metrics (import value, transaction count, unique goods count)
 
 **Checkpoint**: User Story 4 complete - Company dashboard with aggregations and drill-down functional
 

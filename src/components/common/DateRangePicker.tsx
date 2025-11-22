@@ -54,7 +54,7 @@ interface DateRangePickerProps {
  * />
  * ```
  */
-export function DateRangePicker({
+export default function DateRangePicker({
   dateFrom,
   dateTo,
   onDateFromChange,

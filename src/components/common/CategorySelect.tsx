@@ -110,3 +110,5 @@ export function CategorySelect({
     </FormControl>
   );
 }
+
+export default CategorySelect;
