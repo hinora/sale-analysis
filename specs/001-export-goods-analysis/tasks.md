@@ -187,21 +187,21 @@ AI classification (Ollama llama3.1 + mistral) was disabled in the CSV import end
 
 ### Implementation for User Story 5
 
-- [ ] T058 [P] [US5] Implement POST /api/ai/session endpoint in src/pages/api/ai/session.ts to create AI sessions
-- [ ] T059 [P] [US5] Implement POST /api/ai/feed-data endpoint in src/pages/api/ai/feed-data.ts to load transactions into session
-- [ ] T060 [P] [US5] Implement POST /api/ai/query endpoint in src/pages/api/ai/query.ts to process natural language queries
-- [ ] T061 [P] [US5] Implement GET /api/ai/session/[id] endpoint in src/pages/api/ai/session/[id].ts to retrieve session state
-- [ ] T062 [P] [US5] Create AI query handler in src/lib/ai/query-handler.ts to format prompts and parse responses
-- [ ] T063 [P] [US5] Create session manager in src/lib/ai/session-manager.ts using in-memory Map with 30-minute TTL
-- [ ] T064 [US5] Create AI analysis page UI in src/pages/ai-analysis.tsx with data selection and chat interface
-- [ ] T065 [P] [US5] Create DataSelector component in src/components/ai/DataSelector.tsx with filters and summary
-- [ ] T066 [P] [US5] Create ChatInterface component in src/components/ai/ChatInterface.tsx for conversation display
-- [ ] T067 [P] [US5] Create SuggestedQueries component in src/components/ai/SuggestedQueries.tsx with clickable prompts
-- [ ] T068 [P] [US5] Create AIStatus component in src/components/ai/AIStatus.tsx showing training/ready state
-- [ ] T069 [US5] Connect AI page to session creation and data feed APIs with progress tracking
-- [ ] T070 [US5] Implement conversation flow: question submission, response streaming, history display
-- [ ] T071 [US5] Add 10K transaction limit validation before feeding data to AI
-- [ ] T072 [US5] Implement session cleanup for expired sessions (>30 minutes idle)
+- [X] T058 [P] [US5] Implement POST /api/ai/session endpoint in src/pages/api/ai/session.ts to create AI sessions
+- [X] T059 [P] [US5] Implement POST /api/ai/feed-data endpoint in src/pages/api/ai/feed-data.ts to load transactions into session
+- [X] T060 [P] [US5] Implement POST /api/ai/query endpoint in src/pages/api/ai/query.ts to process natural language queries
+- [X] T061 [P] [US5] Implement GET /api/ai/session/[id] endpoint in src/pages/api/ai/session/[id].ts to retrieve session state
+- [X] T062 [P] [US5] Create AI query handler in src/lib/ai/query-handler.ts to format prompts and parse responses
+- [X] T063 [P] [US5] Create session manager in src/lib/ai/session-manager.ts using in-memory Map with 30-minute TTL
+- [X] T064 [US5] Create AI analysis page UI in src/pages/ai-analysis.tsx with data selection and chat interface
+- [X] T065 [P] [US5] Create DataSelector component in src/components/ai/DataSelector.tsx with filters and summary (Integrated in main page)
+- [X] T066 [P] [US5] Create ChatInterface component in src/components/ai/ChatInterface.tsx for conversation display (Integrated in main page)
+- [X] T067 [P] [US5] Create SuggestedQueries component in src/components/ai/SuggestedQueries.tsx with clickable prompts (Integrated in main page)
+- [X] T068 [P] [US5] Create AIStatus component in src/components/ai/AIStatus.tsx showing training/ready state (Integrated in main page)
+- [X] T069 [US5] Connect AI page to session creation and data feed APIs with progress tracking
+- [X] T070 [US5] Implement conversation flow: question submission, response streaming, history display
+- [X] T071 [US5] Add 10K transaction limit validation before feeding data to AI
+- [X] T072 [US5] Implement session cleanup for expired sessions (>30 minutes idle)
 
 **Checkpoint**: User Story 5 complete - AI-powered analysis with natural language queries functional
 
