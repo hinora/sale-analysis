@@ -75,7 +75,7 @@ export const AISessionCreateSchema = z.object({
     dateTo: z.string().datetime().optional(),
   }),
   ollamaModel: z
-    .enum(["deepseek-r1:1.5b", "deepseek-r1:14b", "deepseek-r1:70b"])
+    .enum(["deepseek-r1:1.5b", "deepseek-r1:8b", "deepseek-r1:70b"])
     .default("deepseek-r1:1.5b"),
 });
 

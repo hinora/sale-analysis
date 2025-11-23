@@ -18,7 +18,7 @@ export interface IAISession extends Document {
   trainingDataCount: number; // Number of transactions fed to AI
 
   // Ollama context
-  ollamaModel: string; // e.g., 'deepseek-r1:1.5b', 'deepseek-r1:14b'
+  ollamaModel: string; // e.g., 'deepseek-r1:1.5b', 'deepseek-r1:8b'
   ollamaContext: string; // Conversation token for maintaining context
 
   // Conversation history

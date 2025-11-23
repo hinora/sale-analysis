@@ -24,7 +24,7 @@ A comprehensive data analysis platform for export/import transaction data with A
 This application uses DeepSeek-R1 models for AI-powered features:
 
 - **Development**: `deepseek-r1:1.5b` (~1GB) - Fast, lightweight for local development
-- **Production**: `deepseek-r1:14b` (~8GB) - More accurate, better reasoning for production use
+- **Production**: `deepseek-r1:8b` (~8GB) - More accurate, better reasoning for production use
 
 ### Model Configuration
 
@@ -34,14 +34,14 @@ The AI model is automatically selected based on the environment:
 # Development (uses deepseek-r1:1.5b)
 NODE_ENV=development
 
-# Production (uses deepseek-r1:14b)
+# Production (uses deepseek-r1:8b)
 NODE_ENV=production
 ```
 
 You can override the model by setting the `AI_MODEL` environment variable:
 
 ```bash
-AI_MODEL=deepseek-r1:14b  # Force 14B model in development
+AI_MODEL=deepseek-r1:8b  # Force 14B model in development
 AI_MODEL=deepseek-r1:1.5b # Force 1.5B model in production (not recommended)
 ```
 
@@ -221,7 +221,7 @@ src/
 // Code automatically selects model based on environment
 const model = process.env.AI_MODEL || 
   (process.env.NODE_ENV === "production" 
-    ? "deepseek-r1:14b"    // Production: More accurate
+    ? "deepseek-r1:8b"    // Production: More accurate
     : "deepseek-r1:1.5b"); // Development: Faster
 ```
 

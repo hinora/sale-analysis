@@ -14,7 +14,7 @@ services:
       - NODE_ENV=production
       - MONGODB_URI=mongodb://mongodb:27017/export-goods
       - OLLAMA_HOST=http://ollama:11434
-      - AI_MODEL=deepseek-r1:14b
+      - AI_MODEL=deepseek-r1:8b
       - NEXT_TELEMETRY_DISABLED=1
     depends_on:
       - mongodb
@@ -85,8 +85,8 @@ services:
     entrypoint: /bin/sh
     command: >
       -c "
-      echo 'Pulling deepseek-r1:14b model for production...' &&
-      ollama pull deepseek-r1:14b &&
+      echo 'Pulling deepseek-r1:8b model for production...' &&
+      ollama pull deepseek-r1:8b &&
       echo 'Model downloaded successfully!'
       "
     environment:

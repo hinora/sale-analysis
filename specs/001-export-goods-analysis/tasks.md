@@ -83,7 +83,7 @@ AI classification (Ollama deepseek-r1) was disabled in the CSV import endpoint t
 - AI tools (classifier.ts, name-shortener.ts) remain available for future batch processing or manual re-classification if needed
 - Trade-off: Fast import with basic classification vs. slow import with intelligent AI categorization
 - Decision rationale: User testing showed import performance was critical blocker for production use
-- **Model Selection** (2025-11-22): Uses deepseek-r1:1.5b for development, deepseek-r1:14b for production (controlled via AI_MODEL env var)
+- **Model Selection** (2025-11-23): Uses deepseek-r1:1.5b for development, deepseek-r1:8b for production (controlled via AI_MODEL env var) - 8b provides good balance of performance and resource usage
 
 **Checkpoint**: User Story 1 complete - CSV import with fast fallback classification fully functional (AI disabled for performance)
 

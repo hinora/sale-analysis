@@ -164,7 +164,7 @@ export class QueryHandler {
       model ||
       process.env.AI_MODEL ||
       (process.env.NODE_ENV === "production"
-        ? "deepseek-r1:14b"
+        ? "deepseek-r1:8b"
         : "deepseek-r1:1.5b");
   }
 
