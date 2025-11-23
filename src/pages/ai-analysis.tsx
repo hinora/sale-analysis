@@ -71,6 +71,9 @@ export default function AIAnalysisPage() {
     company: "",
   });
 
+  // Transaction limit (default 10000, max 10000)
+  const [transactionLimit, setTransactionLimit] = useState(10000);
+
   // Conversation state
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState("");
@@ -146,6 +149,7 @@ export default function AIAnalysisPage() {
             ...(filters.dateTo && { dateTo: filters.dateTo }),
             ...(filters.company && { company: filters.company }),
           },
+          limit: transactionLimit,
         }),
       });
 
@@ -355,6 +359,20 @@ export default function AIAnalysisPage() {
                 placeholder="Nhập tên công ty"
               />
 
+              <TextField
+                label="Giới hạn giao dịch"
+                type="number"
+                value={transactionLimit}
+                onChange={(e) => {
+                  const value = Math.min(10000, Math.max(1, parseInt(e.target.value) || 1000));
+                  setTransactionLimit(value);
+                }}
+                size="small"
+                fullWidth
+                inputProps={{ min: 1, max: 10000, step: 100 }}
+                helperText="Tối đa 10,000 giao dịch (nhiều hơn có thể gây lỗi vượt quá ngữ cảnh)"
+              />
+
               <Button
                 variant="contained"
                 onClick={feedData}
@@ -414,10 +432,9 @@ export default function AIAnalysisPage() {
             )}
           </Paper>
 
-          {transactionCount > 10000 && (
+          {transactionCount >= transactionLimit && (
             <Alert severity="warning" sx={{ mt: 2 }}>
-              Giới hạn 10,000 giao dịch. Vui lòng thu hẹp bộ lọc để có kết quả
-              chính xác hơn.
+              Đã đạt giới hạn {transactionLimit.toLocaleString()} giao dịch. Vui lòng thu hẹp bộ lọc hoặc tăng giới hạn để có kết quả chính xác hơn.
             </Alert>
           )}
         </Grid>

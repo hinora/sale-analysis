@@ -189,7 +189,7 @@ AI classification (Ollama deepseek-r1) was disabled in the CSV import endpoint t
 ### Implementation for User Story 5
 
 - [X] T058 [P] [US5] Implement POST /api/ai/session endpoint in src/pages/api/ai/session.ts to create AI sessions
-- [X] T059 [P] [US5] Implement POST /api/ai/feed-data endpoint in src/pages/api/ai/feed-data.ts to load transactions into session
+- [X] T059 [P] [US5] Implement POST /api/ai/feed-data endpoint in src/pages/api/ai/feed-data.ts to load transactions into session with configurable limit (default 10000, max 10000)
 - [X] T060 [P] [US5] Implement POST /api/ai/query endpoint in src/pages/api/ai/query.ts to process natural language queries
 - [X] T061 [P] [US5] Implement GET /api/ai/session/[id] endpoint in src/pages/api/ai/session/[id].ts to retrieve session state
 - [X] T062 [P] [US5] Create AI query handler in src/lib/ai/query-handler.ts to format prompts and parse responses

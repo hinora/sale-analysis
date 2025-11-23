@@ -38,7 +38,7 @@ export default async function handler(
   }
 
   try {
-    const { sessionId, filters } = req.body;
+    const { sessionId, filters, limit } = req.body;
 
     if (!sessionId) {
       return res.status(400).json({
@@ -86,6 +86,12 @@ export default async function handler(
       }
     }
 
+    // Use limit from request or default to MAX_TRANSACTIONS, but never exceed MAX_TRANSACTIONS
+    const effectiveLimit = Math.min(
+      Math.max(1, parseInt(limit) || MAX_TRANSACTIONS),
+      MAX_TRANSACTIONS
+    );
+
     // Fetch transactions with limit
     const transactions = await Transaction.find(query)
       .populate("company", "name address")
@@ -97,7 +103,7 @@ export default async function handler(
           select: "name",
         },
       })
-      .limit(MAX_TRANSACTIONS)
+      .limit(effectiveLimit)
       .sort({ date: -1 })
       .lean();
 
