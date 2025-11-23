@@ -1,5 +1,5 @@
-import React from 'react';
-import { Box, TextField } from '@mui/material';
+import React from "react";
+import { Box, TextField } from "@mui/material";
 
 /**
  * Props for DateRangePicker component
@@ -37,15 +37,15 @@ interface DateRangePickerProps {
 
 /**
  * DateRangePicker Component
- * 
+ *
  * Provides two date pickers for selecting a date range.
  * Uses native HTML5 date inputs with MUI TextField styling.
- * 
+ *
  * @example
  * ```tsx
  * const [dateFrom, setDateFrom] = useState<Date | null>(null);
  * const [dateTo, setDateTo] = useState<Date | null>(null);
- * 
+ *
  * <DateRangePicker
  *   dateFrom={dateFrom}
  *   dateTo={dateTo}
@@ -59,13 +59,13 @@ export default function DateRangePicker({
   dateTo,
   onDateFromChange,
   onDateToChange,
-  fromLabel = 'Từ ngày',
-  toLabel = 'Đến ngày',
+  fromLabel = "Từ ngày",
+  toLabel = "Đến ngày",
   disabled = false,
 }: DateRangePickerProps) {
   const formatDateForInput = (date: Date | null) => {
-    if (!date) return '';
-    return date.toISOString().split('T')[0];
+    if (!date) return "";
+    return date.toISOString().split("T")[0];
   };
 
   const parseDateFromInput = (value: string) => {
@@ -74,7 +74,7 @@ export default function DateRangePicker({
   };
 
   return (
-    <Box sx={{ display: 'flex', gap: 2 }}>
+    <Box sx={{ display: "flex", gap: 2 }}>
       <TextField
         type="date"
         label={fromLabel}

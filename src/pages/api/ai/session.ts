@@ -39,7 +39,8 @@ export default async function handler(
     console.error("[AI Session] Error creating session:", error);
     return res.status(500).json({
       success: false,
-      message: error instanceof Error ? error.message : "Failed to create session",
+      message:
+        error instanceof Error ? error.message : "Failed to create session",
     });
   }
 }

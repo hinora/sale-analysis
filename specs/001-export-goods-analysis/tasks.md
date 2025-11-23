@@ -212,12 +212,12 @@ AI classification (Ollama deepseek-r1) was disabled in the CSV import endpoint t
 
 **Purpose**: Improvements affecting multiple user stories and final validation
 
-- [ ] T073 [P] Create dashboard/home page in src/pages/index.tsx with overview statistics and quick links
-- [ ] T074 [P] Add error boundaries for all pages to handle API failures gracefully
+- [X] T073 [P] Create dashboard/home page in src/pages/index.tsx with overview statistics and quick links
+- [X] T074 [P] Add error boundaries for all pages to handle API failures gracefully
 - [ ] T075 [P] Implement loading states for all async operations (spinners, skeletons)
 - [ ] T076 [P] Add Vietnamese translations file in public/locales/vi.json
-- [ ] T077 [P] Update README.md with Docker quickstart instructions
-- [ ] T078 [P] Add API health check endpoint in src/pages/api/health.ts
+- [X] T077 [P] Update README.md with Docker quickstart instructions
+- [X] T078 [P] Add API health check endpoint in src/pages/api/health.ts
 - [ ] T079 Code review and refactoring for consistency across all components
 - [ ] T080 Performance optimization: verify indexes working, check N+1 queries, optimize aggregations
 - [ ] T081 Security review: validate all user inputs, check for injection vulnerabilities

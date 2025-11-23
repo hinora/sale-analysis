@@ -4,11 +4,13 @@ import type { AppProps } from "next/app";
 import { ThemeProvider, CssBaseline, Box } from "@mui/material";
 import { theme } from "@/styles/theme";
 import Navigation from "@/components/layout/Navigation";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
 import { useBackgroundJobTrigger } from "@/hooks/useBackgroundJobTrigger";
 
 /**
  * Root application component
  * Wraps all pages with:
+ * - ErrorBoundary for error handling
  * - MUI ThemeProvider (with Vietnamese locale)
  * - CssBaseline for consistent styling
  * - Navigation component
@@ -19,16 +21,18 @@ export default function App({ Component, pageProps }: AppProps) {
   useBackgroundJobTrigger(5);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box
-        sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
-      >
-        <Navigation />
-        <Box component="main" sx={{ flexGrow: 1, py: 3 }}>
-          <Component {...pageProps} />
+    <ErrorBoundary>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box
+          sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
+        >
+          <Navigation />
+          <Box component="main" sx={{ flexGrow: 1, py: 3 }}>
+            <Component {...pageProps} />
+          </Box>
         </Box>
-      </Box>
-    </ThemeProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }

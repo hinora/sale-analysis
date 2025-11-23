@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Autocomplete, TextField, CircularProgress } from '@mui/material';
+import React, { useState, useEffect } from "react";
+import { Autocomplete, TextField, CircularProgress } from "@mui/material";
 
 /**
  * Props for CompanyAutocomplete component
@@ -38,15 +38,15 @@ interface CompanyOption {
 
 /**
  * CompanyAutocomplete Component
- * 
+ *
  * Provides autocomplete search for company names.
  * Fetches company list from API and filters based on user input.
  * Supports partial matching and displays company name + address.
- * 
+ *
  * @example
  * ```tsx
  * const [company, setCompany] = useState('');
- * 
+ *
  * <CompanyAutocomplete
  *   value={company}
  *   onChange={setCompany}
@@ -56,8 +56,8 @@ interface CompanyOption {
 export default function CompanyAutocomplete({
   value,
   onChange,
-  label = 'Công ty',
-  placeholder = 'Tìm kiếm công ty...',
+  label = "Công ty",
+  placeholder = "Tìm kiếm công ty...",
   disabled = false,
 }: CompanyAutocompleteProps) {
   const [options, setOptions] = useState<CompanyOption[]>([]);
@@ -75,13 +75,15 @@ export default function CompanyAutocomplete({
       setLoading(true);
       try {
         // Fetch distinct companies from transactions
-        const response = await fetch(`/api/companies/search?q=${encodeURIComponent(inputValue)}`);
+        const response = await fetch(
+          `/api/companies/search?q=${encodeURIComponent(inputValue)}`,
+        );
         if (response.ok) {
           const data = await response.json();
           setOptions(data.companies || []);
         }
       } catch (error) {
-        console.error('[CompanyAutocomplete] Error fetching companies:', error);
+        console.error("[CompanyAutocomplete] Error fetching companies:", error);
       } finally {
         setLoading(false);
       }
@@ -96,24 +98,24 @@ export default function CompanyAutocomplete({
       freeSolo
       value={value}
       onChange={(_, newValue) => {
-        if (typeof newValue === 'string') {
+        if (typeof newValue === "string") {
           onChange(newValue);
         } else if (newValue) {
           onChange(newValue.name);
         } else {
-          onChange('');
+          onChange("");
         }
       }}
       inputValue={inputValue}
       onInputChange={(_, newInputValue) => {
         setInputValue(newInputValue);
         if (!newInputValue) {
-          onChange('');
+          onChange("");
         }
       }}
       options={options}
       getOptionLabel={(option) => {
-        if (typeof option === 'string') return option;
+        if (typeof option === "string") return option;
         return option.name;
       }}
       loading={loading}
@@ -128,7 +130,9 @@ export default function CompanyAutocomplete({
             ...params.InputProps,
             endAdornment: (
               <>
-                {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                {loading ? (
+                  <CircularProgress color="inherit" size={20} />
+                ) : null}
                 {params.InputProps.endAdornment}
               </>
             ),

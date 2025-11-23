@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   FormControl,
   InputLabel,
@@ -6,7 +6,7 @@ import {
   MenuItem,
   CircularProgress,
   SelectChangeEvent,
-} from '@mui/material';
+} from "@mui/material";
 
 /**
  * Props for CategorySelect component
@@ -36,15 +36,15 @@ interface CategorySelectProps {
 
 /**
  * CategorySelect Component
- * 
+ *
  * Provides dropdown selection for goods categories.
  * Fetches available categories from API on mount.
  * Includes an optional "All categories" option.
- * 
+ *
  * @example
  * ```tsx
  * const [category, setCategory] = useState('');
- * 
+ *
  * <CategorySelect
  *   value={category}
  *   onChange={setCategory}
@@ -54,7 +54,7 @@ interface CategorySelectProps {
 export function CategorySelect({
   value,
   onChange,
-  label = 'Danh mục',
+  label = "Danh mục",
   disabled = false,
   showAllOption = true,
 }: CategorySelectProps) {
@@ -66,13 +66,13 @@ export function CategorySelect({
     const fetchCategories = async () => {
       setLoading(true);
       try {
-        const response = await fetch('/api/categories/list');
+        const response = await fetch("/api/categories/list");
         if (response.ok) {
           const data = await response.json();
           setCategories(data.categories || []);
         }
       } catch (error) {
-        console.error('[CategorySelect] Error fetching categories:', error);
+        console.error("[CategorySelect] Error fetching categories:", error);
       } finally {
         setLoading(false);
       }

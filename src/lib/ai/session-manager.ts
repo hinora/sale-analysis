@@ -1,6 +1,6 @@
 /**
  * AI Session Manager
- * 
+ *
  * Manages in-memory AI analysis sessions with:
  * - Transaction data storage per session
  * - 30-minute TTL for automatic cleanup

@@ -74,7 +74,8 @@ export default async function handler(
     console.error("[AI Session Detail] Error:", error);
     return res.status(500).json({
       success: false,
-      message: error instanceof Error ? error.message : "Failed to retrieve session",
+      message:
+        error instanceof Error ? error.message : "Failed to retrieve session",
     });
   }
 }

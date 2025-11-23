@@ -37,7 +37,9 @@ interface CompanyDetailResponse {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<CompanyDetailResponse | { success: boolean; message: string }>,
+  res: NextApiResponse<
+    CompanyDetailResponse | { success: boolean; message: string }
+  >,
 ) {
   if (req.method !== "GET") {
     return res.status(405).json({
@@ -112,10 +114,21 @@ export default async function handler(
     const convertDecimal = (value: unknown): number => {
       if (!value) return 0;
       if (typeof value === "number") return value;
-      if (typeof value === "object" && value !== null && "$numberDecimal" in value) {
-        return Number.parseFloat((value as { $numberDecimal: string }).$numberDecimal);
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        "$numberDecimal" in value
+      ) {
+        return Number.parseFloat(
+          (value as { $numberDecimal: string }).$numberDecimal,
+        );
       }
-      if (typeof value === "object" && value !== null && "toString" in value && typeof value.toString === "function") {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        "toString" in value &&
+        typeof value.toString === "function"
+      ) {
         return Number.parseFloat(value.toString());
       }
       return 0;
@@ -123,7 +136,12 @@ export default async function handler(
 
     // Format transactions
     const formattedTransactions = transactions.map((tx) => {
-      const goodsDoc = tx.goods as { rawName?: string; shortName?: string; category?: { name?: string }; hsCode?: string } | null;
+      const goodsDoc = tx.goods as {
+        rawName?: string;
+        shortName?: string;
+        category?: { name?: string };
+        hsCode?: string;
+      } | null;
       const categoryDoc = goodsDoc?.category as { name?: string } | null;
 
       return {
@@ -148,7 +166,8 @@ export default async function handler(
         name: company.name,
         address: company.address,
         totalTransactions: aggregatedStats.totalTransactions,
-        totalImportValue: Math.round(aggregatedStats.totalImportValue * 100) / 100,
+        totalImportValue:
+          Math.round(aggregatedStats.totalImportValue * 100) / 100,
         totalQuantity: Math.round(aggregatedStats.totalQuantity * 100) / 100,
         uniqueGoodsCount: aggregatedStats.uniqueGoods.length,
         firstTransactionDate: aggregatedStats.firstTransaction.toISOString(),
@@ -160,7 +179,10 @@ export default async function handler(
     console.error("[Company Detail] Error:", error);
     return res.status(500).json({
       success: false,
-      message: error instanceof Error ? error.message : "Failed to fetch company detail",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch company detail",
     });
   }
 }

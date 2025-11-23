@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/router';
+import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/router";
 import {
   Container,
   Paper,
@@ -16,19 +16,19 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Search as SearchIcon,
   Clear as ClearIcon,
   Visibility as VisibilityIcon,
   Close as CloseIcon,
-} from '@mui/icons-material';
-import PageHeader from '@/components/layout/PageHeader';
-import DataTable from '@/components/tables/DataTable';
-import DateRangePicker from '@/components/common/DateRangePicker';
-import CompanyAutocomplete from '@/components/common/CompanyAutocomplete';
-import CategorySelect from '@/components/common/CategorySelect';
-import { formatVND, formatUSD, formatDate } from '@/lib/utils/formatting';
+} from "@mui/icons-material";
+import PageHeader from "@/components/layout/PageHeader";
+import DataTable from "@/components/tables/DataTable";
+import DateRangePicker from "@/components/common/DateRangePicker";
+import CompanyAutocomplete from "@/components/common/CompanyAutocomplete";
+import CategorySelect from "@/components/common/CategorySelect";
+import { formatVND, formatUSD, formatDate } from "@/lib/utils/formatting";
 
 /**
  * Goods data with aggregated metrics
@@ -98,7 +98,7 @@ interface FilterState {
 
 /**
  * Goods Catalog Page
- * 
+ *
  * Displays a product-centric view with aggregated export statistics.
  * Supports filtering by company, date range, and category.
  * Enables sorting by aggregated metrics and drill-down to transaction details.
@@ -108,19 +108,27 @@ export default function GoodsPage() {
 
   // Parse URL query parameters for initial state
   const getInitialFilters = (): FilterState => ({
-    company: (router.query.company as string) || '',
-    dateFrom: router.query.dateFrom ? new Date(router.query.dateFrom as string) : null,
-    dateTo: router.query.dateTo ? new Date(router.query.dateTo as string) : null,
-    category: (router.query.category as string) || '',
-    search: (router.query.search as string) || '',
+    company: (router.query.company as string) || "",
+    dateFrom: router.query.dateFrom
+      ? new Date(router.query.dateFrom as string)
+      : null,
+    dateTo: router.query.dateTo
+      ? new Date(router.query.dateTo as string)
+      : null,
+    category: (router.query.category as string) || "",
+    search: (router.query.search as string) || "",
   });
 
   const [filters, setFilters] = useState<FilterState>(getInitialFilters());
   const [page, setPage] = useState(parseInt(router.query.page as string) || 1);
-  const [pageSize, setPageSize] = useState(parseInt(router.query.pageSize as string) || 50);
-  const [sortBy, setSortBy] = useState((router.query.sortBy as string) || 'totalValueExported');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(
-    (router.query.sortOrder as 'asc' | 'desc') || 'desc'
+  const [pageSize, setPageSize] = useState(
+    parseInt(router.query.pageSize as string) || 50,
+  );
+  const [sortBy, setSortBy] = useState(
+    (router.query.sortBy as string) || "totalValueExported",
+  );
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">(
+    (router.query.sortOrder as "asc" | "desc") || "desc",
   );
 
   const [goods, setGoods] = useState<GoodsItem[]>([]);
@@ -138,14 +146,16 @@ export default function GoodsPage() {
     const query: Record<string, string> = {};
 
     if (filters.company) query.company = filters.company;
-    if (filters.dateFrom) query.dateFrom = filters.dateFrom.toISOString().split('T')[0];
-    if (filters.dateTo) query.dateTo = filters.dateTo.toISOString().split('T')[0];
+    if (filters.dateFrom)
+      query.dateFrom = filters.dateFrom.toISOString().split("T")[0];
+    if (filters.dateTo)
+      query.dateTo = filters.dateTo.toISOString().split("T")[0];
     if (filters.category) query.category = filters.category;
     if (filters.search) query.search = filters.search;
     if (page > 1) query.page = page.toString();
     if (pageSize !== 50) query.pageSize = pageSize.toString();
-    if (sortBy !== 'totalValueExported') query.sortBy = sortBy;
-    if (sortOrder !== 'desc') query.sortOrder = sortOrder;
+    if (sortBy !== "totalValueExported") query.sortBy = sortBy;
+    if (sortOrder !== "desc") query.sortOrder = sortOrder;
 
     router.replace(
       {
@@ -153,7 +163,7 @@ export default function GoodsPage() {
         query,
       },
       undefined,
-      { shallow: true }
+      { shallow: true },
     );
   }, [filters, page, pageSize, sortBy, sortOrder, router]);
 
@@ -170,24 +180,26 @@ export default function GoodsPage() {
         sortOrder,
       });
 
-      if (filters.company) queryParams.append('company', filters.company);
-      if (filters.dateFrom) queryParams.append('dateFrom', filters.dateFrom.toISOString());
-      if (filters.dateTo) queryParams.append('dateTo', filters.dateTo.toISOString());
-      if (filters.category) queryParams.append('category', filters.category);
-      if (filters.search) queryParams.append('search', filters.search);
+      if (filters.company) queryParams.append("company", filters.company);
+      if (filters.dateFrom)
+        queryParams.append("dateFrom", filters.dateFrom.toISOString());
+      if (filters.dateTo)
+        queryParams.append("dateTo", filters.dateTo.toISOString());
+      if (filters.category) queryParams.append("category", filters.category);
+      if (filters.search) queryParams.append("search", filters.search);
 
       const response = await fetch(`/api/goods/list?${queryParams}`);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch goods');
+        throw new Error("Failed to fetch goods");
       }
 
       const data = await response.json();
       setGoods(data.goods);
       setTotal(data.total);
     } catch (err) {
-      console.error('[GoodsPage] Error fetching goods:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error("[GoodsPage] Error fetching goods:", err);
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -199,14 +211,14 @@ export default function GoodsPage() {
     try {
       const response = await fetch(`/api/goods/${goodsId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch goods detail');
+        throw new Error("Failed to fetch goods detail");
       }
       const data = await response.json();
       setSelectedGoods(data);
       setDetailOpen(true);
     } catch (err) {
-      console.error('[GoodsPage] Error fetching goods detail:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load detail');
+      console.error("[GoodsPage] Error fetching goods detail:", err);
+      setError(err instanceof Error ? err.message : "Failed to load detail");
     } finally {
       setDetailLoading(false);
     }
@@ -218,7 +230,10 @@ export default function GoodsPage() {
   }, [fetchGoods]);
 
   // Handle filter changes
-  const handleFilterChange = (key: keyof FilterState, value: string | Date | null) => {
+  const handleFilterChange = (
+    key: keyof FilterState,
+    value: string | Date | null,
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setPage(1); // Reset to first page on filter change
   };
@@ -226,11 +241,11 @@ export default function GoodsPage() {
   // Handle clear filters
   const handleClearFilters = () => {
     setFilters({
-      company: '',
+      company: "",
       dateFrom: null,
       dateTo: null,
-      category: '',
-      search: '',
+      category: "",
+      search: "",
     });
     setPage(1);
   };
@@ -240,13 +255,15 @@ export default function GoodsPage() {
     setPage(newPage + 1); // MUI TablePagination is 0-indexed
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setPageSize(parseInt(event.target.value, 10));
     setPage(1);
   };
 
   // Handle sorting
-  const handleSort = (field: string, direction: 'asc' | 'desc') => {
+  const handleSort = (field: string, direction: "asc" | "desc") => {
     setSortBy(field);
     setSortOrder(direction);
   };
@@ -264,44 +281,49 @@ export default function GoodsPage() {
 
   // Table columns
   const columns = [
-    { id: 'shortName', label: 'Tên hàng hóa', minWidth: 250, sortable: true },
-    { id: 'category', label: 'Danh mục', minWidth: 150, sortable: true },
-    { id: 'hsCode', label: 'Mã HS', minWidth: 100, sortable: true },
+    { id: "shortName", label: "Tên hàng hóa", minWidth: 250, sortable: true },
+    { id: "category", label: "Danh mục", minWidth: 150, sortable: true },
+    { id: "hsCode", label: "Mã HS", minWidth: 100, sortable: true },
     {
-      id: 'transactionCount',
-      label: 'Số giao dịch',
+      id: "transactionCount",
+      label: "Số giao dịch",
       minWidth: 120,
       sortable: true,
-      align: 'right' as const,
+      align: "right" as const,
     },
     {
-      id: 'totalQuantityExported',
-      label: 'Tổng số lượng',
+      id: "totalQuantityExported",
+      label: "Tổng số lượng",
       minWidth: 130,
       sortable: true,
-      align: 'right' as const,
+      align: "right" as const,
     },
     {
-      id: 'totalValueExported',
-      label: 'Tổng trị giá (USD)',
+      id: "totalValueExported",
+      label: "Tổng trị giá (USD)",
       minWidth: 150,
       sortable: true,
-      align: 'right' as const,
+      align: "right" as const,
     },
     {
-      id: 'averagePrice',
-      label: 'Giá trung bình',
+      id: "averagePrice",
+      label: "Giá trung bình",
       minWidth: 130,
       sortable: true,
-      align: 'right' as const,
+      align: "right" as const,
     },
-    { id: 'lastExportDate', label: 'Xuất gần nhất', minWidth: 130, sortable: true },
     {
-      id: 'actions',
-      label: 'Thao tác',
+      id: "lastExportDate",
+      label: "Xuất gần nhất",
+      minWidth: 130,
+      sortable: true,
+    },
+    {
+      id: "actions",
+      label: "Thao tác",
       minWidth: 100,
       sortable: false,
-      align: 'center' as const,
+      align: "center" as const,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       format: (_value: any, row: any) => {
         const original = row.__original as GoodsItem;
@@ -326,14 +348,19 @@ export default function GoodsPage() {
       shortName: item.shortName,
       category: item.category,
       hsCode: item.hsCode,
-      transactionCount: item.transactionCount.toLocaleString('vi-VN'),
-      totalQuantityExported: item.totalQuantityExported.toLocaleString('vi-VN', {
-        maximumFractionDigits: 2,
-      }),
+      transactionCount: item.transactionCount.toLocaleString("vi-VN"),
+      totalQuantityExported: item.totalQuantityExported.toLocaleString(
+        "vi-VN",
+        {
+          maximumFractionDigits: 2,
+        },
+      ),
       totalValueExported: formatUSD(item.totalValueExported),
       averagePrice: formatUSD(item.averagePrice),
-      lastExportDate: item.lastExportDate ? formatDate(new Date(item.lastExportDate)) : '-',
-      actions: '', // Empty string, will be rendered by format function
+      lastExportDate: item.lastExportDate
+        ? formatDate(new Date(item.lastExportDate))
+        : "-",
+      actions: "", // Empty string, will be rendered by format function
     };
     // Add original item data for format function access
     return Object.assign(formatted, { __original: item });
@@ -343,7 +370,7 @@ export default function GoodsPage() {
     <Container maxWidth="xl">
       <PageHeader
         title="Danh mục hàng hóa"
-        subtitle={`Tổng số: ${total.toLocaleString('vi-VN')} mặt hàng`}
+        subtitle={`Tổng số: ${total.toLocaleString("vi-VN")} mặt hàng`}
       />
 
       {/* Filters */}
@@ -359,27 +386,27 @@ export default function GoodsPage() {
               label="Tìm kiếm hàng hóa"
               placeholder="Nhập tên hàng hóa..."
               value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
+              onChange={(e) => handleFilterChange("search", e.target.value)}
             />
           </Grid>
           <Grid item xs={12} md={4}>
             <CategorySelect
               value={filters.category}
-              onChange={(value) => handleFilterChange('category', value)}
+              onChange={(value) => handleFilterChange("category", value)}
             />
           </Grid>
           <Grid item xs={12} md={4}>
             <CompanyAutocomplete
               value={filters.company}
-              onChange={(value) => handleFilterChange('company', value)}
+              onChange={(value) => handleFilterChange("company", value)}
             />
           </Grid>
           <Grid item xs={12} md={8}>
             <DateRangePicker
               dateFrom={filters.dateFrom}
               dateTo={filters.dateTo}
-              onDateFromChange={(date) => handleFilterChange('dateFrom', date)}
-              onDateToChange={(date) => handleFilterChange('dateTo', date)}
+              onDateFromChange={(date) => handleFilterChange("dateFrom", date)}
+              onDateToChange={(date) => handleFilterChange("dateTo", date)}
               fromLabel="Từ ngày xuất"
               toLabel="Đến ngày xuất"
             />
@@ -387,14 +414,18 @@ export default function GoodsPage() {
           <Grid item xs={12} md={4}>
             <Box
               sx={{
-                display: 'flex',
+                display: "flex",
                 gap: 2,
-                justifyContent: 'flex-end',
-                height: '100%',
-                alignItems: 'center',
+                justifyContent: "flex-end",
+                height: "100%",
+                alignItems: "center",
               }}
             >
-              <Button variant="outlined" startIcon={<ClearIcon />} onClick={handleClearFilters}>
+              <Button
+                variant="outlined"
+                startIcon={<ClearIcon />}
+                onClick={handleClearFilters}
+              >
                 Xóa bộ lọc
               </Button>
               <Button
@@ -419,7 +450,7 @@ export default function GoodsPage() {
       {/* Data Table */}
       <Paper>
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
             <CircularProgress />
           </Box>
         ) : (
@@ -450,12 +481,25 @@ export default function GoodsPage() {
       </Paper>
 
       {/* Goods Detail Modal */}
-      <Dialog open={detailOpen} onClose={handleCloseDetail} maxWidth="lg" fullWidth>
+      <Dialog
+        open={detailOpen}
+        onClose={handleCloseDetail}
+        maxWidth="lg"
+        fullWidth
+      >
         {selectedGoods && (
           <>
             <DialogTitle>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6">{selectedGoods.goods.shortName}</Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Typography variant="h6">
+                  {selectedGoods.goods.shortName}
+                </Typography>
                 <IconButton onClick={handleCloseDetail} size="small">
                   <CloseIcon />
                 </IconButton>
@@ -482,16 +526,21 @@ export default function GoodsPage() {
                   <Typography variant="body2" color="text.secondary">
                     Mã HS
                   </Typography>
-                  <Typography variant="body1">{selectedGoods.goods.hsCode}</Typography>
+                  <Typography variant="body1">
+                    {selectedGoods.goods.hsCode}
+                  </Typography>
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Typography variant="body2" color="text.secondary">
                     Tổng số lượng xuất
                   </Typography>
                   <Typography variant="h6" sx={{ mb: 2 }}>
-                    {selectedGoods.goods.totalQuantityExported.toLocaleString('vi-VN', {
-                      maximumFractionDigits: 2,
-                    })}
+                    {selectedGoods.goods.totalQuantityExported.toLocaleString(
+                      "vi-VN",
+                      {
+                        maximumFractionDigits: 2,
+                      },
+                    )}
                   </Typography>
 
                   <Typography variant="body2" color="text.secondary">
@@ -505,7 +554,9 @@ export default function GoodsPage() {
                     Số giao dịch
                   </Typography>
                   <Typography variant="h6">
-                    {selectedGoods.goods.transactionCount.toLocaleString('vi-VN')}
+                    {selectedGoods.goods.transactionCount.toLocaleString(
+                      "vi-VN",
+                    )}
                   </Typography>
                 </Grid>
               </Grid>
@@ -516,18 +567,37 @@ export default function GoodsPage() {
               </Typography>
               <DataTable
                 columns={[
-                  { id: 'declarationNumber', label: 'Số tờ khai', minWidth: 150 },
-                  { id: 'date', label: 'Ngày', minWidth: 120 },
-                  { id: 'company', label: 'Công ty', minWidth: 200 },
-                  { id: 'quantity', label: 'Số lượng', minWidth: 100, align: 'right' as const },
-                  { id: 'unitPrice', label: 'Đơn giá', minWidth: 120, align: 'right' as const },
-                  { id: 'totalValue', label: 'Trị giá', minWidth: 120, align: 'right' as const },
+                  {
+                    id: "declarationNumber",
+                    label: "Số tờ khai",
+                    minWidth: 150,
+                  },
+                  { id: "date", label: "Ngày", minWidth: 120 },
+                  { id: "company", label: "Công ty", minWidth: 200 },
+                  {
+                    id: "quantity",
+                    label: "Số lượng",
+                    minWidth: 100,
+                    align: "right" as const,
+                  },
+                  {
+                    id: "unitPrice",
+                    label: "Đơn giá",
+                    minWidth: 120,
+                    align: "right" as const,
+                  },
+                  {
+                    id: "totalValue",
+                    label: "Trị giá",
+                    minWidth: 120,
+                    align: "right" as const,
+                  },
                 ]}
                 rows={selectedGoods.transactions.map((tx) => ({
                   declarationNumber: tx.declarationNumber,
                   date: formatDate(new Date(tx.date)),
                   company: tx.company.name,
-                  quantity: tx.quantity.toLocaleString('vi-VN'),
+                  quantity: tx.quantity.toLocaleString("vi-VN"),
                   unitPrice: formatUSD(tx.unitPrice),
                   totalValue: formatUSD(tx.totalValue),
                 }))}

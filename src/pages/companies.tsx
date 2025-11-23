@@ -88,7 +88,9 @@ export default function CompaniesPage() {
 
   // Detail modal
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [detailTransactions, setDetailTransactions] = useState<Transaction[]>([]);
+  const [detailTransactions, setDetailTransactions] = useState<Transaction[]>(
+    [],
+  );
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -148,7 +150,9 @@ export default function CompaniesPage() {
       setDetailOpen(true);
     } catch (err) {
       console.error("Failed to fetch company detail:", err);
-      alert(err instanceof Error ? err.message : "Failed to fetch company detail");
+      alert(
+        err instanceof Error ? err.message : "Failed to fetch company detail",
+      );
     } finally {
       setDetailLoading(false);
     }
@@ -172,7 +176,9 @@ export default function CompaniesPage() {
   /**
    * Handle page size change
    */
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setPageSize(parseInt(event.target.value, 10));
     setPage(1);
   };
@@ -295,93 +301,98 @@ export default function CompaniesPage() {
         subtitle={`${total} công ty`}
       />
 
-        {/* Filters */}
-        <Box sx={{ mb: 3, display: "flex", gap: 2, flexWrap: "wrap" }}>
-          <TextField
-            label="Tìm kiếm công ty"
-            value={filters.search}
-            onChange={(e) => handleFilterChange("search", e.target.value)}
-            sx={{ minWidth: 250 }}
-            size="small"
-          />
+      {/* Filters */}
+      <Box sx={{ mb: 3, display: "flex", gap: 2, flexWrap: "wrap" }}>
+        <TextField
+          label="Tìm kiếm công ty"
+          value={filters.search}
+          onChange={(e) => handleFilterChange("search", e.target.value)}
+          sx={{ minWidth: 250 }}
+          size="small"
+        />
 
-          <CategorySelect
-            value={filters.category}
-            onChange={(value) => handleFilterChange("category", value)}
-            label="Danh mục hàng hóa"
-          />
+        <CategorySelect
+          value={filters.category}
+          onChange={(value) => handleFilterChange("category", value)}
+          label="Danh mục hàng hóa"
+        />
 
-          <TextField
-            label="Từ ngày"
-            type="date"
-            value={filters.dateFrom}
-            onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            sx={{ minWidth: 180 }}
-            size="small"
-          />
+        <TextField
+          label="Từ ngày"
+          type="date"
+          value={filters.dateFrom}
+          onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          sx={{ minWidth: 180 }}
+          size="small"
+        />
 
-          <TextField
-            label="Đến ngày"
-            type="date"
-            value={filters.dateTo}
-            onChange={(e) => handleFilterChange("dateTo", e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            sx={{ minWidth: 180 }}
-            size="small"
-          />
+        <TextField
+          label="Đến ngày"
+          type="date"
+          value={filters.dateTo}
+          onChange={(e) => handleFilterChange("dateTo", e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          sx={{ minWidth: 180 }}
+          size="small"
+        />
 
-          <TextField
-            select
-            label="Sắp xếp theo"
-            value={filters.sortBy}
-            onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-            sx={{ minWidth: 200 }}
-            size="small"
-          >
-            <MenuItem value="totalImportValue">Tổng trị giá</MenuItem>
-            <MenuItem value="totalQuantity">Tổng số lượng</MenuItem>
-            <MenuItem value="totalTransactions">Số giao dịch</MenuItem>
-            <MenuItem value="uniqueGoodsCount">Số mặt hàng</MenuItem>
-            <MenuItem value="lastTransactionDate">Giao dịch gần nhất</MenuItem>
-          </TextField>
+        <TextField
+          select
+          label="Sắp xếp theo"
+          value={filters.sortBy}
+          onChange={(e) => handleFilterChange("sortBy", e.target.value)}
+          sx={{ minWidth: 200 }}
+          size="small"
+        >
+          <MenuItem value="totalImportValue">Tổng trị giá</MenuItem>
+          <MenuItem value="totalQuantity">Tổng số lượng</MenuItem>
+          <MenuItem value="totalTransactions">Số giao dịch</MenuItem>
+          <MenuItem value="uniqueGoodsCount">Số mặt hàng</MenuItem>
+          <MenuItem value="lastTransactionDate">Giao dịch gần nhất</MenuItem>
+        </TextField>
+      </Box>
+
+      {/* Data Table */}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <CircularProgress />
         </Box>
+      ) : error ? (
+        <Alert severity="error">{error}</Alert>
+      ) : (
+        <>
+          <DataTable
+            columns={columns}
+            rows={companies.map(formatRow)}
+            sortBy={filters.sortBy}
+            sortDirection={filters.sortOrder}
+            onSort={handleSortChange}
+            pagination={false}
+          />
+          <TablePagination
+            component="div"
+            count={total}
+            page={page - 1} // MUI is 0-indexed
+            onPageChange={handleChangePage}
+            rowsPerPage={pageSize}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[25, 50, 100]}
+            labelRowsPerPage="Số dòng mỗi trang:"
+            labelDisplayedRows={({ from, to, count }) =>
+              `${from}-${to} của ${count !== -1 ? count : `hơn ${to}`}`
+            }
+          />
+        </>
+      )}
 
-        {/* Data Table */}
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : error ? (
-          <Alert severity="error">{error}</Alert>
-        ) : (
-          <>
-            <DataTable
-              columns={columns}
-              rows={companies.map(formatRow)}
-              sortBy={filters.sortBy}
-              sortDirection={filters.sortOrder}
-              onSort={handleSortChange}
-              pagination={false}
-            />
-            <TablePagination
-              component="div"
-              count={total}
-              page={page - 1} // MUI is 0-indexed
-              onPageChange={handleChangePage}
-              rowsPerPage={pageSize}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              rowsPerPageOptions={[25, 50, 100]}
-              labelRowsPerPage="Số dòng mỗi trang:"
-              labelDisplayedRows={({ from, to, count }) =>
-                `${from}-${to} của ${count !== -1 ? count : `hơn ${to}`}`
-              }
-            />
-          </>
-        )}
-
-        {/* Company Detail Modal */}
-        <Dialog open={detailOpen} onClose={handleCloseDetail} maxWidth="lg" fullWidth>
+      {/* Company Detail Modal */}
+      <Dialog
+        open={detailOpen}
+        onClose={handleCloseDetail}
+        maxWidth="lg"
+        fullWidth
+      >
         <DialogTitle>
           {selectedCompany && (
             <>
@@ -452,8 +463,12 @@ export default function CompaniesPage() {
                       <TableCell align="right">
                         {tx.quantity.toLocaleString()} {tx.unit}
                       </TableCell>
-                      <TableCell align="right">{formatUSD(tx.unitPrice)}</TableCell>
-                      <TableCell align="right">{formatUSD(tx.totalValue)}</TableCell>
+                      <TableCell align="right">
+                        {formatUSD(tx.unitPrice)}
+                      </TableCell>
+                      <TableCell align="right">
+                        {formatUSD(tx.totalValue)}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

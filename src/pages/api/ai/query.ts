@@ -1,5 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSession, addMessage, updateSessionStatus } from "@/lib/ai/session-manager";
+import {
+  getSession,
+  addMessage,
+  updateSessionStatus,
+} from "@/lib/ai/session-manager";
 import { queryHandler } from "@/lib/ai/query-handler";
 
 /**
@@ -98,7 +102,8 @@ export default async function handler(
     console.error("[AI Query] Error:", error);
     return res.status(500).json({
       success: false,
-      message: error instanceof Error ? error.message : "Failed to process query",
+      message:
+        error instanceof Error ? error.message : "Failed to process query",
     });
   }
 }

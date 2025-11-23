@@ -1,6 +1,6 @@
 /**
  * AI Query Handler
- * 
+ *
  * Formats prompts and processes natural language queries against transaction data
  * using Ollama LLM with grounded, citation-based responses
  */
@@ -139,8 +139,12 @@ export class QueryHandler {
   constructor(model?: string) {
     this.ollamaClient = new OllamaClient();
     // Use environment variable or default based on NODE_ENV
-    this.model = model || process.env.AI_MODEL || 
-      (process.env.NODE_ENV === "production" ? "deepseek-r1:14b" : "deepseek-r1:1.5b");
+    this.model =
+      model ||
+      process.env.AI_MODEL ||
+      (process.env.NODE_ENV === "production"
+        ? "deepseek-r1:14b"
+        : "deepseek-r1:1.5b");
   }
 
   /**
@@ -163,7 +167,10 @@ export class QueryHandler {
 
       // Build conversation history
       const conversationContext = session.conversationHistory
-        .map((msg) => `${msg.role === "user" ? "Question" : "Answer"}: ${msg.content}`)
+        .map(
+          (msg) =>
+            `${msg.role === "user" ? "Question" : "Answer"}: ${msg.content}`,
+        )
         .join("\n\n");
 
       // Combine system prompt, conversation history, and current question
@@ -201,7 +208,8 @@ Answer:`;
       console.error("[QueryHandler] Error processing query:", error);
 
       return {
-        answer: "Xin lỗi, đã có lỗi xảy ra khi xử lý câu hỏi của bạn. Vui lòng thử lại.",
+        answer:
+          "Xin lỗi, đã có lỗi xảy ra khi xử lý câu hỏi của bạn. Vui lòng thử lại.",
         citations: [],
         confidence: "low",
         processingTime: Date.now() - startTime,
@@ -212,9 +220,7 @@ Answer:`;
   /**
    * Generate suggested queries based on data
    */
-  async generateSuggestedQueries(
-    session: AISession,
-  ): Promise<string[]> {
+  async generateSuggestedQueries(session: AISession): Promise<string[]> {
     // If no data, return generic suggestions
     if (session.transactionData.length === 0) {
       return [
@@ -258,13 +264,9 @@ Answer:`;
       `Tổng giá trị xuất khẩu của ${session.transactionData.length} giao dịch là bao nhiêu?`,
     );
 
-    suggestions.push(
-      "So sánh giá trị trung bình giữa các danh mục hàng hóa",
-    );
+    suggestions.push("So sánh giá trị trung bình giữa các danh mục hàng hóa");
 
-    suggestions.push(
-      "Xu hướng nhập khẩu theo thời gian thế nào?",
-    );
+    suggestions.push("Xu hướng nhập khẩu theo thời gian thế nào?");
 
     return suggestions.slice(0, 5);
   }

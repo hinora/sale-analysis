@@ -16,8 +16,11 @@ export interface ClassificationResult {
  * Uses deepseek-r1:1.5b for development, deepseek-r1:14b for production
  */
 export class AIClassifier {
-  private modelName = process.env.AI_MODEL || 
-    (process.env.NODE_ENV === "production" ? "deepseek-r1:14b" : "deepseek-r1:1.5b");
+  private modelName =
+    process.env.AI_MODEL ||
+    (process.env.NODE_ENV === "production"
+      ? "deepseek-r1:14b"
+      : "deepseek-r1:1.5b");
   private ollamaClient = getOllamaClient();
 
   /**

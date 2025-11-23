@@ -317,7 +317,9 @@ export default function AIAnalysisPage() {
               1. Chọn dữ liệu
             </Typography>
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}
+            >
               <CategorySelect
                 value={filters.category}
                 onChange={(value) => handleFilterChange("category", value)}
@@ -358,11 +360,15 @@ export default function AIAnalysisPage() {
                 onClick={feedData}
                 disabled={sessionStatus === "feeding"}
                 startIcon={
-                  sessionStatus === "feeding" ? <CircularProgress size={20} /> : undefined
+                  sessionStatus === "feeding" ? (
+                    <CircularProgress size={20} />
+                  ) : undefined
                 }
                 fullWidth
               >
-                {sessionStatus === "feeding" ? "Đang tải..." : "Tải dữ liệu vào AI"}
+                {sessionStatus === "feeding"
+                  ? "Đang tải..."
+                  : "Tải dữ liệu vào AI"}
               </Button>
 
               <Divider />
@@ -374,7 +380,11 @@ export default function AIAnalysisPage() {
                   size="small"
                   icon={<InfoIcon />}
                 />
-                <IconButton size="small" onClick={resetSession} title="Tạo phiên mới">
+                <IconButton
+                  size="small"
+                  onClick={resetSession}
+                  title="Tạo phiên mới"
+                >
                   <RefreshIcon />
                 </IconButton>
               </Box>
@@ -406,14 +416,22 @@ export default function AIAnalysisPage() {
 
           {transactionCount > 10000 && (
             <Alert severity="warning" sx={{ mt: 2 }}>
-              Giới hạn 10,000 giao dịch. Vui lòng thu hẹp bộ lọc để có kết quả chính xác hơn.
+              Giới hạn 10,000 giao dịch. Vui lòng thu hẹp bộ lọc để có kết quả
+              chính xác hơn.
             </Alert>
           )}
         </Grid>
 
         {/* Right Panel: Chat Interface */}
         <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 3, height: "70vh", display: "flex", flexDirection: "column" }}>
+          <Paper
+            sx={{
+              p: 3,
+              height: "70vh",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <Typography variant="h6" gutterBottom>
               2. Hỏi và nhận câu trả lời
             </Typography>
@@ -451,14 +469,16 @@ export default function AIAnalysisPage() {
                       key={index}
                       sx={{
                         flexDirection: "column",
-                        alignItems: message.role === "user" ? "flex-end" : "flex-start",
+                        alignItems:
+                          message.role === "user" ? "flex-end" : "flex-start",
                         mb: 2,
                       }}
                     >
                       <Card
                         sx={{
                           maxWidth: "80%",
-                          bgcolor: message.role === "user" ? "primary.light" : "white",
+                          bgcolor:
+                            message.role === "user" ? "primary.light" : "white",
                         }}
                       >
                         <CardContent>
@@ -523,24 +543,32 @@ export default function AIAnalysisPage() {
                               {message.content}
                             </ReactMarkdown>
                           </Box>
-                          {message.citations && message.citations.length > 0 && (
-                            <Box sx={{ mt: 1 }}>
-                              <Typography variant="caption" color="text.secondary">
-                                Trích dẫn:{" "}
-                                {message.citations.map((citation, i) => (
-                                  <Chip
-                                    key={i}
-                                    label={citation}
-                                    size="small"
-                                    sx={{ mr: 0.5, mt: 0.5 }}
-                                  />
-                                ))}
-                              </Typography>
-                            </Box>
-                          )}
+                          {message.citations &&
+                            message.citations.length > 0 && (
+                              <Box sx={{ mt: 1 }}>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  Trích dẫn:{" "}
+                                  {message.citations.map((citation, i) => (
+                                    <Chip
+                                      key={i}
+                                      label={citation}
+                                      size="small"
+                                      sx={{ mr: 0.5, mt: 0.5 }}
+                                    />
+                                  ))}
+                                </Typography>
+                              </Box>
+                            )}
                         </CardContent>
                       </Card>
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mt: 0.5 }}
+                      >
                         {message.timestamp.toLocaleTimeString("vi-VN")}
                       </Typography>
                     </ListItem>
@@ -571,8 +599,14 @@ export default function AIAnalysisPage() {
               <Button
                 variant="contained"
                 onClick={() => sendQuestion()}
-                disabled={sessionStatus !== "ready" || isQuerying || !currentQuestion.trim()}
-                startIcon={isQuerying ? <CircularProgress size={20} /> : <SendIcon />}
+                disabled={
+                  sessionStatus !== "ready" ||
+                  isQuerying ||
+                  !currentQuestion.trim()
+                }
+                startIcon={
+                  isQuerying ? <CircularProgress size={20} /> : <SendIcon />
+                }
               >
                 Gửi
               </Button>

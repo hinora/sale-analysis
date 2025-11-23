@@ -1,7 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { connectToDatabase } from "@/lib/db/connection";
 import { Transaction } from "@/lib/db/models/Transaction";
-import { addTransactionData, getSession, updateSessionStatus } from "@/lib/ai/session-manager";
+import {
+  addTransactionData,
+  getSession,
+  updateSessionStatus,
+} from "@/lib/ai/session-manager";
 
 /**
  * Feed data response
@@ -73,7 +77,9 @@ export default async function handler(
     if (filters?.dateFrom || filters?.dateTo) {
       query.date = {};
       if (filters.dateFrom) {
-        (query.date as Record<string, unknown>).$gte = new Date(filters.dateFrom);
+        (query.date as Record<string, unknown>).$gte = new Date(
+          filters.dateFrom,
+        );
       }
       if (filters.dateTo) {
         (query.date as Record<string, unknown>).$lte = new Date(filters.dateTo);
@@ -107,13 +113,18 @@ export default async function handler(
     const formattedTransactions = transactions.map((tx) => ({
       declarationNumber: tx.declarationNumber,
       date: tx.date,
-      companyName: (tx.company as unknown as { name: string })?.name || "Unknown",
-      companyAddress: (tx.company as unknown as { address: string })?.address || "",
+      companyName:
+        (tx.company as unknown as { name: string })?.name || "Unknown",
+      companyAddress:
+        (tx.company as unknown as { address: string })?.address || "",
       importCountry: tx.importCountry || "N/A",
-      goodsName: (tx.goods as unknown as { rawName: string })?.rawName || "Unknown",
-      goodsShortName: (tx.goods as unknown as { shortName: string })?.shortName || "",
+      goodsName:
+        (tx.goods as unknown as { rawName: string })?.rawName || "Unknown",
+      goodsShortName:
+        (tx.goods as unknown as { shortName: string })?.shortName || "",
       categoryName:
-        (tx.goods as unknown as { category: { name: string } })?.category?.name || "Other",
+        (tx.goods as unknown as { category: { name: string } })?.category
+          ?.name || "Other",
       quantity: tx.quantity,
       unit: tx.unit,
       unitPriceUSD: tx.unitPriceUSD,

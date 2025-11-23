@@ -26,7 +26,9 @@ interface CompanyListResponse {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<CompanyListResponse | { success: boolean; message: string }>,
+  res: NextApiResponse<
+    CompanyListResponse | { success: boolean; message: string }
+  >,
 ) {
   if (req.method !== "GET") {
     return res.status(405).json({
@@ -60,10 +62,14 @@ export default async function handler(
     if (dateFrom || dateTo) {
       transactionFilters.date = {};
       if (dateFrom) {
-        (transactionFilters.date as Record<string, unknown>).$gte = new Date(dateFrom);
+        (transactionFilters.date as Record<string, unknown>).$gte = new Date(
+          dateFrom,
+        );
       }
       if (dateTo) {
-        (transactionFilters.date as Record<string, unknown>).$lte = new Date(dateTo);
+        (transactionFilters.date as Record<string, unknown>).$lte = new Date(
+          dateTo,
+        );
       }
     }
 
@@ -151,12 +157,18 @@ export default async function handler(
     });
 
     // Stage 7: Sort
-    const sortField = sortBy === "totalImportValue" ? "totalImportValue"
-      : sortBy === "totalQuantity" ? "totalQuantity"
-      : sortBy === "totalTransactions" ? "totalTransactions"
-      : sortBy === "uniqueGoodsCount" ? "uniqueGoodsCount"
-      : sortBy === "lastTransactionDate" ? "lastTransactionDate"
-      : "totalImportValue";
+    const sortField =
+      sortBy === "totalImportValue"
+        ? "totalImportValue"
+        : sortBy === "totalQuantity"
+          ? "totalQuantity"
+          : sortBy === "totalTransactions"
+            ? "totalTransactions"
+            : sortBy === "uniqueGoodsCount"
+              ? "uniqueGoodsCount"
+              : sortBy === "lastTransactionDate"
+                ? "lastTransactionDate"
+                : "totalImportValue";
 
     pipeline.push({ $sort: { [sortField]: sortOrder } });
 
@@ -196,7 +208,8 @@ export default async function handler(
     console.error("[Companies List] Error:", error);
     return res.status(500).json({
       success: false,
-      message: error instanceof Error ? error.message : "Failed to fetch companies",
+      message:
+        error instanceof Error ? error.message : "Failed to fetch companies",
     });
   }
 }
