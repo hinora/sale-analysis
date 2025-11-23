@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -7,6 +8,9 @@ import {
   Box,
   Button,
   Container,
+  Switch,
+  FormControlLabel,
+  Tooltip,
 } from "@mui/material";
 import {
   UploadFile as UploadIcon,
@@ -22,9 +26,60 @@ import {
  * - Active route highlighting
  * - Responsive design
  * - Icon + text navigation
+ * - Auto-classify toggle control
  */
 export default function Navigation() {
   const router = useRouter();
+  const [autoClassifyEnabled, setAutoClassifyEnabled] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
+
+  const handleAutoClassifyToggle = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const enabled = event.target.checked;
+    setIsToggling(true);
+
+    try {
+      if (enabled) {
+        // Start the job
+        const response = await fetch("/api/jobs/classify-goods", {
+          method: "POST",
+        });
+
+        if (response.status === 202 || response.status === 409) {
+          setAutoClassifyEnabled(true);
+          console.log("[Navigation] Auto-classify job started");
+        } else {
+          console.error(
+            "[Navigation] Failed to start job:",
+            response.status,
+          );
+          // Revert toggle on failure
+          setAutoClassifyEnabled(false);
+        }
+      } else {
+        // Stop the job
+        const response = await fetch("/api/jobs/classify-goods", {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          setAutoClassifyEnabled(false);
+          console.log("[Navigation] Auto-classify job stopped");
+        } else {
+          console.error("[Navigation] Failed to stop job:", response.status);
+          // Revert toggle on failure
+          setAutoClassifyEnabled(true);
+        }
+      }
+    } catch (error) {
+      console.error("[Navigation] Error toggling auto-classify:", error);
+      // Revert toggle on error
+      setAutoClassifyEnabled(!enabled);
+    } finally {
+      setIsToggling(false);
+    }
+  };
 
   const navItems = [
     { label: "Nhập CSV", href: "/import", icon: <UploadIcon /> },
@@ -85,6 +140,41 @@ export default function Navigation() {
                 </Button>
               );
             })}
+          </Box>
+
+          {/* Auto-Classify Toggle */}
+          <Box sx={{ ml: 2 }}>
+            <Tooltip
+              title={
+                autoClassifyEnabled
+                  ? "Tắt phân loại tự động"
+                  : "Bật phân loại tự động"
+              }
+            >
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={autoClassifyEnabled}
+                    onChange={handleAutoClassifyToggle}
+                    disabled={isToggling}
+                    sx={{
+                      "& .MuiSwitch-switchBase.Mui-checked": {
+                        color: "white",
+                      },
+                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                        {
+                          backgroundColor: "rgba(255, 255, 255, 0.5)",
+                        },
+                    }}
+                  />
+                }
+                label={
+                  <Typography variant="body2" sx={{ color: "white" }}>
+                    Auto-Classify
+                  </Typography>
+                }
+              />
+            </Tooltip>
           </Box>
         </Toolbar>
       </Container>

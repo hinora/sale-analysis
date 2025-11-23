@@ -33,10 +33,17 @@ interface ErrorResponse {
 let jobRunning = false;
 let lastResult: ClassifyGoodsJobResult | null = null;
 let lastRunDate: Date | null = null;
+// Flag to signal job cancellation (exported for use in classify-goods job)
+export let shouldStopJob = false;
+
+export function setShouldStopJob(value: boolean) {
+  shouldStopJob = value;
+}
 
 /**
  * GET /api/jobs/classify-goods - Check job status
  * POST /api/jobs/classify-goods - Trigger job execution
+ * DELETE /api/jobs/classify-goods - Stop running job
  */
 export default async function handler(
   req: NextApiRequest,
@@ -76,6 +83,7 @@ export default async function handler(
 
       // Mark job as running
       jobRunning = true;
+      setShouldStopJob(false); // Reset stop flag
       console.log("[API] Background classification job triggered");
 
       // Run job asynchronously (don't await - return 202 immediately)
@@ -92,6 +100,7 @@ export default async function handler(
         })
         .finally(() => {
           jobRunning = false;
+          setShouldStopJob(false);
           console.log("[API] Job status reset to idle");
         });
 
@@ -102,9 +111,38 @@ export default async function handler(
       });
     } catch (error) {
       jobRunning = false;
+      setShouldStopJob(false);
       console.error("[API] Failed to start job:", error);
       return res.status(500).json({
         error: "Failed to start job",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  // DELETE - Stop running job
+  if (req.method === "DELETE") {
+    if (!jobRunning) {
+      return res.status(200).json({
+        running: false,
+        lastRun: lastRunDate || undefined,
+        lastResult: lastResult || undefined,
+      });
+    }
+
+    try {
+      setShouldStopJob(true);
+      console.log("[API] Job stop requested");
+
+      return res.status(200).json({
+        running: true,
+        lastRun: lastRunDate || undefined,
+        lastResult: lastResult || undefined,
+      });
+    } catch (error) {
+      console.error("[API] Failed to stop job:", error);
+      return res.status(500).json({
+        error: "Failed to stop job",
         message: error instanceof Error ? error.message : "Unknown error",
       });
     }
