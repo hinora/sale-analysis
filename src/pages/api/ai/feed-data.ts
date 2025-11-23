@@ -109,6 +109,7 @@ export default async function handler(
       date: tx.date,
       companyName: (tx.company as unknown as { name: string })?.name || "Unknown",
       companyAddress: (tx.company as unknown as { address: string })?.address || "",
+      importCountry: tx.importCountry || "N/A",
       goodsName: (tx.goods as unknown as { rawName: string })?.rawName || "Unknown",
       goodsShortName: (tx.goods as unknown as { shortName: string })?.shortName || "",
       categoryName:

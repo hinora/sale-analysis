@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Container,
   Box,
@@ -12,7 +14,6 @@ import {
   Divider,
   List,
   ListItem,
-  ListItemText,
   IconButton,
   Grid,
   Card,
@@ -482,9 +483,46 @@ export default function AIAnalysisPage() {
                               />
                             )}
                           </Typography>
-                          <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
-                            {message.content}
-                          </Typography>
+                          <Box
+                            sx={{
+                              "& p": { mb: 1 },
+                              "& ul, & ol": { pl: 2, mb: 1 },
+                              "& li": { mb: 0.5 },
+                              "& code": {
+                                bgcolor: "grey.100",
+                                px: 0.5,
+                                py: 0.25,
+                                borderRadius: 0.5,
+                                fontFamily: "monospace",
+                                fontSize: "0.9em",
+                              },
+                              "& pre": {
+                                bgcolor: "grey.100",
+                                p: 1,
+                                borderRadius: 1,
+                                overflow: "auto",
+                              },
+                              "& table": {
+                                borderCollapse: "collapse",
+                                width: "100%",
+                                mb: 1,
+                              },
+                              "& th, & td": {
+                                border: "1px solid",
+                                borderColor: "grey.300",
+                                p: 1,
+                                textAlign: "left",
+                              },
+                              "& th": {
+                                bgcolor: "grey.100",
+                                fontWeight: "bold",
+                              },
+                            }}
+                          >
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {message.content}
+                            </ReactMarkdown>
+                          </Box>
                           {message.citations && message.citations.length > 0 && (
                             <Box sx={{ mt: 1 }}>
                               <Typography variant="caption" color="text.secondary">

@@ -20,22 +20,18 @@ export interface QueryResult {
 
 /**
  * Format transaction data for AI context
+ * Note: Transactions are already limited to 10,000 in feed-data endpoint
  */
 function formatTransactionDataForContext(
   transactions: Array<Record<string, unknown>>,
-  maxTransactions = 100,
 ): string {
-  // Sample transactions if too many
-  const sampleTransactions =
-    transactions.length > maxTransactions
-      ? transactions.slice(0, maxTransactions)
-      : transactions;
-
-  // Format as structured data
-  const formatted = sampleTransactions
+  // Format as structured data (use all transactions - already limited at feed time)
+  const formatted = transactions
     .map((tx, index) => {
       return `Transaction ${index + 1}:
 - Company: ${tx.companyName || "N/A"}
+- Company Address: ${tx.companyAddress || "N/A"}
+- Import Country: ${tx.importCountry || "N/A"}
 - Goods: ${tx.goodsName || "N/A"}
 - Category: ${tx.categoryName || "N/A"}
 - Quantity: ${tx.quantity || 0} ${tx.unit || ""}
@@ -49,8 +45,6 @@ function formatTransactionDataForContext(
   const summary = `
 Dataset Summary:
 - Total transactions: ${transactions.length}
-- Transactions shown: ${sampleTransactions.length}
-- Data coverage: ${transactions.length > maxTransactions ? `Sampled (${maxTransactions} of ${transactions.length})` : "Complete"}
 `;
 
   return summary + "\n" + formatted;
@@ -162,7 +156,6 @@ export class QueryHandler {
       // Format transaction data for context
       const transactionContext = formatTransactionDataForContext(
         session.transactionData,
-        200, // Increase sample size for better analysis
       );
 
       // Build system prompt
