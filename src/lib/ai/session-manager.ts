@@ -8,8 +8,8 @@
  * - Session state management
  */
 
-import type { FilterExpression } from './filter-engine';
-import type { AggregationCache } from './aggregation-engine';
+import type { FilterExpression } from "./filter-engine";
+import type { AggregationCache } from "./aggregation-engine";
 
 export interface AIMessage {
   role: "user" | "assistant" | "system";
@@ -248,7 +248,9 @@ export function updateFilterView(
 
   // Check iteration limit (max 10 per specification)
   if (session.contextState.iterationCount >= 10) {
-    console.warn(`[SessionManager] Session ${sessionId} reached max iteration limit (10)`);
+    console.warn(
+      `[SessionManager] Session ${sessionId} reached max iteration limit (10)`,
+    );
     return session;
   }
 
@@ -262,7 +264,7 @@ export function updateFilterView(
   session.expiresAt = new Date(Date.now() + SESSION_TTL);
 
   console.log(
-    `[SessionManager] Updated filter view: ${session.transactionData.length} → ${filteredTransactions.length} transactions (iteration ${session.contextState.iterationCount}/10)`
+    `[SessionManager] Updated filter view: ${session.transactionData.length} → ${filteredTransactions.length} transactions (iteration ${session.contextState.iterationCount}/10)`,
   );
 
   return session;
@@ -298,7 +300,7 @@ export function addFilterLog(
   // Create criteria string for display
   const criteria = `${filterExpression.field} ${filterExpression.operator} ${
     Array.isArray(filterExpression.value)
-      ? `[${filterExpression.value.join(', ')}]`
+      ? `[${filterExpression.value.join(", ")}]`
       : filterExpression.value
   }`;
 

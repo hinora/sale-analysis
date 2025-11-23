@@ -119,13 +119,14 @@ export default async function handler(
     });
 
     // Return user-friendly error message
-    const errorMessage = error instanceof Error 
-      ? error.message.includes('timeout') 
-        ? 'Query processing timed out. Please try with a simpler question or smaller dataset.'
-        : error.message.includes('Ollama')
-        ? 'AI service is currently unavailable. Please try again later.'
-        : error.message
-      : "Failed to process query";
+    const errorMessage =
+      error instanceof Error
+        ? error.message.includes("timeout")
+          ? "Query processing timed out. Please try with a simpler question or smaller dataset."
+          : error.message.includes("Ollama")
+            ? "AI service is currently unavailable. Please try again later."
+            : error.message
+        : "Failed to process query";
 
     return res.status(500).json({
       success: false,

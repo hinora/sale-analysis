@@ -11,7 +11,7 @@
  */
 export interface AggregationSpec {
   field: string;
-  operation: 'count' | 'sum' | 'average' | 'min' | 'max';
+  operation: "count" | "sum" | "average" | "min" | "max";
   groupBy?: string;
 }
 
@@ -55,14 +55,18 @@ export function computeAggregations(
   const startTime = performance.now();
   const results = specs.map((spec) => computeAggregation(transactions, spec));
   const totalTime = performance.now() - startTime;
-  
+
   // Performance logging (warn if >100ms)
   if (totalTime > 100) {
-    console.warn(`[AggregationEngine] Slow aggregation: ${totalTime.toFixed(2)}ms for ${specs.length} specs on ${transactions.length} transactions`);
+    console.warn(
+      `[AggregationEngine] Slow aggregation: ${totalTime.toFixed(2)}ms for ${specs.length} specs on ${transactions.length} transactions`,
+    );
   } else {
-    console.log(`[AggregationEngine] Aggregation execution: ${totalTime.toFixed(2)}ms for ${specs.length} specs`);
+    console.log(
+      `[AggregationEngine] Aggregation execution: ${totalTime.toFixed(2)}ms for ${specs.length} specs`,
+    );
   }
-  
+
   return results;
 }
 
@@ -79,7 +83,12 @@ export function computeAggregation(
 
   if (spec.groupBy) {
     // Grouped aggregation
-    dataPoints = groupBy(transactions, spec.groupBy, spec.field, spec.operation);
+    dataPoints = groupBy(
+      transactions,
+      spec.groupBy,
+      spec.field,
+      spec.operation,
+    );
   } else {
     // Simple total aggregation
     dataPoints = [computeTotal(transactions, spec.field, spec.operation)];
@@ -102,13 +111,13 @@ export function groupBy(
   transactions: Array<Record<string, unknown>>,
   groupByField: string,
   valueField: string,
-  operation: 'count' | 'sum' | 'average' | 'min' | 'max',
+  operation: "count" | "sum" | "average" | "min" | "max",
 ): AggregationDataPoint[] {
   // Group transactions
   const groups = new Map<string, Array<Record<string, unknown>>>();
 
   for (const tx of transactions) {
-    const key = String(tx[groupByField] || 'Unknown');
+    const key = String(tx[groupByField] || "Unknown");
     if (!groups.has(key)) {
       groups.set(key, []);
     }
@@ -129,19 +138,22 @@ export function groupBy(
     let value: number;
 
     switch (operation) {
-      case 'count':
+      case "count":
         value = groupTransactions.length;
         break;
-      case 'sum':
+      case "sum":
         value = values.reduce((sum, v) => sum + v, 0);
         break;
-      case 'average':
-        value = values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
+      case "average":
+        value =
+          values.length > 0
+            ? values.reduce((sum, v) => sum + v, 0) / values.length
+            : 0;
         break;
-      case 'min':
+      case "min":
         value = values.length > 0 ? Math.min(...values) : 0;
         break;
-      case 'max':
+      case "max":
         value = values.length > 0 ? Math.max(...values) : 0;
         break;
     }
@@ -160,7 +172,10 @@ export function groupBy(
 /**
  * Get top N results from aggregation
  */
-export function getTopN(dataPoints: AggregationDataPoint[], n: number): AggregationDataPoint[] {
+export function getTopN(
+  dataPoints: AggregationDataPoint[],
+  n: number,
+): AggregationDataPoint[] {
   return dataPoints.slice(0, n);
 }
 
@@ -170,7 +185,7 @@ export function getTopN(dataPoints: AggregationDataPoint[], n: number): Aggregat
 export function computeTotal(
   transactions: Array<Record<string, unknown>>,
   field: string,
-  operation: 'count' | 'sum' | 'average' | 'min' | 'max',
+  operation: "count" | "sum" | "average" | "min" | "max",
 ): AggregationDataPoint {
   const values = transactions
     .map((tx) => Number(tx[field]) || 0)
@@ -179,25 +194,28 @@ export function computeTotal(
   let value: number;
 
   switch (operation) {
-    case 'count':
+    case "count":
       value = transactions.length;
       break;
-    case 'sum':
+    case "sum":
       value = values.reduce((sum, v) => sum + v, 0);
       break;
-    case 'average':
-      value = values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
+    case "average":
+      value =
+        values.length > 0
+          ? values.reduce((sum, v) => sum + v, 0) / values.length
+          : 0;
       break;
-    case 'min':
+    case "min":
       value = values.length > 0 ? Math.min(...values) : 0;
       break;
-    case 'max':
+    case "max":
       value = values.length > 0 ? Math.max(...values) : 0;
       break;
   }
 
   return {
-    key: 'Total',
+    key: "Total",
     value,
     count: transactions.length,
   };
@@ -216,19 +234,34 @@ export function buildAggregationCache(
   const byMonth = new Map<string, AggregationDataPoint>();
 
   // Group by company
-  const companyData = groupBy(transactions, 'companyName', 'totalValueUSD', 'sum');
+  const companyData = groupBy(
+    transactions,
+    "companyName",
+    "totalValueUSD",
+    "sum",
+  );
   for (const dp of companyData) {
     byCompany.set(dp.key, dp);
   }
 
   // Group by category
-  const categoryData = groupBy(transactions, 'categoryName', 'totalValueUSD', 'sum');
+  const categoryData = groupBy(
+    transactions,
+    "categoryName",
+    "totalValueUSD",
+    "sum",
+  );
   for (const dp of categoryData) {
     byCategory.set(dp.key, dp);
   }
 
   // Group by country
-  const countryData = groupBy(transactions, 'importCountry', 'totalValueUSD', 'sum');
+  const countryData = groupBy(
+    transactions,
+    "importCountry",
+    "totalValueUSD",
+    "sum",
+  );
   for (const dp of countryData) {
     byCountry.set(dp.key, dp);
   }
@@ -238,7 +271,7 @@ export function buildAggregationCache(
   for (const tx of transactions) {
     const date = tx.date ? new Date(String(tx.date)) : null;
     if (date && !Number.isNaN(date.getTime())) {
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       if (!monthlyGroups.has(monthKey)) {
         monthlyGroups.set(monthKey, []);
       }
@@ -253,7 +286,7 @@ export function buildAggregationCache(
   for (const [monthKey, monthTransactions] of monthlyGroups.entries()) {
     const totalValue = monthTransactions.reduce(
       (sum, tx) => sum + (Number(tx.totalValueUSD) || 0),
-      0
+      0,
     );
     byMonth.set(monthKey, {
       key: monthKey,
@@ -276,28 +309,30 @@ export function buildAggregationCache(
  */
 export function queryCacheTopN(
   cache: AggregationCache,
-  groupBy: 'company' | 'category' | 'country' | 'month',
+  groupBy: "company" | "category" | "country" | "month",
   n: number,
 ): AggregationDataPoint[] {
   let cacheMap: Map<string, AggregationDataPoint>;
 
   switch (groupBy) {
-    case 'company':
+    case "company":
       cacheMap = cache.byCompany;
       break;
-    case 'category':
+    case "category":
       cacheMap = cache.byCategory;
       break;
-    case 'country':
+    case "country":
       cacheMap = cache.byCountry;
       break;
-    case 'month':
+    case "month":
       cacheMap = cache.byMonth;
       break;
   }
 
   // Convert map to array and sort by value
-  const dataPoints = Array.from(cacheMap.values()).sort((a, b) => b.value - a.value);
+  const dataPoints = Array.from(cacheMap.values()).sort(
+    (a, b) => b.value - a.value,
+  );
 
   return getTopN(dataPoints, n);
 }
@@ -310,8 +345,17 @@ export function formatAggregationForAI(result: AggregationResult): string {
   const { spec, dataPoints, totalRecords } = result;
 
   // Header
-  const operation = spec.operation === 'count' ? 'Count' : spec.operation === 'sum' ? 'Total' : spec.operation === 'average' ? 'Average' : spec.operation === 'min' ? 'Min' : 'Max';
-  const groupBy = spec.groupBy || 'Overall';
+  const operation =
+    spec.operation === "count"
+      ? "Count"
+      : spec.operation === "sum"
+        ? "Total"
+        : spec.operation === "average"
+          ? "Average"
+          : spec.operation === "min"
+            ? "Min"
+            : "Max";
+  const groupBy = spec.groupBy || "Overall";
   const header = `${operation} by ${groupBy}`;
 
   // Data points (token-optimized format)
@@ -320,16 +364,16 @@ export function formatAggregationForAI(result: AggregationResult): string {
   for (const dp of dataPoints.slice(0, 20)) {
     // Limit to top 20
     const valueFormatted =
-      spec.field === 'totalValueUSD' || spec.operation === 'sum'
-        ? `$${dp.value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+      spec.field === "totalValueUSD" || spec.operation === "sum"
+        ? `$${dp.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}`
         : dp.value.toFixed(2);
 
-    const countInfo = dp.count ? ` (${dp.count} txns)` : '';
+    const countInfo = dp.count ? ` (${dp.count} txns)` : "";
     lines.push(`  ${dp.key}: ${valueFormatted}${countInfo}`);
   }
 
   // Summary
-  const summary = `Total records: ${totalRecords}${dataPoints.length > 20 ? `, showing top 20 of ${dataPoints.length}` : ''}`;
+  const summary = `Total records: ${totalRecords}${dataPoints.length > 20 ? `, showing top 20 of ${dataPoints.length}` : ""}`;
 
-  return `${header}\n${lines.join('\n')}\n${summary}`;
+  return `${header}\n${lines.join("\n")}\n${summary}`;
 }

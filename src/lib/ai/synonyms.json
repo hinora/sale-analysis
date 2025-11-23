@@ -1,12 +1,27 @@
 {
   "countries": {
-    "United States": ["US", "USA", "United States", "Hoa Kỳ", "America", "U.S.", "U.S.A"],
+    "United States": [
+      "US",
+      "USA",
+      "United States",
+      "Hoa Kỳ",
+      "America",
+      "U.S.",
+      "U.S.A"
+    ],
     "Vietnam": ["VN", "Vietnam", "Việt Nam", "VNM"],
     "China": ["CN", "China", "Trung Quốc", "CHN", "PRC"],
     "Japan": ["JP", "Japan", "Nhật Bản", "JPN"],
     "Korea": ["KR", "Korea", "Hàn Quốc", "South Korea", "ROK"],
     "Germany": ["DE", "Germany", "Đức", "DEU"],
-    "United Kingdom": ["UK", "United Kingdom", "Anh", "GB", "Britain", "Great Britain"]
+    "United Kingdom": [
+      "UK",
+      "United Kingdom",
+      "Anh",
+      "GB",
+      "Britain",
+      "Great Britain"
+    ]
   },
   "companies": {
     "CÔNG TY": ["CÔNG TY", "Cty", "CTY", "Co.", "Company", "COMPANY"]

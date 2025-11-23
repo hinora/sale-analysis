@@ -8,9 +8,13 @@
 import { OllamaClient } from "./ollama-client";
 import type { AISession } from "./session-manager";
 import { updateFilterView, addFilterLog } from "./session-manager";
-import { executeFilters, type FilterExpression } from './filter-engine';
-import { FilterExpressionSchema } from '../utils/validation';
-import { computeAggregations, formatAggregationForAI, type AggregationSpec } from './aggregation-engine';
+import { executeFilters, type FilterExpression } from "./filter-engine";
+import { FilterExpressionSchema } from "../utils/validation";
+import {
+  computeAggregations,
+  formatAggregationForAI,
+  type AggregationSpec,
+} from "./aggregation-engine";
 
 /**
  * Query result with response and citations
@@ -36,11 +40,17 @@ export interface FilterLog {
  * Query intent classification
  */
 export interface QueryIntent {
-  type: 'aggregation' | 'detail' | 'trend' | 'comparison' | 'recommendation' | 'ranking';
+  type:
+    | "aggregation"
+    | "detail"
+    | "trend"
+    | "comparison"
+    | "recommendation"
+    | "ranking";
   filters: FilterExpression[];
   aggregations?: Array<{
     field: string;
-    operation: 'count' | 'sum' | 'average' | 'min' | 'max';
+    operation: "count" | "sum" | "average" | "min" | "max";
     groupBy?: string;
   }>;
   limit?: number;
@@ -59,19 +69,34 @@ function formatTransactionDataForContext(
   // Calculate aggregated statistics for context
   const stats = {
     totalTransactions: transactions.length,
-    totalValue: transactions.reduce((sum, tx) => sum + (Number(tx.totalValueUSD) || 0), 0),
-    companies: new Set(transactions.map(tx => tx.companyName).filter(Boolean)),
-    categories: new Set(transactions.map(tx => tx.categoryName).filter(Boolean)),
-    countries: new Set(transactions.map(tx => tx.importCountry).filter(Boolean)),
+    totalValue: transactions.reduce(
+      (sum, tx) => sum + (Number(tx.totalValueUSD) || 0),
+      0,
+    ),
+    companies: new Set(
+      transactions.map((tx) => tx.companyName).filter(Boolean),
+    ),
+    categories: new Set(
+      transactions.map((tx) => tx.categoryName).filter(Boolean),
+    ),
+    countries: new Set(
+      transactions.map((tx) => tx.importCountry).filter(Boolean),
+    ),
     dateRange: {
-      earliest: transactions.reduce((min, tx) => {
-        const date = new Date(tx.date as string);
-        return !min || date < min ? date : min;
-      }, null as Date | null),
-      latest: transactions.reduce((max, tx) => {
-        const date = new Date(tx.date as string);
-        return !max || date > max ? date : max;
-      }, null as Date | null),
+      earliest: transactions.reduce(
+        (min, tx) => {
+          const date = new Date(tx.date as string);
+          return !min || date < min ? date : min;
+        },
+        null as Date | null,
+      ),
+      latest: transactions.reduce(
+        (max, tx) => {
+          const date = new Date(tx.date as string);
+          return !max || date > max ? date : max;
+        },
+        null as Date | null,
+      ),
     },
   };
 
@@ -89,7 +114,7 @@ TÓM TẮT DỮ LIỆU:
 - Số công ty: ${stats.companies.size}
 - Số danh mục: ${stats.categories.size}
 - Số nước: ${stats.countries.size}
-- Khoảng thời gian: ${stats.dateRange.earliest?.toISOString().split('T')[0]} đến ${stats.dateRange.latest?.toISOString().split('T')[0]}
+- Khoảng thời gian: ${stats.dateRange.earliest?.toISOString().split("T")[0]} đến ${stats.dateRange.latest?.toISOString().split("T")[0]}
 
 ĐỊNH DẠNG DỮ LIỆU: STT|Công ty|Nước|Danh mục|Số lượng|Đơn giá|Tổng giá trị|Ngày
 
@@ -261,10 +286,13 @@ Filters:`,
 
       // Parse JSON response
       let filtersJson = response.response.trim();
-      
+
       // Remove markdown code blocks if present
-      filtersJson = filtersJson.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      
+      filtersJson = filtersJson
+        .replace(/```json\n?/g, "")
+        .replace(/```\n?/g, "")
+        .trim();
+
       // Extract JSON array if wrapped in text
       const jsonMatch = filtersJson.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
@@ -275,7 +303,10 @@ Filters:`,
 
       // Validate each filter with Zod schema
       if (!Array.isArray(filters)) {
-        console.warn('[QueryHandler] extractFilters returned non-array:', filters);
+        console.warn(
+          "[QueryHandler] extractFilters returned non-array:",
+          filters,
+        );
         return [];
       }
 
@@ -285,13 +316,17 @@ Filters:`,
           const validated = FilterExpressionSchema.parse(filter);
           validatedFilters.push(validated);
         } catch (validationError) {
-          console.warn('[QueryHandler] Invalid filter expression:', filter, validationError);
+          console.warn(
+            "[QueryHandler] Invalid filter expression:",
+            filter,
+            validationError,
+          );
         }
       }
 
       return validatedFilters;
     } catch (error) {
-      console.error('[QueryHandler] Error extracting filters:', error);
+      console.error("[QueryHandler] Error extracting filters:", error);
       return [];
     }
   }
@@ -313,7 +348,10 @@ Filters:`,
     }
 
     // Very small sample size (< 3 transactions) for aggregation queries
-    const isAggregationQuery = /tổng|trung bình|average|total|sum|count|bao nhiêu|có mấy/i.test(userQuestion);
+    const isAggregationQuery =
+      /tổng|trung bình|average|total|sum|count|bao nhiêu|có mấy/i.test(
+        userQuestion,
+      );
     if (isAggregationQuery && filteredTransactions.length < 3) {
       return {
         insufficient: true,
@@ -329,7 +367,8 @@ Filters:`,
     if (!hasCompanyNames && !hasValues && !hasCategories) {
       return {
         insufficient: true,
-        reason: "Filtered data lacks critical fields (company, value, or category)",
+        reason:
+          "Filtered data lacks critical fields (company, value, or category)",
       };
     }
 
@@ -342,34 +381,40 @@ Filters:`,
    */
   async classifyQueryIntent(userQuestion: string): Promise<QueryIntent> {
     // Pattern matching for common query types
-    const aggregationPatterns = /tổng|trung bình|average|total|sum|count|bao nhiêu|có mấy|nhiều nhất|ít nhất|most|least|highest|lowest/i;
-    const detailPatterns = /show|hiển thị|list|danh sách|top \d+|liệt kê|chi tiết|details?/i;
-    const trendPatterns = /trend|xu hướng|theo thời gian|over time|growth|tăng trưởng|biến động|changes?/i;
-    const comparisonPatterns = /so sánh|compare|versus|vs\.|khác nhau|difference|better|worse/i;
-    const recommendationPatterns = /recommend|đề xuất|suggest|gợi ý|should|nên|advice|tư vấn/i;
-    const rankingPatterns = /top|rank|xếp hạng|hàng đầu|leading|best|worst|tốt nhất|kém nhất/i;
+    const aggregationPatterns =
+      /tổng|trung bình|average|total|sum|count|bao nhiêu|có mấy|nhiều nhất|ít nhất|most|least|highest|lowest/i;
+    const detailPatterns =
+      /show|hiển thị|list|danh sách|top \d+|liệt kê|chi tiết|details?/i;
+    const trendPatterns =
+      /trend|xu hướng|theo thời gian|over time|growth|tăng trưởng|biến động|changes?/i;
+    const comparisonPatterns =
+      /so sánh|compare|versus|vs\.|khác nhau|difference|better|worse/i;
+    const recommendationPatterns =
+      /recommend|đề xuất|suggest|gợi ý|should|nên|advice|tư vấn/i;
+    const rankingPatterns =
+      /top|rank|xếp hạng|hàng đầu|leading|best|worst|tốt nhất|kém nhất/i;
 
-    let type: QueryIntent['type'] = 'detail'; // default
+    let type: QueryIntent["type"] = "detail"; // default
     let confidence = 0.5;
 
     // Classify by patterns
     if (aggregationPatterns.test(userQuestion)) {
-      type = 'aggregation';
+      type = "aggregation";
       confidence = 0.8;
     } else if (trendPatterns.test(userQuestion)) {
-      type = 'trend';
+      type = "trend";
       confidence = 0.8;
     } else if (comparisonPatterns.test(userQuestion)) {
-      type = 'comparison';
+      type = "comparison";
       confidence = 0.75;
     } else if (recommendationPatterns.test(userQuestion)) {
-      type = 'recommendation';
+      type = "recommendation";
       confidence = 0.7;
     } else if (rankingPatterns.test(userQuestion)) {
-      type = 'ranking';
+      type = "ranking";
       confidence = 0.8;
     } else if (detailPatterns.test(userQuestion)) {
-      type = 'detail';
+      type = "detail";
       confidence = 0.7;
     }
 
@@ -377,21 +422,25 @@ Filters:`,
     const filters = await this.extractFilters(userQuestion);
 
     // Extract aggregations if type is aggregation or ranking
-    let aggregations: QueryIntent['aggregations'];
-    if (type === 'aggregation' || type === 'ranking') {
+    let aggregations: QueryIntent["aggregations"];
+    if (type === "aggregation" || type === "ranking") {
       aggregations = this.extractAggregationSpecs(userQuestion);
     }
 
     // Extract limit from question (e.g., "top 5", "10 companies")
-    const limitMatch = userQuestion.match(/top (\d+)|(\d+) (công ty|companies|transactions|giao dịch|mặt hàng|goods)/i);
-    const limit = limitMatch ? parseInt(limitMatch[1] || limitMatch[2]) : undefined;
+    const limitMatch = userQuestion.match(
+      /top (\d+)|(\d+) (công ty|companies|transactions|giao dịch|mặt hàng|goods)/i,
+    );
+    const limit = limitMatch
+      ? parseInt(limitMatch[1] || limitMatch[2])
+      : undefined;
 
     // Extract orderBy from question
     let orderBy: string | undefined;
     if (/nhiều nhất|most|highest|max|cao nhất/i.test(userQuestion)) {
-      orderBy = 'desc';
+      orderBy = "desc";
     } else if (/ít nhất|least|lowest|min|thấp nhất/i.test(userQuestion)) {
-      orderBy = 'asc';
+      orderBy = "asc";
     }
 
     return {
@@ -410,53 +459,55 @@ Filters:`,
    */
   extractAggregationSpecs(userQuestion: string): Array<{
     field: string;
-    operation: 'count' | 'sum' | 'average' | 'min' | 'max';
+    operation: "count" | "sum" | "average" | "min" | "max";
     groupBy?: string;
   }> {
     const aggregations: Array<{
       field: string;
-      operation: 'count' | 'sum' | 'average' | 'min' | 'max';
+      operation: "count" | "sum" | "average" | "min" | "max";
       groupBy?: string;
     }> = [];
 
     // Detect operation type
-    let operation: 'count' | 'sum' | 'average' | 'min' | 'max' = 'count';
+    let operation: "count" | "sum" | "average" | "min" | "max" = "count";
     if (/tổng|total|sum/i.test(userQuestion)) {
-      operation = 'sum';
+      operation = "sum";
     } else if (/trung bình|average|mean/i.test(userQuestion)) {
-      operation = 'average';
+      operation = "average";
     } else if (/nhiều nhất|most|max|highest|cao nhất/i.test(userQuestion)) {
-      operation = 'max';
+      operation = "max";
     } else if (/ít nhất|least|min|lowest|thấp nhất/i.test(userQuestion)) {
-      operation = 'min';
+      operation = "min";
     }
 
     // Detect field
-    let field = 'totalValueUSD'; // default
+    let field = "totalValueUSD"; // default
     if (/công ty|company|companies/i.test(userQuestion)) {
-      field = 'companyName';
-    } else if (/mặt hàng|goods|category|categories|danh mục/i.test(userQuestion)) {
-      field = 'categoryName';
+      field = "companyName";
+    } else if (
+      /mặt hàng|goods|category|categories|danh mục/i.test(userQuestion)
+    ) {
+      field = "categoryName";
     } else if (/quốc gia|country|countries/i.test(userQuestion)) {
-      field = 'importCountry';
+      field = "importCountry";
     } else if (/giá trị|value/i.test(userQuestion)) {
-      field = 'totalValueUSD';
+      field = "totalValueUSD";
     } else if (/số lượng|quantity/i.test(userQuestion)) {
-      field = 'quantity';
+      field = "quantity";
     }
 
     // Detect groupBy
     let groupBy: string | undefined;
     if (/theo công ty|by company|per company/i.test(userQuestion)) {
-      groupBy = 'companyName';
+      groupBy = "companyName";
     } else if (/theo mặt hàng|by category|per category/i.test(userQuestion)) {
-      groupBy = 'categoryName';
+      groupBy = "categoryName";
     } else if (/theo quốc gia|by country|per country/i.test(userQuestion)) {
-      groupBy = 'importCountry';
+      groupBy = "importCountry";
     } else if (/theo tháng|by month|per month/i.test(userQuestion)) {
-      groupBy = 'month';
+      groupBy = "month";
     } else if (/theo năm|by year|per year/i.test(userQuestion)) {
-      groupBy = 'year';
+      groupBy = "year";
     }
 
     aggregations.push({ field, operation, groupBy });
@@ -470,14 +521,18 @@ Filters:`,
   async processQuery(
     session: AISession,
     userQuestion: string,
-  ): Promise<QueryResult & { filterLogs?: FilterLog[]; queryIntent?: QueryIntent }> {
+  ): Promise<
+    QueryResult & { filterLogs?: FilterLog[]; queryIntent?: QueryIntent }
+  > {
     const startTime = Date.now();
     const filterLogs: FilterLog[] = [];
 
     try {
       // Classify query intent (US3)
       const queryIntent = await this.classifyQueryIntent(userQuestion);
-      console.log(`[QueryHandler] Query intent: ${queryIntent.type} (confidence: ${queryIntent.confidence})`);
+      console.log(
+        `[QueryHandler] Query intent: ${queryIntent.type} (confidence: ${queryIntent.confidence})`,
+      );
 
       // Extract filters from query intent
       const filters = queryIntent.filters;
@@ -486,7 +541,7 @@ Filters:`,
       let filteredTransactions = session.transactionData;
       if (filters.length > 0) {
         const filterStartTime = Date.now();
-        
+
         filteredTransactions = executeFilters(
           session.transactionData as Array<Record<string, unknown>>,
           filters,
@@ -505,24 +560,29 @@ Filters:`,
             matchedCount: filteredTransactions.length,
             executionTimeMs: filterExecutionTime,
           };
-          
+
           filterLogs.push(filterLog);
-          
+
           // Persist to session context state
           addFilterLog(
             session.id,
             filter,
             filteredTransactions.length,
             session.transactionData.length,
-            filterExecutionTime
+            filterExecutionTime,
           );
         });
 
-        console.log(`[QueryHandler] Applied ${filters.length} filters: ${session.transactionData.length} → ${filteredTransactions.length} transactions (${filterExecutionTime}ms)`);
+        console.log(
+          `[QueryHandler] Applied ${filters.length} filters: ${session.transactionData.length} → ${filteredTransactions.length} transactions (${filterExecutionTime}ms)`,
+        );
       }
 
       // Check for data insufficiency (US2)
-      const insufficiencyCheck = this.detectDataInsufficiency(filteredTransactions, userQuestion);
+      const insufficiencyCheck = this.detectDataInsufficiency(
+        filteredTransactions,
+        userQuestion,
+      );
       if (insufficiencyCheck.insufficient) {
         return {
           answer: `Xin lỗi, dữ liệu sau khi lọc không đủ để trả lời câu hỏi của bạn. Lý do: ${insufficiencyCheck.reason}`,
@@ -535,10 +595,13 @@ Filters:`,
 
       // Use aggregations for aggregation/ranking query types (US5)
       let transactionContext: string;
-      if (queryIntent.type === 'aggregation' || queryIntent.type === 'ranking') {
+      if (
+        queryIntent.type === "aggregation" ||
+        queryIntent.type === "ranking"
+      ) {
         // Compute aggregations instead of passing full transactions
         const aggregations = queryIntent.aggregations || [];
-        
+
         // If no aggregations specified, infer from question
         if (aggregations.length === 0) {
           const inferredSpecs = this.extractAggregationSpecs(userQuestion);
@@ -546,7 +609,7 @@ Filters:`,
         }
 
         // Convert to AggregationSpec format
-        const aggSpecs: AggregationSpec[] = aggregations.map(agg => ({
+        const aggSpecs: AggregationSpec[] = aggregations.map((agg) => ({
           field: agg.field,
           operation: agg.operation,
           groupBy: agg.groupBy,
@@ -556,12 +619,17 @@ Filters:`,
         const aggResults = computeAggregations(filteredTransactions, aggSpecs);
 
         // Format aggregation results for AI (token-optimized)
-        transactionContext = aggResults.map(formatAggregationForAI).join('\n\n');
+        transactionContext = aggResults
+          .map(formatAggregationForAI)
+          .join("\n\n");
 
-        console.log(`[QueryHandler] Using aggregations: ${aggSpecs.length} specs computed, ${transactionContext.length} bytes (vs ${JSON.stringify(filteredTransactions).length} bytes for full data)`);
+        console.log(
+          `[QueryHandler] Using aggregations: ${aggSpecs.length} specs computed, ${transactionContext.length} bytes (vs ${JSON.stringify(filteredTransactions).length} bytes for full data)`,
+        );
       } else {
         // Format filtered transaction data for context (detail/trend/comparison queries)
-        transactionContext = formatTransactionDataForContext(filteredTransactions);
+        transactionContext =
+          formatTransactionDataForContext(filteredTransactions);
       }
 
       // Build system prompt

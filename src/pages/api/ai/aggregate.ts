@@ -78,7 +78,7 @@ export default async function handler(
         });
       }
 
-      if (!['count', 'sum', 'average', 'min', 'max'].includes(agg.operation)) {
+      if (!["count", "sum", "average", "min", "max"].includes(agg.operation)) {
         return res.status(400).json({
           success: false,
           message: `Invalid operation: ${agg.operation}. Must be one of: count, sum, average, min, max`,
@@ -115,11 +115,12 @@ export default async function handler(
     });
 
     // Return user-friendly error message
-    const errorMessage = error instanceof Error 
-      ? error.message.includes('Invalid operation')
-        ? error.message
-        : 'Failed to compute aggregations. Please check your aggregation specifications.'
-      : "Failed to compute aggregations";
+    const errorMessage =
+      error instanceof Error
+        ? error.message.includes("Invalid operation")
+          ? error.message
+          : "Failed to compute aggregations. Please check your aggregation specifications."
+        : "Failed to compute aggregations";
 
     return res.status(500).json({
       success: false,

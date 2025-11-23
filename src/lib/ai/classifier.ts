@@ -125,7 +125,9 @@ Phân loại:`;
       console.error("[AIClassifier] Response:", response);
 
       // Fallback: try to extract category from text
-      const categoryMatch = response.match(/category[:\s]+["']?([\w\sàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđĐ&]+)/i);
+      const categoryMatch = response.match(
+        /category[:\s]+["']?([\w\sàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđĐ&]+)/i,
+      );
       return {
         category: categoryMatch ? categoryMatch[1].trim() : "Khác",
         confidence: 0.5,

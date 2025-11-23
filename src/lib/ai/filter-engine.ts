@@ -1,6 +1,6 @@
 /**
  * Filter Engine - In-memory transaction filtering with smart matching
- * 
+ *
  * Provides filtering capabilities for loaded transactions using smart text matching,
  * supporting multiple operators and logical connectors (AND/OR).
  */
@@ -10,15 +10,15 @@ import {
   matchesFilter as textMatchesFilter,
   checkSynonyms,
   type NormalizationOptions,
-} from './text-normalizer';
-import type { FilterExpression, FilterOptions } from '../utils/validation';
+} from "./text-normalizer";
+import type { FilterExpression, FilterOptions } from "../utils/validation";
 
 // Re-export types for convenience
 export type { FilterExpression, FilterOptions };
 
 /**
  * Execute filter expressions on in-memory transaction array.
- * 
+ *
  * @param transactions - Array of loaded transactions
  * @param filters - Array of filter expressions (combined with AND/OR logic)
  * @param options - Normalization options
@@ -27,32 +27,32 @@ export type { FilterExpression, FilterOptions };
 export function executeFilters<T extends Record<string, unknown>>(
   transactions: T[],
   filters: FilterExpression[],
-  options: FilterOptions = {}
+  options: FilterOptions = {},
 ): T[] {
   const startTime = performance.now();
-  
+
   if (filters.length === 0) {
     return transactions;
   }
 
-  const filteredResults = transactions.filter(transaction => {
+  const filteredResults = transactions.filter((transaction) => {
     let result = true;
-    let currentLogicalOp: 'AND' | 'OR' = 'AND';
+    let currentLogicalOp: "AND" | "OR" = "AND";
 
     for (const filter of filters) {
       const matches = matchesFilterExpression(transaction, filter, options);
 
-      if (currentLogicalOp === 'AND') {
+      if (currentLogicalOp === "AND") {
         result = result && matches;
       } else {
         result = result || matches;
       }
 
       // Set logical operator for next iteration
-      currentLogicalOp = filter.logicalOperator || 'AND';
+      currentLogicalOp = filter.logicalOperator || "AND";
 
       // Short-circuit optimization
-      if (!result && currentLogicalOp === 'AND') {
+      if (!result && currentLogicalOp === "AND") {
         return false;
       }
     }
@@ -61,12 +61,16 @@ export function executeFilters<T extends Record<string, unknown>>(
   });
 
   const executionTime = performance.now() - startTime;
-  
+
   // Performance logging (warn if >100ms)
   if (executionTime > 100) {
-    console.warn(`[FilterEngine] Slow filter execution: ${executionTime.toFixed(2)}ms for ${filters.length} filters on ${transactions.length} transactions`);
+    console.warn(
+      `[FilterEngine] Slow filter execution: ${executionTime.toFixed(2)}ms for ${filters.length} filters on ${transactions.length} transactions`,
+    );
   } else {
-    console.log(`[FilterEngine] Filter execution: ${executionTime.toFixed(2)}ms, ${transactions.length} → ${filteredResults.length} transactions`);
+    console.log(
+      `[FilterEngine] Filter execution: ${executionTime.toFixed(2)}ms, ${transactions.length} → ${filteredResults.length} transactions`,
+    );
   }
 
   return filteredResults;
@@ -74,7 +78,7 @@ export function executeFilters<T extends Record<string, unknown>>(
 
 /**
  * Apply single filter expression to transactions.
- * 
+ *
  * @param transactions - Array to filter
  * @param filter - Single filter expression
  * @param options - Normalization options
@@ -83,16 +87,16 @@ export function executeFilters<T extends Record<string, unknown>>(
 export function applyFilter<T extends Record<string, unknown>>(
   transactions: T[],
   filter: FilterExpression,
-  options: FilterOptions = {}
+  options: FilterOptions = {},
 ): T[] {
-  return transactions.filter(transaction => 
-    matchesFilterExpression(transaction, filter, options)
+  return transactions.filter((transaction) =>
+    matchesFilterExpression(transaction, filter, options),
   );
 }
 
 /**
  * Check if transaction matches filter expression with smart text matching.
- * 
+ *
  * @param transaction - Transaction to test
  * @param filter - Filter expression
  * @param options - Normalization options
@@ -101,9 +105,15 @@ export function applyFilter<T extends Record<string, unknown>>(
 function matchesFilterExpression<T extends Record<string, unknown>>(
   transaction: T,
   filter: FilterExpression,
-  options: FilterOptions = {}
+  options: FilterOptions = {},
 ): boolean {
-  const { field, operator, value, matchStrategy = 'normalized', fuzzyThreshold = 2 } = filter;
+  const {
+    field,
+    operator,
+    value,
+    matchStrategy = "normalized",
+    fuzzyThreshold = 2,
+  } = filter;
   const fieldValue = transaction[field];
 
   // Handle null/undefined
@@ -115,9 +125,12 @@ function matchesFilterExpression<T extends Record<string, unknown>>(
   const normOptions: NormalizationOptions = {
     caseSensitive: false,
     trimWhitespace: true,
-    matchStrategy: matchStrategy === 'normalized' ? 'contains' : 
-                   matchStrategy === 'case-insensitive' ? 'contains' : 
-                   matchStrategy,
+    matchStrategy:
+      matchStrategy === "normalized"
+        ? "contains"
+        : matchStrategy === "case-insensitive"
+          ? "contains"
+          : matchStrategy,
     removeDiacritics: options.removeDiacritics,
     synonyms: options.synonyms,
     fuzzyThreshold,
@@ -125,20 +138,23 @@ function matchesFilterExpression<T extends Record<string, unknown>>(
 
   // Handle different operators
   switch (operator) {
-    case 'equals': {
-      if (typeof value === 'string' && typeof fieldValue === 'string') {
+    case "equals": {
+      if (typeof value === "string" && typeof fieldValue === "string") {
         // Check synonyms first
         if (checkSynonyms(fieldValue, value, options.synonyms)) {
           return true;
         }
         // Fall back to normalized comparison
-        return normalizeText(fieldValue, normOptions) === normalizeText(value, normOptions);
+        return (
+          normalizeText(fieldValue, normOptions) ===
+          normalizeText(value, normOptions)
+        );
       }
       return fieldValue === value;
     }
 
-    case 'contains': {
-      if (typeof value === 'string') {
+    case "contains": {
+      if (typeof value === "string") {
         const fieldStr = String(fieldValue);
         // Check synonyms first
         if (checkSynonyms(fieldStr, value, options.synonyms)) {
@@ -149,15 +165,18 @@ function matchesFilterExpression<T extends Record<string, unknown>>(
       return String(fieldValue).includes(String(value));
     }
 
-    case 'startsWith': {
-      if (typeof value === 'string') {
+    case "startsWith": {
+      if (typeof value === "string") {
         const fieldStr = String(fieldValue);
-        return textMatchesFilter(fieldStr, value, { ...normOptions, matchStrategy: 'startsWith' });
+        return textMatchesFilter(fieldStr, value, {
+          ...normOptions,
+          matchStrategy: "startsWith",
+        });
       }
       return String(fieldValue).startsWith(String(value));
     }
 
-    case 'greaterThan': {
+    case "greaterThan": {
       const numValue = Number(value);
       const numField = Number(fieldValue);
       if (Number.isNaN(numValue) || Number.isNaN(numField)) {
@@ -166,7 +185,7 @@ function matchesFilterExpression<T extends Record<string, unknown>>(
       return numField > numValue;
     }
 
-    case 'lessThan': {
+    case "lessThan": {
       const numValue = Number(value);
       const numField = Number(fieldValue);
       if (Number.isNaN(numValue) || Number.isNaN(numField)) {
@@ -175,7 +194,7 @@ function matchesFilterExpression<T extends Record<string, unknown>>(
       return numField < numValue;
     }
 
-    case 'between': {
+    case "between": {
       if (!Array.isArray(value) || value.length !== 2) {
         return false;
       }
@@ -188,20 +207,23 @@ function matchesFilterExpression<T extends Record<string, unknown>>(
       return numField >= min && numField <= max;
     }
 
-    case 'in': {
+    case "in": {
       if (!Array.isArray(value)) {
         return false;
       }
-      
+
       // Check if fieldValue matches any value in the array
-      return value.some(v => {
-        if (typeof v === 'string' && typeof fieldValue === 'string') {
+      return value.some((v) => {
+        if (typeof v === "string" && typeof fieldValue === "string") {
           // Check synonyms
           if (checkSynonyms(fieldValue, v, options.synonyms)) {
             return true;
           }
           // Check normalized match
-          return normalizeText(fieldValue, normOptions) === normalizeText(v, normOptions);
+          return (
+            normalizeText(fieldValue, normOptions) ===
+            normalizeText(v, normOptions)
+          );
         }
         return fieldValue === v;
       });

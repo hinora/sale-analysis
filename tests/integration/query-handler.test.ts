@@ -3,45 +3,45 @@
  * Tests query intent classification with 8 real-world questions
  */
 
-import { QueryHandler } from '@/lib/ai/query-handler';
+import { QueryHandler } from "@/lib/ai/query-handler";
 
 // Mock session data
 const mockSession = {
-  id: 'test-session',
+  id: "test-session",
   transactionData: [
     {
-      companyName: 'ABC Corporation',
-      importCountry: 'United States',
-      categoryName: 'Electronics',
+      companyName: "ABC Corporation",
+      importCountry: "United States",
+      categoryName: "Electronics",
       totalValueUSD: 50000,
       quantity: 100,
-      unit: 'units',
+      unit: "units",
       unitPriceUSD: 500,
-      date: '2024-01-15',
+      date: "2024-01-15",
     },
     {
-      companyName: 'XYZ Import Ltd',
-      importCountry: 'Vietnam',
-      categoryName: 'Machinery',
+      companyName: "XYZ Import Ltd",
+      importCountry: "Vietnam",
+      categoryName: "Machinery",
       totalValueUSD: 75000,
       quantity: 50,
-      unit: 'units',
+      unit: "units",
       unitPriceUSD: 1500,
-      date: '2024-02-20',
+      date: "2024-02-20",
     },
     {
-      companyName: 'Global Trading Co',
-      importCountry: 'China',
-      categoryName: 'Electronics',
+      companyName: "Global Trading Co",
+      importCountry: "China",
+      categoryName: "Electronics",
       totalValueUSD: 120000,
       quantity: 200,
-      unit: 'units',
+      unit: "units",
       unitPriceUSD: 600,
-      date: '2024-03-10',
+      date: "2024-03-10",
     },
   ],
   conversationHistory: [],
-  status: 'ready' as const,
+  status: "ready" as const,
   createdAt: new Date(),
   lastAccessedAt: new Date(),
   expiresAt: new Date(Date.now() + 30 * 60 * 1000),
@@ -51,192 +51,193 @@ const mockSession = {
   },
 };
 
-describe('QueryHandler - Intent Classification', () => {
+describe("QueryHandler - Intent Classification", () => {
   let queryHandler: QueryHandler;
 
   beforeEach(() => {
-    queryHandler = new QueryHandler('test-model');
+    queryHandler = new QueryHandler("test-model");
   });
 
-  describe('Real-world question mapping', () => {
+  describe("Real-world question mapping", () => {
     test('Question 1: "Which company imports the most?" → aggregation', async () => {
       const intent = await queryHandler.classifyQueryIntent(
-        'Which company imports the most?'
+        "Which company imports the most?",
       );
 
-      expect(intent.type).toBe('aggregation');
+      expect(intent.type).toBe("aggregation");
       expect(intent.confidence).toBeGreaterThanOrEqual(0.7);
       expect(intent.aggregations).toBeDefined();
     });
 
     test('Question 2: "Show me top 5 transactions" → detail', async () => {
       const intent = await queryHandler.classifyQueryIntent(
-        'Show me top 5 transactions'
+        "Show me top 5 transactions",
       );
 
-      expect(intent.type).toBe('detail');
+      expect(intent.type).toBe("detail");
       expect(intent.limit).toBe(5);
       expect(intent.confidence).toBeGreaterThanOrEqual(0.6);
     });
 
     test('Question 3: "What is the import trend over time?" → trend', async () => {
       const intent = await queryHandler.classifyQueryIntent(
-        'What is the import trend over time?'
+        "What is the import trend over time?",
       );
 
-      expect(intent.type).toBe('trend');
+      expect(intent.type).toBe("trend");
       expect(intent.confidence).toBeGreaterThanOrEqual(0.7);
     });
 
     test('Question 4: "Compare US and China imports" → comparison', async () => {
       const intent = await queryHandler.classifyQueryIntent(
-        'Compare US and China imports'
+        "Compare US and China imports",
       );
 
-      expect(intent.type).toBe('comparison');
+      expect(intent.type).toBe("comparison");
       expect(intent.confidence).toBeGreaterThanOrEqual(0.7);
     });
 
     test('Question 5: "Which companies should I export to in the US?" → recommendation', async () => {
       const intent = await queryHandler.classifyQueryIntent(
-        'Which companies should I export to in the US?'
+        "Which companies should I export to in the US?",
       );
 
-      expect(intent.type).toBe('recommendation');
+      expect(intent.type).toBe("recommendation");
       expect(intent.confidence).toBeGreaterThanOrEqual(0.6);
     });
 
     test('Question 6: "Top 10 companies by import value" → ranking', async () => {
       const intent = await queryHandler.classifyQueryIntent(
-        'Top 10 companies by import value'
+        "Top 10 companies by import value",
       );
 
-      expect(intent.type).toBe('ranking');
+      expect(intent.type).toBe("ranking");
       expect(intent.limit).toBe(10);
       expect(intent.confidence).toBeGreaterThanOrEqual(0.7);
     });
 
     test('Question 7: "Tổng giá trị nhập khẩu là bao nhiêu?" → aggregation (Vietnamese)', async () => {
       const intent = await queryHandler.classifyQueryIntent(
-        'Tổng giá trị nhập khẩu là bao nhiêu?'
+        "Tổng giá trị nhập khẩu là bao nhiêu?",
       );
 
-      expect(intent.type).toBe('aggregation');
+      expect(intent.type).toBe("aggregation");
       expect(intent.confidence).toBeGreaterThanOrEqual(0.7);
     });
 
     test('Question 8: "List all electronics imports" → detail', async () => {
       const intent = await queryHandler.classifyQueryIntent(
-        'List all electronics imports'
+        "List all electronics imports",
       );
 
-      expect(intent.type).toBe('detail');
+      expect(intent.type).toBe("detail");
       expect(intent.confidence).toBeGreaterThanOrEqual(0.6);
     });
   });
 
-  describe('Aggregation spec extraction', () => {
+  describe("Aggregation spec extraction", () => {
     test('Extracts count operation from "How many companies?"', () => {
       const specs = queryHandler.extractAggregationSpecs(
-        'How many companies are there?'
+        "How many companies are there?",
       );
 
       expect(specs).toHaveLength(1);
-      expect(specs[0].operation).toBe('count');
-      expect(specs[0].field).toBe('companyName');
+      expect(specs[0].operation).toBe("count");
+      expect(specs[0].field).toBe("companyName");
     });
 
     test('Extracts sum operation from "Total value"', () => {
       const specs = queryHandler.extractAggregationSpecs(
-        'What is the total value of imports?'
+        "What is the total value of imports?",
       );
 
       expect(specs).toHaveLength(1);
-      expect(specs[0].operation).toBe('sum');
-      expect(specs[0].field).toBe('totalValueUSD');
+      expect(specs[0].operation).toBe("sum");
+      expect(specs[0].field).toBe("totalValueUSD");
     });
 
     test('Extracts average operation from "Average price"', () => {
       const specs = queryHandler.extractAggregationSpecs(
-        'What is the average price?'
+        "What is the average price?",
       );
 
       expect(specs).toHaveLength(1);
-      expect(specs[0].operation).toBe('average');
+      expect(specs[0].operation).toBe("average");
     });
 
     test('Extracts groupBy from "by company"', () => {
       const specs = queryHandler.extractAggregationSpecs(
-        'Total imports by company'
+        "Total imports by company",
       );
 
       expect(specs).toHaveLength(1);
-      expect(specs[0].groupBy).toBe('companyName');
+      expect(specs[0].groupBy).toBe("companyName");
     });
 
     test('Extracts groupBy from "by category"', () => {
-      const specs = queryHandler.extractAggregationSpecs(
-        'Sum by category'
-      );
+      const specs = queryHandler.extractAggregationSpecs("Sum by category");
 
       expect(specs).toHaveLength(1);
-      expect(specs[0].groupBy).toBe('categoryName');
+      expect(specs[0].groupBy).toBe("categoryName");
     });
   });
 
-  describe('Filter extraction', () => {
-    test('Extracts country filter from question', async () => {
+  describe("Filter extraction", () => {
+    test("Extracts country filter from question", async () => {
       const intent = await queryHandler.classifyQueryIntent(
-        'Show me US companies'
+        "Show me US companies",
       );
 
       expect(intent.filters.length).toBeGreaterThan(0);
       const countryFilter = intent.filters.find(
-        (f) => f.field === 'importCountry'
+        (f) => f.field === "importCountry",
       );
       expect(countryFilter).toBeDefined();
     });
 
-    test('Extracts category filter from question', async () => {
+    test("Extracts category filter from question", async () => {
       const intent = await queryHandler.classifyQueryIntent(
-        'List electronics imports'
+        "List electronics imports",
       );
 
       expect(intent.filters.length).toBeGreaterThan(0);
       const categoryFilter = intent.filters.find(
-        (f) => f.field === 'categoryName'
+        (f) => f.field === "categoryName",
       );
       expect(categoryFilter).toBeDefined();
     });
   });
 
-  describe('Order by and limit extraction', () => {
+  describe("Order by and limit extraction", () => {
     test('Extracts limit from "top 5"', async () => {
-      const intent = await queryHandler.classifyQueryIntent('Show top 5 companies');
+      const intent = await queryHandler.classifyQueryIntent(
+        "Show top 5 companies",
+      );
 
       expect(intent.limit).toBe(5);
     });
 
     test('Extracts limit from "10 companies"', async () => {
-      const intent = await queryHandler.classifyQueryIntent('List 10 companies');
+      const intent =
+        await queryHandler.classifyQueryIntent("List 10 companies");
 
       expect(intent.limit).toBe(10);
     });
 
     test('Extracts descending order from "most"', async () => {
       const intent = await queryHandler.classifyQueryIntent(
-        'Which imports the most?'
+        "Which imports the most?",
       );
 
-      expect(intent.orderBy).toBe('desc');
+      expect(intent.orderBy).toBe("desc");
     });
 
     test('Extracts ascending order from "least"', async () => {
       const intent = await queryHandler.classifyQueryIntent(
-        'Which imports the least?'
+        "Which imports the least?",
       );
 
-      expect(intent.orderBy).toBe('asc');
+      expect(intent.orderBy).toBe("asc");
     });
   });
 });
