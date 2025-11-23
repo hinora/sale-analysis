@@ -104,11 +104,32 @@ export default async function handler(
       queryIntent: result.queryIntent,
     });
   } catch (error) {
-    console.error("[AI Query] Error:", error);
+    // Update status to error
+    if (req.body.sessionId) {
+      updateSessionStatus(req.body.sessionId, "error");
+    }
+
+    // Log detailed error information
+    console.error("[AI Query] Error processing query:", {
+      sessionId: req.body.sessionId,
+      question: req.body.question?.substring(0, 100),
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Return user-friendly error message
+    const errorMessage = error instanceof Error 
+      ? error.message.includes('timeout') 
+        ? 'Query processing timed out. Please try with a simpler question or smaller dataset.'
+        : error.message.includes('Ollama')
+        ? 'AI service is currently unavailable. Please try again later.'
+        : error.message
+      : "Failed to process query";
+
     return res.status(500).json({
       success: false,
-      message:
-        error instanceof Error ? error.message : "Failed to process query",
+      message: errorMessage,
     });
   }
 }

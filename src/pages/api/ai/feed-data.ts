@@ -157,10 +157,32 @@ export default async function handler(
       dataSize: updatedSession.metadata.dataSize,
     });
   } catch (error) {
-    console.error("[AI Feed Data] Error:", error);
+    // Log detailed error information
+    console.error("[AI Feed Data] Error loading data:", {
+      sessionId: req.body.sessionId,
+      filterKeys: req.body.filters ? Object.keys(req.body.filters) : [],
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Update session status to error if session exists
+    if (req.body.sessionId) {
+      updateSessionStatus(req.body.sessionId, "error");
+    }
+
+    // Return user-friendly error message
+    const errorMessage = error instanceof Error 
+      ? error.message.includes('database')
+        ? 'Database connection failed. Please try again later.'
+        : error.message.includes('limit')
+        ? `Transaction limit exceeded. Maximum ${MAX_TRANSACTIONS} transactions allowed.`
+        : error.message
+      : "Failed to load transaction data";
+
     return res.status(500).json({
       success: false,
-      message: error instanceof Error ? error.message : "Failed to feed data",
+      message: errorMessage,
     });
   }
 }

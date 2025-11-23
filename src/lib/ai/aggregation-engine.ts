@@ -52,7 +52,18 @@ export function computeAggregations(
   transactions: Array<Record<string, unknown>>,
   specs: AggregationSpec[],
 ): AggregationResult[] {
-  return specs.map((spec) => computeAggregation(transactions, spec));
+  const startTime = performance.now();
+  const results = specs.map((spec) => computeAggregation(transactions, spec));
+  const totalTime = performance.now() - startTime;
+  
+  // Performance logging (warn if >100ms)
+  if (totalTime > 100) {
+    console.warn(`[AggregationEngine] Slow aggregation: ${totalTime.toFixed(2)}ms for ${specs.length} specs on ${transactions.length} transactions`);
+  } else {
+    console.log(`[AggregationEngine] Aggregation execution: ${totalTime.toFixed(2)}ms for ${specs.length} specs`);
+  }
+  
+  return results;
 }
 
 /**

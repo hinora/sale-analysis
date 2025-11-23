@@ -7,7 +7,7 @@
 
 import { OllamaClient } from "./ollama-client";
 import type { AISession } from "./session-manager";
-import { updateFilterView } from "./session-manager";
+import { updateFilterView, addFilterLog } from "./session-manager";
 import { executeFilters, type FilterExpression } from './filter-engine';
 import { FilterExpressionSchema } from '../utils/validation';
 import { computeAggregations, formatAggregationForAI, type AggregationSpec } from './aggregation-engine';
@@ -497,14 +497,25 @@ Filters:`,
         // Update session filter view for iterative refinement (US2)
         updateFilterView(session.id, filteredTransactions, filters);
 
-        // Log each filter execution
+        // Log each filter execution with metadata (FR-012)
         filters.forEach((filter) => {
-          filterLogs.push({
+          const filterLog = {
             timestamp: new Date().toISOString(),
             filterExpression: filter,
             matchedCount: filteredTransactions.length,
             executionTimeMs: filterExecutionTime,
-          });
+          };
+          
+          filterLogs.push(filterLog);
+          
+          // Persist to session context state
+          addFilterLog(
+            session.id,
+            filter,
+            filteredTransactions.length,
+            session.transactionData.length,
+            filterExecutionTime
+          );
         });
 
         console.log(`[QueryHandler] Applied ${filters.length} filters: ${session.transactionData.length} → ${filteredTransactions.length} transactions (${filterExecutionTime}ms)`);

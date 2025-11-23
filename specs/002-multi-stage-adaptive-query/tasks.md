@@ -99,7 +99,7 @@
 - [X] T028 [US3] Add routing logic in query-handler.ts: if type=aggregation → use aggregations, if type=detail → use full transaction details
 - [X] T029 [US3] Implement extractAggregationSpecs() function in query-handler.ts to generate AggregationSpec[] from query intent
 - [X] T030 [US3] Map 8 real-world questions to query types in query-handler.ts: "Which company imports most?" → aggregation, "Show top 5" → detail, "Import trend over time?" → trend, "Export to US suggest companies?" → recommendation
-- [ ] T031 [P] [US3] Create integration test `tests/integration/query-handler.test.ts` with test cases for all 8 real-world questions
+- [X] T031 [P] [US3] Create integration test `tests/integration/query-handler.test.ts` with test cases for all 8 real-world questions
 
 **Checkpoint**: User Story 3 complete - query intent classification working, routes to optimal data strategy
 
@@ -143,8 +143,8 @@
 - [X] T046 [P] [US5] Implement formatAggregationForAI() function in aggregation-engine.ts (token-optimized text output: 200 bytes vs 500KB)
 - [X] T047 [US5] Integrate aggregation-engine into `src/pages/api/ai/chat.ts` (if query type=aggregation, compute aggregations instead of loading full transactions)
 - [X] T048 [US5] Add aggregation result caching to session-manager.ts ContextState (cache gets rebuilt on filter changes)
-- [ ] T049 [P] [US5] Create API route `src/pages/api/ai/aggregate.ts` with POST handler for explicit aggregation requests
-- [ ] T050 [P] [US5] Create unit test `tests/unit/aggregation-engine.test.ts` with test cases for: group-by, sum, count, top-N, time-series, cache performance (<100ms for 10K transactions)
+- [X] T049 [P] [US5] Create API route `src/pages/api/ai/aggregate.ts` with POST handler for explicit aggregation requests
+- [X] T050 [P] [US5] Create unit test `tests/unit/aggregation-engine.test.ts` with test cases for: group-by, sum, count, top-N, time-series, cache performance (<100ms for 10K transactions)
 
 **Checkpoint**: User Story 5 complete - in-memory aggregations working, 80% token reduction achieved
 
@@ -174,12 +174,12 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T058 [P] Add FilterLog entity persistence in session-manager.ts appliedFilters array
-- [ ] T059 [P] Implement filter operation metadata tracking (FR-012: matched count, total count, execution time, criteria)
-- [ ] T060 [P] Add error handling for all API routes: filter.ts, aggregate.ts, chat.ts
+- [X] T058 [P] Add FilterLog entity persistence in session-manager.ts appliedFilters array
+- [X] T059 [P] Implement filter operation metadata tracking (FR-012: matched count, total count, execution time, criteria)
+- [X] T060 [P] Add error handling for all API routes: filter.ts, aggregate.ts, chat.ts
 - [ ] T061 [P] Modify `src/pages/api/ai/feed-data.ts` to support current session data loading
-- [ ] T062 Add performance logging for filter operations (track sub-100ms target compliance)
-- [ ] T063 Add performance logging for aggregation operations (track sub-100ms target compliance)
+- [X] T062 Add performance logging for filter operations (track sub-100ms target compliance)
+- [X] T063 Add performance logging for aggregation operations (track sub-100ms target compliance)
 - [ ] T064 [P] Update `README.md` with new feature documentation: smart filtering capabilities, in-memory aggregations
 - [ ] T065 [P] Create or update `DOCKER.md` if deployment configuration changes needed
 - [ ] T066 Run quickstart.md validation: install dependencies, verify synonym config, test text normalization, test filter engine, test aggregations

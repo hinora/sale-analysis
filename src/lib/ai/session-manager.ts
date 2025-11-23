@@ -27,6 +27,14 @@ export interface ContextState {
   iterationCount: number;
   lastFilterTimestamp?: Date;
   aggregationCache?: AggregationCache;
+  filterLogs: Array<{
+    timestamp: string;
+    filterExpression: FilterExpression;
+    matchedCount: number;
+    totalCount: number;
+    executionTimeMs: number;
+    criteria: string;
+  }>;
 }
 
 export interface AISession {
@@ -234,6 +242,7 @@ export function updateFilterView(
       currentFilterView: session.transactionData,
       appliedFilters: [],
       iterationCount: 0,
+      filterLogs: [],
     };
   }
 
@@ -255,6 +264,53 @@ export function updateFilterView(
   console.log(
     `[SessionManager] Updated filter view: ${session.transactionData.length} → ${filteredTransactions.length} transactions (iteration ${session.contextState.iterationCount}/10)`
   );
+
+  return session;
+}
+
+/**
+ * Add filter log entry to session context state
+ */
+export function addFilterLog(
+  sessionId: string,
+  filterExpression: FilterExpression,
+  matchedCount: number,
+  totalCount: number,
+  executionTimeMs: number,
+): AISession | null {
+  const session = getSession(sessionId);
+
+  if (!session) {
+    return null;
+  }
+
+  // Initialize contextState if not exists
+  if (!session.contextState) {
+    session.contextState = {
+      loadedTransactions: session.transactionData,
+      currentFilterView: session.transactionData,
+      appliedFilters: [],
+      iterationCount: 0,
+      filterLogs: [],
+    };
+  }
+
+  // Create criteria string for display
+  const criteria = `${filterExpression.field} ${filterExpression.operator} ${
+    Array.isArray(filterExpression.value)
+      ? `[${filterExpression.value.join(', ')}]`
+      : filterExpression.value
+  }`;
+
+  // Add filter log entry
+  session.contextState.filterLogs.push({
+    timestamp: new Date().toISOString(),
+    filterExpression,
+    matchedCount,
+    totalCount,
+    executionTimeMs,
+    criteria,
+  });
 
   return session;
 }

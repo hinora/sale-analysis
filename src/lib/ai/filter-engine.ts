@@ -29,11 +29,13 @@ export function executeFilters<T extends Record<string, unknown>>(
   filters: FilterExpression[],
   options: FilterOptions = {}
 ): T[] {
+  const startTime = performance.now();
+  
   if (filters.length === 0) {
     return transactions;
   }
 
-  return transactions.filter(transaction => {
+  const filteredResults = transactions.filter(transaction => {
     let result = true;
     let currentLogicalOp: 'AND' | 'OR' = 'AND';
 
@@ -57,6 +59,17 @@ export function executeFilters<T extends Record<string, unknown>>(
 
     return result;
   });
+
+  const executionTime = performance.now() - startTime;
+  
+  // Performance logging (warn if >100ms)
+  if (executionTime > 100) {
+    console.warn(`[FilterEngine] Slow filter execution: ${executionTime.toFixed(2)}ms for ${filters.length} filters on ${transactions.length} transactions`);
+  } else {
+    console.log(`[FilterEngine] Filter execution: ${executionTime.toFixed(2)}ms, ${transactions.length} → ${filteredResults.length} transactions`);
+  }
+
+  return filteredResults;
 }
 
 /**
