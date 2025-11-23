@@ -40,7 +40,7 @@ export class AIClassifier {
     } catch (error) {
       console.error("[AIClassifier] Classification error:", error);
       return {
-        category: "Other",
+        category: "Khác",
         confidence: 0,
         reasoning: "Classification failed",
       };
@@ -78,29 +78,29 @@ export class AIClassifier {
    * Build classification prompt
    */
   private buildClassificationPrompt(goodsName: string): string {
-    return `You are a product classification expert. Classify the following export goods into one of these categories:
+    return `Bạn là chuyên gia phân loại sản phẩm. Hãy phân loại hàng hóa xuất khẩu sau vào một trong các danh mục này:
 
-Categories:
-- Frozen Seafood (frozen shrimp, fish, squid, etc.)
-- Fresh Seafood (fresh fish, shellfish, etc.)
-- Agricultural Products (rice, coffee, fruits, vegetables, etc.)
-- Textiles & Garments (fabric, clothing, shoes, etc.)
-- Wood Products (furniture, lumber, plywood, etc.)
-- Electronics & Machinery (electronics, machines, equipment, etc.)
-- Chemicals & Plastics (chemicals, plastic products, rubber, etc.)
-- Food & Beverages (processed food, drinks, snacks, etc.)
-- Other (anything else)
+Danh mục:
+- Thủy sản đông lạnh (tôm đông lạnh, cá, mực, v.v.)
+- Thủy sản tươi sống (cá tươi, hải sản, v.v.)
+- Nông sản (gạo, cà phê, trái cây, rau củ, v.v.)
+- Dệt may & Hàng thời trang (vải, quần áo, giày dép, v.v.)
+- Sản phẩm gỗ (đồ gỗ, gỗ xẻ, ván ép, v.v.)
+- Điện tử & Máy móc (điện tử, máy móc, thiết bị, v.v.)
+- Hóa chất & Nhựa (hóa chất, sản phẩm nhựa, cao su, v.v.)
+- Thực phẩm & Đồ uống (thực phẩm chế biến, đồ uống, snack, v.v.)
+- Khác (các mặt hàng khác)
 
-Goods name: "${goodsName}"
+Tên hàng hóa: "${goodsName}"
 
-Respond in JSON format with exactly this structure:
+Trả lời theo định dạng JSON với cấu trúc chính xác như sau:
 {
-  "category": "category name",
+  "category": "tên danh mục bằng tiếng Việt",
   "confidence": 0.0-1.0,
-  "reasoning": "brief explanation"
+  "reasoning": "giải thích ngắn gọn"
 }
 
-Classification:`;
+Phân loại:`;
   }
 
   /**
@@ -116,7 +116,7 @@ Classification:`;
 
       const parsed = JSON.parse(jsonMatch[0]);
       return {
-        category: parsed.category || "Other",
+        category: parsed.category || "Khác",
         confidence: parsed.confidence || 0.5,
         reasoning: parsed.reasoning || "",
       };
@@ -125,9 +125,9 @@ Classification:`;
       console.error("[AIClassifier] Response:", response);
 
       // Fallback: try to extract category from text
-      const categoryMatch = response.match(/category[:\s]+["']?(\w+[\w\s&]*)/i);
+      const categoryMatch = response.match(/category[:\s]+["']?([\w\sàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđĐ&]+)/i);
       return {
-        category: categoryMatch ? categoryMatch[1] : "Other",
+        category: categoryMatch ? categoryMatch[1].trim() : "Khác",
         confidence: 0.5,
         reasoning: "Parsed from text response",
       };
@@ -152,10 +152,10 @@ Classification:`;
       return category._id.toString();
     } catch (error) {
       console.error("[AIClassifier] Category creation error:", error);
-      // Return default "Other" category
+      // Return default "Khác" category
       const defaultCategory = await Category.findOneAndUpdate(
-        { name: "Other" },
-        { name: "Other", description: "Uncategorized products" },
+        { name: "Khác" },
+        { name: "Khác", description: "Sản phẩm chưa phân loại" },
         { upsert: true, new: true },
       );
       return defaultCategory._id.toString();

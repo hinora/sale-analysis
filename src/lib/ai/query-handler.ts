@@ -28,23 +28,23 @@ function formatTransactionDataForContext(
   // Format as structured data (use all transactions - already limited at feed time)
   const formatted = transactions
     .map((tx, index) => {
-      return `Transaction ${index + 1}:
-- Company: ${tx.companyName || "N/A"}
-- Company Address: ${tx.companyAddress || "N/A"}
-- Import Country: ${tx.importCountry || "N/A"}
-- Goods: ${tx.goodsName || "N/A"}
-- Category: ${tx.categoryName || "N/A"}
-- Quantity: ${tx.quantity || 0} ${tx.unit || ""}
-- Unit Price: $${tx.unitPriceUSD || 0}
-- Total Value: $${tx.totalValueUSD || 0}
-- Date: ${tx.date || "N/A"}
+      return `Giao dịch ${index + 1}:
+- Công ty: ${tx.companyName || "N/A"}
+- Địa chỉ công ty: ${tx.companyAddress || "N/A"}
+- Nước nhập khẩu: ${tx.importCountry || "N/A"}
+- Hàng hóa: ${tx.goodsName || "N/A"}
+- Danh mục: ${tx.categoryName || "N/A"}
+- Số lượng: ${tx.quantity || 0} ${tx.unit || ""}
+- Đơn giá: $${tx.unitPriceUSD || 0}
+- Tổng giá trị: $${tx.totalValueUSD || 0}
+- Ngày: ${tx.date || "N/A"}
 `;
     })
     .join("\n");
 
   const summary = `
-Dataset Summary:
-- Total transactions: ${transactions.length}
+Tóm tắt dữ liệu:
+- Tổng số giao dịch: ${transactions.length}
 `;
 
   return summary + "\n" + formatted;
@@ -54,24 +54,24 @@ Dataset Summary:
  * Build system prompt for grounded analysis
  */
 function buildSystemPrompt(transactionData: string): string {
-  return `You are an expert data analyst specializing in export/import trade data analysis. You have been provided with a dataset of export transactions.
+  return `Bạn là chuyên gia phân tích dữ liệu chuyên về phân tích dữ liệu thương mại xuất/nhập khẩu. Bạn được cung cấp một tập dữ liệu các giao dịch xuất khẩu.
 
-IMPORTANT RULES:
-1. Base your answers ONLY on the provided transaction data
-2. Always cite specific transactions when making claims (e.g., "Transaction 5 shows...")
-3. If the data doesn't contain information to answer the question, say "I cannot find this information in the provided data"
-4. Use precise numbers and avoid generalizations
-5. When calculating totals or averages, show your work
-6. Respond in Vietnamese when appropriate based on the question language
+QUY TẮC QUAN TRỌNG:
+1. Chỉ dựa trên dữ liệu giao dịch được cung cấp để trả lời
+2. Luôn trích dẫn các giao dịch cụ thể khi đưa ra nhận định (ví dụ: "Giao dịch 5 cho thấy...")
+3. Nếu dữ liệu không chứa thông tin để trả lời câu hỏi, hãy nói "Tôi không tìm thấy thông tin này trong dữ liệu được cung cấp"
+4. Sử dụng số liệu chính xác và tránh khái quát hóa
+5. Khi tính tổng hoặc trung bình, hãy trình bày các bước tính toán
+6. Luôn trả lời bằng tiếng Việt
 
-TRANSACTION DATA:
+DỮ LIỆU GIAO DỊCH:
 ${transactionData}
 
-When answering questions:
-- Start with a direct answer
-- Provide supporting evidence with transaction citations
-- Include relevant statistics (totals, averages, percentages)
-- Be concise but thorough
+Khi trả lời câu hỏi:
+- Bắt đầu với câu trả lời trực tiếp
+- Cung cấp bằng chứng hỗ trợ với trích dẫn giao dịch
+- Bao gồm các thống kê liên quan (tổng, trung bình, phần trăm)
+- Ngắn gọn nhưng đầy đủ
 `;
 }
 
@@ -169,16 +169,16 @@ export class QueryHandler {
       const conversationContext = session.conversationHistory
         .map(
           (msg) =>
-            `${msg.role === "user" ? "Question" : "Answer"}: ${msg.content}`,
+            `${msg.role === "user" ? "Câu hỏi" : "Trả lời"}: ${msg.content}`,
         )
         .join("\n\n");
 
       // Combine system prompt, conversation history, and current question
       const fullPrompt = `${systemPrompt}
 
-${conversationContext ? `Previous conversation:\n${conversationContext}\n\n` : ""}Current question: ${userQuestion}
+${conversationContext ? `Cuộc hội thoại trước:\n${conversationContext}\n\n` : ""}Câu hỏi hiện tại: ${userQuestion}
 
-Answer:`;
+Trả lời:`;
 
       // Query Ollama using generate API
       const response = await this.ollamaClient.generate({

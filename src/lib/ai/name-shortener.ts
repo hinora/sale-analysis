@@ -99,18 +99,18 @@ export class AINameShortener {
    * Build shortening prompt
    */
   private buildShorteningPrompt(goodsName: string): string {
-    return `You are a product name editor. Create a concise, clear version of this product name while preserving key information.
+    return `Bạn là trình biên tập tên sản phẩm. Hãy tạo phiên bản ngắn gọn, rõ ràng của tên sản phẩm này trong khi vẫn giữ thông tin quan trọng.
 
-Rules:
-- Maximum ${this.maxLength} characters
-- Keep essential product details (type, specification, key features)
-- Remove redundant words and descriptions
-- Use standard abbreviations when appropriate
-- Maintain clarity and searchability
+Quy tắc:
+- Tối đa ${this.maxLength} ký tự
+- Giữ các chi tiết sản phẩm thiết yếu (loại, thông số kỹ thuật, tính năng chính)
+- Loại bỏ các từ và mô tả dư thừa
+- Sử dụng viết tắt chuẩn khi thích hợp
+- Duy trì tính rõ ràng và khả năng tìm kiếm
 
-Original name: "${goodsName}"
+Tên gốc: "${goodsName}"
 
-Provide ONLY the shortened name, nothing else:`;
+Chỉ cung cấp tên đã rút gọn, không có gì khác:`;
   }
 
   /**
