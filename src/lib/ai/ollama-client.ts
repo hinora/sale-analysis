@@ -73,7 +73,7 @@ export class OllamaClient {
           temperature: options.temperature ?? 0.7,
           top_p: options.top_p ?? 0.9,
           top_k: options.top_k ?? 40,
-          num_ctx: 131072, // 128K context window for deepseek-r1 models
+          num_ctx: 65536, // 64K context window for deepseek-r1:8b (native limit)
         },
       }),
     });
