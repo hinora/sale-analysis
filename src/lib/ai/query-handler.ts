@@ -103,7 +103,7 @@ function formatTransactionDataForContext(
   // Use compact CSV-like format instead of verbose text
   const formatted = transactions
     .map((tx, index) => {
-      return `${index + 1}|${tx.companyName}|${tx.importCountry}|${tx.categoryName}|${tx.quantity} ${tx.unit}|$${tx.unitPriceUSD}|$${tx.totalValueUSD}|${tx.date}`;
+      return `${index + 1}|${tx.declarationNumber}|${tx.date}|${tx.companyName}|${tx.companyAddress}|${tx.importCountry}|${tx.goodsName}|${tx.goodsShortName}|${tx.categoryName}|${tx.quantity} ${tx.unit}|$${tx.unitPriceUSD}|$${tx.totalValueUSD}`;
     })
     .join("\n");
 
@@ -116,7 +116,7 @@ TÓM TẮT DỮ LIỆU:
 - Số nước: ${stats.countries.size}
 - Khoảng thời gian: ${stats.dateRange.earliest?.toISOString().split("T")[0]} đến ${stats.dateRange.latest?.toISOString().split("T")[0]}
 
-ĐỊNH DẠNG DỮ LIỆU: STT|Công ty|Nước|Danh mục|Số lượng|Đơn giá|Tổng giá trị|Ngày
+ĐỊNH DẠNG DỮ LIỆU: STT|Số tờ khai|Ngày|Công ty|Địa chỉ công ty|Nước nhập khẩu|Tên hàng hóa|Tên rút gọn|Danh mục|Số lượng|Đơn giá|Tổng giá trị
 
 DỮ LIỆU GIAO DỊCH:
 ${formatted}
