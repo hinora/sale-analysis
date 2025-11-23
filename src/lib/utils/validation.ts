@@ -105,3 +105,55 @@ export type GoodsFilter = z.infer<typeof GoodsFilterSchema>;
 export type AISessionCreate = z.infer<typeof AISessionCreateSchema>;
 export type AIMessage = z.infer<typeof AIMessageSchema>;
 export type CSVUpload = z.infer<typeof CSVUploadSchema>;
+
+// ============================================================================
+// Multi-Stage Adaptive Query System Schemas (Feature 002)
+// ============================================================================
+
+// Filter expression schema
+export const FilterExpressionSchema = z.object({
+  field: z.string().min(1),
+  operator: z.enum(['equals', 'contains', 'startsWith', 'greaterThan', 'lessThan', 'between', 'in']),
+  value: z.union([z.string(), z.number(), z.array(z.string())]),
+  matchStrategy: z.enum(['exact', 'fuzzy', 'case-insensitive', 'normalized']).optional(),
+  fuzzyThreshold: z.number().min(0).max(5).optional(),
+  logicalOperator: z.enum(['AND', 'OR']).optional(),
+});
+
+// Query intent schema
+export const QueryIntentSchema = z.object({
+  type: z.enum(['aggregation', 'detail', 'trend', 'comparison', 'recommendation', 'ranking']),
+  filters: z.array(FilterExpressionSchema),
+  aggregations: z.array(z.object({
+    field: z.string(),
+    operation: z.enum(['count', 'sum', 'average', 'min', 'max']),
+    groupBy: z.string().optional(),
+  })).optional(),
+  limit: z.number().int().positive().optional(),
+  orderBy: z.object({
+    field: z.string(),
+    direction: z.enum(['asc', 'desc']),
+  }).optional(),
+  confidence: z.number().min(0).max(1),
+});
+
+// Aggregation spec schema
+export const AggregationSpecSchema = z.object({
+  field: z.string().min(1),
+  operation: z.enum(['count', 'sum', 'average', 'min', 'max']),
+  groupBy: z.string().optional(),
+});
+
+// Filter options schema
+export const FilterOptionsSchema = z.object({
+  removeDiacritics: z.boolean().optional(),
+  synonyms: z.record(z.string(), z.array(z.string())).optional(),
+  logExecution: z.boolean().optional(),
+});
+
+// Export types for multi-stage query system
+export type FilterExpression = z.infer<typeof FilterExpressionSchema>;
+export type QueryIntent = z.infer<typeof QueryIntentSchema>;
+export type AggregationSpec = z.infer<typeof AggregationSpecSchema>;
+export type FilterOptions = z.infer<typeof FilterOptionsSchema>;
+

@@ -5,6 +5,7 @@ import {
   updateSessionStatus,
 } from "@/lib/ai/session-manager";
 import { queryHandler } from "@/lib/ai/query-handler";
+import type { FilterLog, QueryIntent } from "@/lib/ai/query-handler";
 
 /**
  * Query response
@@ -15,6 +16,8 @@ interface QueryResponse {
   citations?: string[];
   confidence?: "high" | "medium" | "low";
   processingTime?: number;
+  filterLogs?: FilterLog[];
+  queryIntent?: QueryIntent;
   message?: string;
 }
 
@@ -97,6 +100,8 @@ export default async function handler(
       citations: result.citations,
       confidence: result.confidence,
       processingTime: result.processingTime,
+      filterLogs: result.filterLogs,
+      queryIntent: result.queryIntent,
     });
   } catch (error) {
     console.error("[AI Query] Error:", error);

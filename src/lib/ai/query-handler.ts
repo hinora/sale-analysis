@@ -7,6 +7,10 @@
 
 import { OllamaClient } from "./ollama-client";
 import type { AISession } from "./session-manager";
+import { updateFilterView } from "./session-manager";
+import { executeFilters, type FilterExpression } from './filter-engine';
+import { FilterExpressionSchema } from '../utils/validation';
+import { computeAggregations, formatAggregationForAI, type AggregationSpec } from './aggregation-engine';
 
 /**
  * Query result with response and citations
@@ -16,6 +20,32 @@ export interface QueryResult {
   citations: string[];
   confidence: "high" | "medium" | "low";
   processingTime: number;
+}
+
+/**
+ * Filter execution log for debugging and performance tracking
+ */
+export interface FilterLog {
+  timestamp: string;
+  filterExpression: FilterExpression;
+  matchedCount: number;
+  executionTimeMs: number;
+}
+
+/**
+ * Query intent classification
+ */
+export interface QueryIntent {
+  type: 'aggregation' | 'detail' | 'trend' | 'comparison' | 'recommendation' | 'ranking';
+  filters: FilterExpression[];
+  aggregations?: Array<{
+    field: string;
+    operation: 'count' | 'sum' | 'average' | 'min' | 'max';
+    groupBy?: string;
+  }>;
+  limit?: number;
+  orderBy?: string;
+  confidence: number; // 0-1
 }
 
 /**
@@ -169,19 +199,359 @@ export class QueryHandler {
   }
 
   /**
+   * Extract FilterExpression[] from user question using AI analysis
+   * Analyzes natural language to identify field filters (company, country, category, date range, etc.)
+   */
+  async extractFilters(userQuestion: string): Promise<FilterExpression[]> {
+    const systemPrompt = `You are a filter extraction system. Analyze the user's question and extract structured filters.
+
+Transaction fields available:
+- companyName: string (e.g., "CÔNG TY ABC", "XYZ Corporation")
+- importCountry: string (e.g., "United States", "Vietnam", "China")
+- categoryName: string (e.g., "Electronics", "Machinery", "Textiles")
+- date: string (YYYY-MM-DD format)
+- totalValueUSD: number (e.g., 50000.00)
+- quantity: number
+- unitPriceUSD: number
+
+Operators supported:
+- equals: exact match (supports synonyms)
+- contains: substring match (supports synonyms)
+- startsWith: prefix match
+- greaterThan: numeric comparison >
+- lessThan: numeric comparison <
+- between: range [min, max]
+- in: array membership
+
+Return ONLY a valid JSON array of filter objects. Each filter must have:
+{
+  "field": "fieldName",
+  "operator": "operatorName",
+  "value": "stringOrNumberOrArray",
+  "matchStrategy": "exact" | "fuzzy" | "case-insensitive" | "normalized",
+  "fuzzyThreshold": 0-5 (optional, for fuzzy matching),
+  "logicalOperator": "AND" | "OR" (optional, default AND)
+}
+
+Examples:
+Question: "Show me US companies"
+Response: [{"field":"importCountry","operator":"contains","value":"US","matchStrategy":"case-insensitive"}]
+
+Question: "Electronics from Vietnam in Q1 2024"
+Response: [{"field":"categoryName","operator":"contains","value":"Electronics","matchStrategy":"case-insensitive"},{"field":"importCountry","operator":"contains","value":"Vietnam","matchStrategy":"case-insensitive"},{"field":"date","operator":"between","value":["2024-01-01","2024-03-31"]}]
+
+Question: "Companies with sales over $50,000"
+Response: [{"field":"totalValueUSD","operator":"greaterThan","value":"50000"}]
+
+If no filters can be extracted, return an empty array: []
+
+Respond ONLY with the JSON array, no other text.`;
+
+    try {
+      const response = await this.ollamaClient.generate({
+        model: this.model,
+        prompt: `${systemPrompt}
+
+Question: ${userQuestion}
+
+Filters:`,
+        stream: false,
+        temperature: 0.3, // Lower temperature for more structured output
+      });
+
+      // Parse JSON response
+      let filtersJson = response.response.trim();
+      
+      // Remove markdown code blocks if present
+      filtersJson = filtersJson.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      
+      // Extract JSON array if wrapped in text
+      const jsonMatch = filtersJson.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        filtersJson = jsonMatch[0];
+      }
+
+      const filters = JSON.parse(filtersJson);
+
+      // Validate each filter with Zod schema
+      if (!Array.isArray(filters)) {
+        console.warn('[QueryHandler] extractFilters returned non-array:', filters);
+        return [];
+      }
+
+      const validatedFilters: FilterExpression[] = [];
+      for (const filter of filters) {
+        try {
+          const validated = FilterExpressionSchema.parse(filter);
+          validatedFilters.push(validated);
+        } catch (validationError) {
+          console.warn('[QueryHandler] Invalid filter expression:', filter, validationError);
+        }
+      }
+
+      return validatedFilters;
+    } catch (error) {
+      console.error('[QueryHandler] Error extracting filters:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Detect if filtered data is insufficient for the query
+   * Returns true if data is too sparse or missing key fields
+   */
+  detectDataInsufficiency(
+    filteredTransactions: Array<Record<string, unknown>>,
+    userQuestion: string,
+  ): { insufficient: boolean; reason?: string } {
+    // No transactions after filtering
+    if (filteredTransactions.length === 0) {
+      return {
+        insufficient: true,
+        reason: "No transactions match the specified criteria",
+      };
+    }
+
+    // Very small sample size (< 3 transactions) for aggregation queries
+    const isAggregationQuery = /tổng|trung bình|average|total|sum|count|bao nhiêu|có mấy/i.test(userQuestion);
+    if (isAggregationQuery && filteredTransactions.length < 3) {
+      return {
+        insufficient: true,
+        reason: `Only ${filteredTransactions.length} transaction(s) available for aggregation analysis`,
+      };
+    }
+
+    // Check for missing critical fields
+    const hasCompanyNames = filteredTransactions.some((tx) => tx.companyName);
+    const hasValues = filteredTransactions.some((tx) => tx.totalValueUSD);
+    const hasCategories = filteredTransactions.some((tx) => tx.categoryName);
+
+    if (!hasCompanyNames && !hasValues && !hasCategories) {
+      return {
+        insufficient: true,
+        reason: "Filtered data lacks critical fields (company, value, or category)",
+      };
+    }
+
+    return { insufficient: false };
+  }
+
+  /**
+   * Classify user question into query type and extract intent
+   * Uses pattern matching and AI to determine optimal data strategy
+   */
+  async classifyQueryIntent(userQuestion: string): Promise<QueryIntent> {
+    // Pattern matching for common query types
+    const aggregationPatterns = /tổng|trung bình|average|total|sum|count|bao nhiêu|có mấy|nhiều nhất|ít nhất|most|least|highest|lowest/i;
+    const detailPatterns = /show|hiển thị|list|danh sách|top \d+|liệt kê|chi tiết|details?/i;
+    const trendPatterns = /trend|xu hướng|theo thời gian|over time|growth|tăng trưởng|biến động|changes?/i;
+    const comparisonPatterns = /so sánh|compare|versus|vs\.|khác nhau|difference|better|worse/i;
+    const recommendationPatterns = /recommend|đề xuất|suggest|gợi ý|should|nên|advice|tư vấn/i;
+    const rankingPatterns = /top|rank|xếp hạng|hàng đầu|leading|best|worst|tốt nhất|kém nhất/i;
+
+    let type: QueryIntent['type'] = 'detail'; // default
+    let confidence = 0.5;
+
+    // Classify by patterns
+    if (aggregationPatterns.test(userQuestion)) {
+      type = 'aggregation';
+      confidence = 0.8;
+    } else if (trendPatterns.test(userQuestion)) {
+      type = 'trend';
+      confidence = 0.8;
+    } else if (comparisonPatterns.test(userQuestion)) {
+      type = 'comparison';
+      confidence = 0.75;
+    } else if (recommendationPatterns.test(userQuestion)) {
+      type = 'recommendation';
+      confidence = 0.7;
+    } else if (rankingPatterns.test(userQuestion)) {
+      type = 'ranking';
+      confidence = 0.8;
+    } else if (detailPatterns.test(userQuestion)) {
+      type = 'detail';
+      confidence = 0.7;
+    }
+
+    // Extract filters (already implemented)
+    const filters = await this.extractFilters(userQuestion);
+
+    // Extract aggregations if type is aggregation or ranking
+    let aggregations: QueryIntent['aggregations'];
+    if (type === 'aggregation' || type === 'ranking') {
+      aggregations = this.extractAggregationSpecs(userQuestion);
+    }
+
+    // Extract limit from question (e.g., "top 5", "10 companies")
+    const limitMatch = userQuestion.match(/top (\d+)|(\d+) (công ty|companies|transactions|giao dịch|mặt hàng|goods)/i);
+    const limit = limitMatch ? parseInt(limitMatch[1] || limitMatch[2]) : undefined;
+
+    // Extract orderBy from question
+    let orderBy: string | undefined;
+    if (/nhiều nhất|most|highest|max|cao nhất/i.test(userQuestion)) {
+      orderBy = 'desc';
+    } else if (/ít nhất|least|lowest|min|thấp nhất/i.test(userQuestion)) {
+      orderBy = 'asc';
+    }
+
+    return {
+      type,
+      filters,
+      aggregations,
+      limit,
+      orderBy,
+      confidence,
+    };
+  }
+
+  /**
+   * Extract aggregation specifications from user question
+   * Identifies field, operation, and groupBy for aggregation queries
+   */
+  extractAggregationSpecs(userQuestion: string): Array<{
+    field: string;
+    operation: 'count' | 'sum' | 'average' | 'min' | 'max';
+    groupBy?: string;
+  }> {
+    const aggregations: Array<{
+      field: string;
+      operation: 'count' | 'sum' | 'average' | 'min' | 'max';
+      groupBy?: string;
+    }> = [];
+
+    // Detect operation type
+    let operation: 'count' | 'sum' | 'average' | 'min' | 'max' = 'count';
+    if (/tổng|total|sum/i.test(userQuestion)) {
+      operation = 'sum';
+    } else if (/trung bình|average|mean/i.test(userQuestion)) {
+      operation = 'average';
+    } else if (/nhiều nhất|most|max|highest|cao nhất/i.test(userQuestion)) {
+      operation = 'max';
+    } else if (/ít nhất|least|min|lowest|thấp nhất/i.test(userQuestion)) {
+      operation = 'min';
+    }
+
+    // Detect field
+    let field = 'totalValueUSD'; // default
+    if (/công ty|company|companies/i.test(userQuestion)) {
+      field = 'companyName';
+    } else if (/mặt hàng|goods|category|categories|danh mục/i.test(userQuestion)) {
+      field = 'categoryName';
+    } else if (/quốc gia|country|countries/i.test(userQuestion)) {
+      field = 'importCountry';
+    } else if (/giá trị|value/i.test(userQuestion)) {
+      field = 'totalValueUSD';
+    } else if (/số lượng|quantity/i.test(userQuestion)) {
+      field = 'quantity';
+    }
+
+    // Detect groupBy
+    let groupBy: string | undefined;
+    if (/theo công ty|by company|per company/i.test(userQuestion)) {
+      groupBy = 'companyName';
+    } else if (/theo mặt hàng|by category|per category/i.test(userQuestion)) {
+      groupBy = 'categoryName';
+    } else if (/theo quốc gia|by country|per country/i.test(userQuestion)) {
+      groupBy = 'importCountry';
+    } else if (/theo tháng|by month|per month/i.test(userQuestion)) {
+      groupBy = 'month';
+    } else if (/theo năm|by year|per year/i.test(userQuestion)) {
+      groupBy = 'year';
+    }
+
+    aggregations.push({ field, operation, groupBy });
+
+    return aggregations;
+  }
+
+  /**
    * Process a natural language query against session data
    */
   async processQuery(
     session: AISession,
     userQuestion: string,
-  ): Promise<QueryResult> {
+  ): Promise<QueryResult & { filterLogs?: FilterLog[]; queryIntent?: QueryIntent }> {
     const startTime = Date.now();
+    const filterLogs: FilterLog[] = [];
 
     try {
-      // Format transaction data for context
-      const transactionContext = formatTransactionDataForContext(
-        session.transactionData,
-      );
+      // Classify query intent (US3)
+      const queryIntent = await this.classifyQueryIntent(userQuestion);
+      console.log(`[QueryHandler] Query intent: ${queryIntent.type} (confidence: ${queryIntent.confidence})`);
+
+      // Extract filters from query intent
+      const filters = queryIntent.filters;
+
+      // Apply filters if any were extracted
+      let filteredTransactions = session.transactionData;
+      if (filters.length > 0) {
+        const filterStartTime = Date.now();
+        
+        filteredTransactions = executeFilters(
+          session.transactionData as Array<Record<string, unknown>>,
+          filters,
+        );
+
+        const filterExecutionTime = Date.now() - filterStartTime;
+
+        // Update session filter view for iterative refinement (US2)
+        updateFilterView(session.id, filteredTransactions, filters);
+
+        // Log each filter execution
+        filters.forEach((filter) => {
+          filterLogs.push({
+            timestamp: new Date().toISOString(),
+            filterExpression: filter,
+            matchedCount: filteredTransactions.length,
+            executionTimeMs: filterExecutionTime,
+          });
+        });
+
+        console.log(`[QueryHandler] Applied ${filters.length} filters: ${session.transactionData.length} → ${filteredTransactions.length} transactions (${filterExecutionTime}ms)`);
+      }
+
+      // Check for data insufficiency (US2)
+      const insufficiencyCheck = this.detectDataInsufficiency(filteredTransactions, userQuestion);
+      if (insufficiencyCheck.insufficient) {
+        return {
+          answer: `Xin lỗi, dữ liệu sau khi lọc không đủ để trả lời câu hỏi của bạn. Lý do: ${insufficiencyCheck.reason}`,
+          citations: [],
+          confidence: "low",
+          processingTime: Date.now() - startTime,
+          filterLogs: filterLogs.length > 0 ? filterLogs : undefined,
+        };
+      }
+
+      // Use aggregations for aggregation/ranking query types (US5)
+      let transactionContext: string;
+      if (queryIntent.type === 'aggregation' || queryIntent.type === 'ranking') {
+        // Compute aggregations instead of passing full transactions
+        const aggregations = queryIntent.aggregations || [];
+        
+        // If no aggregations specified, infer from question
+        if (aggregations.length === 0) {
+          const inferredSpecs = this.extractAggregationSpecs(userQuestion);
+          aggregations.push(...inferredSpecs);
+        }
+
+        // Convert to AggregationSpec format
+        const aggSpecs: AggregationSpec[] = aggregations.map(agg => ({
+          field: agg.field,
+          operation: agg.operation,
+          groupBy: agg.groupBy,
+        }));
+
+        // Compute aggregations
+        const aggResults = computeAggregations(filteredTransactions, aggSpecs);
+
+        // Format aggregation results for AI (token-optimized)
+        transactionContext = aggResults.map(formatAggregationForAI).join('\n\n');
+
+        console.log(`[QueryHandler] Using aggregations: ${aggSpecs.length} specs computed, ${transactionContext.length} bytes (vs ${JSON.stringify(filteredTransactions).length} bytes for full data)`);
+      } else {
+        // Format filtered transaction data for context (detail/trend/comparison queries)
+        transactionContext = formatTransactionDataForContext(filteredTransactions);
+      }
 
       // Build system prompt
       const systemPrompt = buildSystemPrompt(transactionContext);
@@ -224,6 +594,8 @@ Trả lời:`;
         citations,
         confidence,
         processingTime,
+        filterLogs: filterLogs.length > 0 ? filterLogs : undefined,
+        queryIntent,
       };
     } catch (error) {
       console.error("[QueryHandler] Error processing query:", error);

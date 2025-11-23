@@ -8,10 +8,25 @@
  * - Session state management
  */
 
+import type { FilterExpression } from './filter-engine';
+import type { AggregationCache } from './aggregation-engine';
+
 export interface AIMessage {
   role: "user" | "assistant" | "system";
   content: string;
   timestamp: Date;
+}
+
+/**
+ * Context state tracking for iterative refinement
+ */
+export interface ContextState {
+  loadedTransactions: Array<Record<string, unknown>>;
+  currentFilterView: Array<Record<string, unknown>>;
+  appliedFilters: FilterExpression[];
+  iterationCount: number;
+  lastFilterTimestamp?: Date;
+  aggregationCache?: AggregationCache;
 }
 
 export interface AISession {
@@ -27,6 +42,7 @@ export interface AISession {
     dataSize: number;
     filters?: Record<string, unknown>;
   };
+  contextState?: ContextState;
 }
 
 /**
@@ -194,6 +210,53 @@ export function updateSessionStatus(
   status: AISession["status"],
 ): AISession | null {
   return updateSession(sessionId, { status });
+}
+
+/**
+ * Update filter view with new filters (iterative refinement)
+ * Tracks iteration count with maximum limit of 10
+ */
+export function updateFilterView(
+  sessionId: string,
+  filteredTransactions: Array<Record<string, unknown>>,
+  filters: FilterExpression[],
+): AISession | null {
+  const session = getSession(sessionId);
+
+  if (!session) {
+    return null;
+  }
+
+  // Initialize contextState if not exists
+  if (!session.contextState) {
+    session.contextState = {
+      loadedTransactions: session.transactionData,
+      currentFilterView: session.transactionData,
+      appliedFilters: [],
+      iterationCount: 0,
+    };
+  }
+
+  // Check iteration limit (max 10 per specification)
+  if (session.contextState.iterationCount >= 10) {
+    console.warn(`[SessionManager] Session ${sessionId} reached max iteration limit (10)`);
+    return session;
+  }
+
+  // Update context state
+  session.contextState.currentFilterView = filteredTransactions;
+  session.contextState.appliedFilters = filters;
+  session.contextState.iterationCount += 1;
+  session.contextState.lastFilterTimestamp = new Date();
+
+  session.lastAccessedAt = new Date();
+  session.expiresAt = new Date(Date.now() + SESSION_TTL);
+
+  console.log(
+    `[SessionManager] Updated filter view: ${session.transactionData.length} → ${filteredTransactions.length} transactions (iteration ${session.contextState.iterationCount}/10)`
+  );
+
+  return session;
 }
 
 /**
