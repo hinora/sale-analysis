@@ -230,23 +230,42 @@ export class QueryHandler {
   async extractFilters(userQuestion: string): Promise<FilterExpression[]> {
     const systemPrompt = `You are a filter extraction system. Analyze the user's question and extract structured filters.
 
-Transaction fields available:
-- companyName: string (e.g., "CÔNG TY ABC", "XYZ Corporation")
-- importCountry: string (e.g., "United States", "Vietnam", "China")
-- categoryName: string (e.g., "Electronics", "Machinery", "Textiles")
-- date: string (YYYY-MM-DD format)
-- totalValueUSD: number (e.g., 50000.00)
-- quantity: number
-- unitPriceUSD: number
+Transaction fields available (12 columns):
+1. declarationNumber: string (e.g., "DEC-2024-001", "VN123456")
+2. date: string (YYYY-MM-DD format, e.g., "2024-01-15")
+3. companyName: string (e.g., "CÔNG TY ABC", "XYZ Corporation")
+4. companyAddress: string (e.g., "123 Main St, Hanoi", "456 Business Ave")
+5. importCountry: string (e.g., "United States", "Vietnam", "China")
+6. goodsName: string (e.g., "Laptop Dell Inspiron 15", "Máy tính xách tay")
+7. goodsShortName: string (e.g., "Laptop", "Computer")
+8. categoryName: string (e.g., "Electronics", "Machinery", "Textiles")
+9. quantity: number (e.g., 100, 500)
+10. unit: string (e.g., "pcs", "kg", "cái", "chiếc")
+11. unitPriceUSD: number (e.g., 299.99, 1500.50)
+12. totalValueUSD: number (e.g., 50000.00, 125000.00)
 
-Operators supported:
-- equals: exact match (supports synonyms)
-- contains: substring match (supports synonyms)
-- startsWith: prefix match
-- greaterThan: numeric comparison >
-- lessThan: numeric comparison <
-- between: range [min, max]
-- in: array membership
+Operators by field type:
+**String fields (declarationNumber, companyName, companyAddress, importCountry, goodsName, goodsShortName, categoryName, unit):**
+  - equals: exact match (supports synonyms)
+  - contains: substring match (supports synonyms)
+  - startsWith: prefix match
+  - in: array membership
+
+**Number fields (quantity, unitPriceUSD, totalValueUSD):**
+  - equals: exact numeric match
+  - greaterThan: numeric comparison >
+  - lessThan: numeric comparison <
+  - between: range [min, max]
+  - in: array membership
+
+**Date fields (date):**
+  - equals: exact date match
+  - greaterThan: date after >
+  - lessThan: date before <
+  - between: date range [start, end]
+
+IMPORTANT: Do NOT use numeric operators (greaterThan, lessThan, between) with string fields!
+IMPORTANT: Do NOT use string operators (contains, startsWith) with numeric fields!
 
 Return ONLY a valid JSON array of filter objects. Each filter must have:
 {
@@ -267,6 +286,12 @@ Response: [{"field":"categoryName","operator":"contains","value":"Electronics","
 
 Question: "Companies with sales over $50,000"
 Response: [{"field":"totalValueUSD","operator":"greaterThan","value":"50000"}]
+
+Question: "Declarations starting with DEC-2024"
+Response: [{"field":"declarationNumber","operator":"startsWith","value":"DEC-2024","matchStrategy":"case-insensitive"}]
+
+Question: "Laptops with quantity greater than 100"
+Response: [{"field":"goodsShortName","operator":"contains","value":"Laptop","matchStrategy":"case-insensitive"},{"field":"quantity","operator":"greaterThan","value":"100"}]
 
 If no filters can be extracted, return an empty array: []
 
@@ -310,10 +335,70 @@ Filters:`,
         return [];
       }
 
+      // Define field types for validation
+      const stringFields = [
+        "declarationNumber",
+        "companyName",
+        "companyAddress",
+        "importCountry",
+        "goodsName",
+        "goodsShortName",
+        "categoryName",
+        "unit",
+      ];
+      const numericFields = ["quantity", "unitPriceUSD", "totalValueUSD"];
+      const dateFields = ["date"];
+
+      const stringOperators = ["equals", "contains", "startsWith", "in"];
+      const numericOperators = [
+        "equals",
+        "greaterThan",
+        "lessThan",
+        "between",
+        "in",
+      ];
+      const dateOperators = [
+        "equals",
+        "greaterThan",
+        "lessThan",
+        "between",
+      ];
+
       const validatedFilters: FilterExpression[] = [];
       for (const filter of filters) {
         try {
+          // Validate with Zod schema first
           const validated = FilterExpressionSchema.parse(filter);
+
+          // Additional validation: check field type matches operator
+          let isValidCombination = false;
+
+          if (stringFields.includes(validated.field)) {
+            isValidCombination = stringOperators.includes(validated.operator);
+            if (!isValidCombination) {
+              console.warn(
+                `[QueryHandler] Invalid operator '${validated.operator}' for string field '${validated.field}'. Skipping filter.`,
+              );
+              continue;
+            }
+          } else if (numericFields.includes(validated.field)) {
+            isValidCombination = numericOperators.includes(validated.operator);
+            if (!isValidCombination) {
+              console.warn(
+                `[QueryHandler] Invalid operator '${validated.operator}' for numeric field '${validated.field}'. Skipping filter.`,
+              );
+              continue;
+            }
+          } else if (dateFields.includes(validated.field)) {
+            isValidCombination = dateOperators.includes(validated.operator);
+            if (!isValidCombination) {
+              console.warn(
+                `[QueryHandler] Invalid operator '${validated.operator}' for date field '${validated.field}'. Skipping filter.`,
+              );
+              continue;
+            }
+          }
+
           validatedFilters.push(validated);
         } catch (validationError) {
           console.warn(
@@ -377,80 +462,176 @@ Filters:`,
 
   /**
    * Classify user question into query type and extract intent
-   * Uses pattern matching and AI to determine optimal data strategy
+   * Uses AI to determine optimal data strategy
    */
   async classifyQueryIntent(userQuestion: string): Promise<QueryIntent> {
-    // Pattern matching for common query types
-    const aggregationPatterns =
-      /tổng|trung bình|average|total|sum|count|bao nhiêu|có mấy|nhiều nhất|ít nhất|most|least|highest|lowest/i;
-    const detailPatterns =
-      /show|hiển thị|list|danh sách|top \d+|liệt kê|chi tiết|details?/i;
-    const trendPatterns =
-      /trend|xu hướng|theo thời gian|over time|growth|tăng trưởng|biến động|changes?/i;
-    const comparisonPatterns =
-      /so sánh|compare|versus|vs\.|khác nhau|difference|better|worse/i;
-    const recommendationPatterns =
-      /recommend|đề xuất|suggest|gợi ý|should|nên|advice|tư vấn/i;
-    const rankingPatterns =
-      /top|rank|xếp hạng|hàng đầu|leading|best|worst|tốt nhất|kém nhất/i;
+    const systemPrompt = `You are a query intent classifier for transaction data analysis. Analyze the user's question and classify it into one of these types:
 
-    let type: QueryIntent["type"] = "detail"; // default
-    let confidence = 0.5;
+1. **aggregation**: Questions asking for totals, counts, sums, averages, min/max values
+   Examples: "What's the total value?", "How many transactions?", "Tổng giá trị là bao nhiêu?"
 
-    // Classify by patterns
-    if (aggregationPatterns.test(userQuestion)) {
-      type = "aggregation";
-      confidence = 0.8;
-    } else if (trendPatterns.test(userQuestion)) {
-      type = "trend";
-      confidence = 0.8;
-    } else if (comparisonPatterns.test(userQuestion)) {
-      type = "comparison";
-      confidence = 0.75;
-    } else if (recommendationPatterns.test(userQuestion)) {
-      type = "recommendation";
-      confidence = 0.7;
-    } else if (rankingPatterns.test(userQuestion)) {
-      type = "ranking";
-      confidence = 0.8;
-    } else if (detailPatterns.test(userQuestion)) {
-      type = "detail";
-      confidence = 0.7;
+2. **detail**: Questions asking for specific transaction details or lists
+   Examples: "Show me all transactions", "List electronics imports", "Hiển thị chi tiết"
+
+3. **trend**: Questions about changes over time, growth, patterns
+   Examples: "What's the trend?", "How did sales grow?", "Xu hướng theo thời gian?"
+
+4. **comparison**: Questions comparing entities, time periods, or categories
+   Examples: "Compare US and China imports", "So sánh giữa các công ty"
+
+5. **recommendation**: Questions asking for suggestions or advice
+   Examples: "Which companies should I focus on?", "Đề xuất chiến lược"
+
+6. **ranking**: Questions asking for top/bottom performers or sorted lists
+   Examples: "Top 10 companies", "Highest value exports", "Công ty hàng đầu"
+
+Return ONLY a valid JSON object with this structure:
+{
+  "type": "aggregation|detail|trend|comparison|recommendation|ranking",
+  "confidence": 0.0-1.0,
+  "reasoning": "brief explanation of why this type was chosen"
+}
+
+Be precise and confident in your classification. Consider both English and Vietnamese questions.`;
+
+    try {
+      // Use AI to classify query type
+      const response = await this.ollamaClient.generate({
+        model: this.model,
+        prompt: `${systemPrompt}
+
+Question: ${userQuestion}
+
+Classification:`,
+        stream: false,
+        temperature: 0.3, // Lower temperature for more consistent classification
+      });
+
+      // Parse JSON response
+      let classificationJson = response.response.trim();
+
+      // Remove markdown code blocks if present
+      classificationJson = classificationJson
+        .replace(/```json\n?/g, "")
+        .replace(/```\n?/g, "")
+        .trim();
+
+      // Extract JSON object if wrapped in text
+      const jsonMatch = classificationJson.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        classificationJson = jsonMatch[0];
+      }
+
+      const classification = JSON.parse(classificationJson);
+
+      const type: QueryIntent["type"] = classification.type || "detail";
+      const confidence: number =
+        typeof classification.confidence === "number"
+          ? classification.confidence
+          : 0.5;
+
+      console.log(
+        `[QueryHandler] AI classification: ${type} (confidence: ${confidence}) - ${classification.reasoning}`,
+      );
+
+      // Extract filters (already implemented)
+      const filters = await this.extractFilters(userQuestion);
+
+      // Extract aggregations if type is aggregation or ranking
+      let aggregations: QueryIntent["aggregations"];
+      if (type === "aggregation" || type === "ranking") {
+        aggregations = this.extractAggregationSpecs(userQuestion);
+      }
+
+      // Extract limit from question (e.g., "top 5", "10 companies")
+      const limitMatch = userQuestion.match(
+        /top (\d+)|(\d+) (công ty|companies|transactions|giao dịch|mặt hàng|goods)/i,
+      );
+      const limit = limitMatch
+        ? parseInt(limitMatch[1] || limitMatch[2])
+        : undefined;
+
+      // Extract orderBy from question
+      let orderBy: string | undefined;
+      if (/nhiều nhất|most|highest|max|cao nhất/i.test(userQuestion)) {
+        orderBy = "desc";
+      } else if (/ít nhất|least|lowest|min|thấp nhất/i.test(userQuestion)) {
+        orderBy = "asc";
+      }
+
+      return {
+        type,
+        filters,
+        aggregations,
+        limit,
+        orderBy,
+        confidence,
+      };
+    } catch (error) {
+      console.error("[QueryHandler] Error classifying query intent:", error);
+
+      // Fallback to pattern matching if AI classification fails
+      const aggregationPatterns =
+        /tổng|trung bình|average|total|sum|count|bao nhiêu|có mấy|nhiều nhất|ít nhất|most|least|highest|lowest/i;
+      const trendPatterns =
+        /trend|xu hướng|theo thời gian|over time|growth|tăng trưởng|biến động|changes?/i;
+      const comparisonPatterns =
+        /so sánh|compare|versus|vs\.|khác nhau|difference|better|worse/i;
+      const recommendationPatterns =
+        /recommend|đề xuất|suggest|gợi ý|should|nên|advice|tư vấn/i;
+      const rankingPatterns =
+        /top|rank|xếp hạng|hàng đầu|leading|best|worst|tốt nhất|kém nhất/i;
+
+      let type: QueryIntent["type"] = "detail";
+      let confidence = 0.5;
+
+      if (aggregationPatterns.test(userQuestion)) {
+        type = "aggregation";
+        confidence = 0.8;
+      } else if (trendPatterns.test(userQuestion)) {
+        type = "trend";
+        confidence = 0.8;
+      } else if (comparisonPatterns.test(userQuestion)) {
+        type = "comparison";
+        confidence = 0.75;
+      } else if (recommendationPatterns.test(userQuestion)) {
+        type = "recommendation";
+        confidence = 0.7;
+      } else if (rankingPatterns.test(userQuestion)) {
+        type = "ranking";
+        confidence = 0.8;
+      }
+
+      const filters = await this.extractFilters(userQuestion);
+
+      let aggregations: QueryIntent["aggregations"];
+      if (type === "aggregation" || type === "ranking") {
+        aggregations = this.extractAggregationSpecs(userQuestion);
+      }
+
+      const limitMatch = userQuestion.match(
+        /top (\d+)|(\d+) (công ty|companies|transactions|giao dịch|mặt hàng|goods)/i,
+      );
+      const limit = limitMatch
+        ? parseInt(limitMatch[1] || limitMatch[2])
+        : undefined;
+
+      let orderBy: string | undefined;
+      if (/nhiều nhất|most|highest|max|cao nhất/i.test(userQuestion)) {
+        orderBy = "desc";
+      } else if (/ít nhất|least|lowest|min|thấp nhất/i.test(userQuestion)) {
+        orderBy = "asc";
+      }
+
+      return {
+        type,
+        filters,
+        aggregations,
+        limit,
+        orderBy,
+        confidence,
+      };
     }
-
-    // Extract filters (already implemented)
-    const filters = await this.extractFilters(userQuestion);
-
-    // Extract aggregations if type is aggregation or ranking
-    let aggregations: QueryIntent["aggregations"];
-    if (type === "aggregation" || type === "ranking") {
-      aggregations = this.extractAggregationSpecs(userQuestion);
-    }
-
-    // Extract limit from question (e.g., "top 5", "10 companies")
-    const limitMatch = userQuestion.match(
-      /top (\d+)|(\d+) (công ty|companies|transactions|giao dịch|mặt hàng|goods)/i,
-    );
-    const limit = limitMatch
-      ? parseInt(limitMatch[1] || limitMatch[2])
-      : undefined;
-
-    // Extract orderBy from question
-    let orderBy: string | undefined;
-    if (/nhiều nhất|most|highest|max|cao nhất/i.test(userQuestion)) {
-      orderBy = "desc";
-    } else if (/ít nhất|least|lowest|min|thấp nhất/i.test(userQuestion)) {
-      orderBy = "asc";
-    }
-
-    return {
-      type,
-      filters,
-      aggregations,
-      limit,
-      orderBy,
-      confidence,
-    };
   }
 
   /**
