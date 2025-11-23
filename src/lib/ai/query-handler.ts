@@ -21,33 +21,53 @@ export interface QueryResult {
 /**
  * Format transaction data for AI context
  * Note: Transactions are already limited to 10,000 in feed-data endpoint
+ * Uses compact CSV format to fit more data within model context window
  */
 function formatTransactionDataForContext(
   transactions: Array<Record<string, unknown>>,
 ): string {
-  // Format as structured data (use all transactions - already limited at feed time)
+  // Calculate aggregated statistics for context
+  const stats = {
+    totalTransactions: transactions.length,
+    totalValue: transactions.reduce((sum, tx) => sum + (Number(tx.totalValueUSD) || 0), 0),
+    companies: new Set(transactions.map(tx => tx.companyName).filter(Boolean)),
+    categories: new Set(transactions.map(tx => tx.categoryName).filter(Boolean)),
+    countries: new Set(transactions.map(tx => tx.importCountry).filter(Boolean)),
+    dateRange: {
+      earliest: transactions.reduce((min, tx) => {
+        const date = new Date(tx.date as string);
+        return !min || date < min ? date : min;
+      }, null as Date | null),
+      latest: transactions.reduce((max, tx) => {
+        const date = new Date(tx.date as string);
+        return !max || date > max ? date : max;
+      }, null as Date | null),
+    },
+  };
+
+  // Use compact CSV-like format instead of verbose text
   const formatted = transactions
     .map((tx, index) => {
-      return `Giao dịch ${index + 1}:
-- Công ty: ${tx.companyName || "N/A"}
-- Địa chỉ công ty: ${tx.companyAddress || "N/A"}
-- Nước nhập khẩu: ${tx.importCountry || "N/A"}
-- Hàng hóa: ${tx.goodsName || "N/A"}
-- Danh mục: ${tx.categoryName || "N/A"}
-- Số lượng: ${tx.quantity || 0} ${tx.unit || ""}
-- Đơn giá: $${tx.unitPriceUSD || 0}
-- Tổng giá trị: $${tx.totalValueUSD || 0}
-- Ngày: ${tx.date || "N/A"}
-`;
+      return `${index + 1}|${tx.companyName}|${tx.importCountry}|${tx.categoryName}|${tx.quantity} ${tx.unit}|$${tx.unitPriceUSD}|$${tx.totalValueUSD}|${tx.date}`;
     })
     .join("\n");
 
   const summary = `
-Tóm tắt dữ liệu:
-- Tổng số giao dịch: ${transactions.length}
+TÓM TẮT DỮ LIỆU:
+- Tổng số giao dịch: ${stats.totalTransactions}
+- Tổng giá trị: $${stats.totalValue.toFixed(2)}
+- Số công ty: ${stats.companies.size}
+- Số danh mục: ${stats.categories.size}
+- Số nước: ${stats.countries.size}
+- Khoảng thời gian: ${stats.dateRange.earliest?.toISOString().split('T')[0]} đến ${stats.dateRange.latest?.toISOString().split('T')[0]}
+
+ĐỊNH DẠNG DỮ LIỆU: STT|Công ty|Nước|Danh mục|Số lượng|Đơn giá|Tổng giá trị|Ngày
+
+DỮ LIỆU GIAO DỊCH:
+${formatted}
 `;
 
-  return summary + "\n" + formatted;
+  return summary;
 }
 
 /**
@@ -58,18 +78,19 @@ function buildSystemPrompt(transactionData: string): string {
 
 QUY TẮC QUAN TRỌNG:
 1. Chỉ dựa trên dữ liệu giao dịch được cung cấp để trả lời
-2. Luôn trích dẫn các giao dịch cụ thể khi đưa ra nhận định (ví dụ: "Giao dịch 5 cho thấy...")
+2. Luôn trích dẫn các giao dịch cụ thể khi đưa ra nhận định (ví dụ: "Giao dịch số 5 cho thấy...")
 3. Nếu dữ liệu không chứa thông tin để trả lời câu hỏi, hãy nói "Tôi không tìm thấy thông tin này trong dữ liệu được cung cấp"
 4. Sử dụng số liệu chính xác và tránh khái quát hóa
 5. Khi tính tổng hoặc trung bình, hãy trình bày các bước tính toán
 6. Luôn trả lời bằng tiếng Việt
+7. CHÚ Ý: Dữ liệu được định dạng dạng bảng với dấu | phân cách. Đếm số dòng để biết tổng số giao dịch.
 
 DỮ LIỆU GIAO DỊCH:
 ${transactionData}
 
 Khi trả lời câu hỏi:
 - Bắt đầu với câu trả lời trực tiếp
-- Cung cấp bằng chứng hỗ trợ với trích dẫn giao dịch
+- Cung cấp bằng chứng hỗ trợ với trích dẫn số thứ tự giao dịch
 - Bao gồm các thống kê liên quan (tổng, trung bình, phần trăm)
 - Ngắn gọn nhưng đầy đủ
 `;
