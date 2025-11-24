@@ -1,0 +1,198 @@
+openapi: 3.0.0
+info:
+  title: RAG Retrieval Internal API
+  description: Internal interface for retrieval components (embedder, index, retriever)
+  version: 1.0.0
+
+paths:
+  # No external HTTP paths - this is an internal module interface
+  # Documenting the programmatic API contracts
+
+components:
+  schemas:
+    TransactionEmbeddingRequest:
+      type: object
+      description: Request to generate embedding for a transaction
+      required:
+        - transaction
+      properties:
+        transaction:
+          type: object
+          description: Transaction record with all fields
+          additionalProperties: true
+        format:
+          type: string
+          enum: [natural_language, compact]
+          default: natural_language
+          description: Format style for text representation
+      
+    TransactionEmbeddingResponse:
+      type: object
+      required:
+        - transactionId
+        - embedding
+        - textRepresentation
+      properties:
+        transactionId:
+          type: string
+          description: ID of the transaction
+        embedding:
+          type: array
+          items:
+            type: number
+          minItems: 384
+          maxItems: 384
+          description: 384-dimensional embedding vector
+        textRepresentation:
+          type: string
+          description: Natural language text used to generate embedding
+        createdAt:
+          type: string
+          format: date-time
+    
+    QueryEmbeddingRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: User's natural language question
+        conversationContext:
+          type: string
+          description: Optional context from conversation history
+    
+    QueryEmbeddingResponse:
+      type: object
+      required:
+        - queryEmbedding
+        - enhancedQuery
+      properties:
+        queryEmbedding:
+          type: array
+          items:
+            type: number
+          minItems: 384
+          maxItems: 384
+          description: 384-dimensional query embedding
+        enhancedQuery:
+          type: string
+          description: Query with conversation context appended
+    
+    IndexBuildRequest:
+      type: object
+      required:
+        - sessionId
+        - embeddings
+      properties:
+        sessionId:
+          type: string
+          description: AI session identifier
+        embeddings:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionEmbeddingResponse'
+          description: Array of transaction embeddings to index
+    
+    IndexBuildResponse:
+      type: object
+      required:
+        - sessionId
+        - status
+        - transactionCount
+      properties:
+        sessionId:
+          type: string
+        status:
+          type: string
+          enum: [ready, failed]
+        transactionCount:
+          type: integer
+          minimum: 0
+        embeddingDimensions:
+          type: integer
+          enum: [384]
+        indexedAt:
+          type: string
+          format: date-time
+        error:
+          type: string
+          description: Error message if status is failed
+    
+    RetrievalRequest:
+      type: object
+      required:
+        - sessionId
+        - queryEmbedding
+      properties:
+        sessionId:
+          type: string
+          description: AI session with existing index
+        queryEmbedding:
+          type: array
+          items:
+            type: number
+          minItems: 384
+          maxItems: 384
+        k:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 100
+          description: Number of transactions to retrieve
+        threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.6
+          description: Minimum cosine similarity score
+    
+    RetrievalResponse:
+      type: object
+      required:
+        - retrievedTransactions
+        - similarityScores
+        - retrievalCount
+      properties:
+        retrievedTransactions:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: Array of transaction objects ordered by relevance
+        similarityScores:
+          type: array
+          items:
+            type: number
+            minimum: 0
+            maximum: 1
+          description: Cosine similarity scores matching retrievedTransactions order
+        retrievalCount:
+          type: integer
+          minimum: 0
+          description: Actual number of transactions retrieved (may be < k if insufficient relevant data)
+        relevanceThreshold:
+          type: number
+          description: Threshold used for filtering
+        retrievedAt:
+          type: string
+          format: date-time
+
+# Programmatic Interface Contracts
+
+# Embedder Module Interface
+# Function: generateTransactionEmbedding(transaction: Transaction): Promise<TransactionEmbeddingResponse>
+# Function: generateQueryEmbedding(query: string, context?: string): Promise<QueryEmbeddingResponse>
+# Function: generateBatchEmbeddings(transactions: Transaction[], batchSize: number): Promise<TransactionEmbeddingResponse[]>
+
+# Index Module Interface  
+# Function: buildIndex(sessionId: string, embeddings: TransactionEmbeddingResponse[]): Promise<IndexBuildResponse>
+# Function: getIndex(sessionId: string): SessionVectorIndex | null
+# Function: deleteIndex(sessionId: string): Promise<void>
+# Function: rebuildIndex(sessionId: string, embeddings: TransactionEmbeddingResponse[]): Promise<IndexBuildResponse>
+
+# Retriever Module Interface
+# Function: retrieve(request: RetrievalRequest): Promise<RetrievalResponse>
+# Function: retrieveWithScores(sessionId: string, queryEmbedding: number[], k: number): Promise<{transactions: Transaction[], scores: number[]}>

@@ -53,3 +53,6 @@ logs/
 *.swp
 *.swo
 *~
+
+# RAG/Vector index temporary storage
+.vectra-temp/

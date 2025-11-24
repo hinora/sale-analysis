@@ -6,7 +6,10 @@
  * - 30-minute TTL for automatic cleanup
  * - Conversation history tracking
  * - Session state management
+ * - RAG vector index management
  */
+
+import type { SessionVectorIndex } from "./retrieval/types";
 
 export interface AIMessage {
   role: "user" | "assistant" | "system";
@@ -18,7 +21,14 @@ export interface AISession {
   id: string;
   transactionData: Array<Record<string, unknown>>;
   conversationHistory: AIMessage[];
-  status: "idle" | "feeding" | "ready" | "querying" | "error";
+  status:
+    | "idle"
+    | "feeding"
+    | "ready"
+    | "querying"
+    | "error"
+    | "indexing"
+    | "index-failed";
   createdAt: Date;
   lastAccessedAt: Date;
   expiresAt: Date;
@@ -27,6 +37,9 @@ export interface AISession {
     dataSize: number;
     filters?: Record<string, unknown>;
   };
+  // RAG-specific fields
+  useRAG?: boolean; // Enable RAG retrieval for this session
+  vectorIndex?: Omit<SessionVectorIndex, "vectorIndex">; // Index metadata without the actual index object
 }
 
 /**

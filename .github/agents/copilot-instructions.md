@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2025-11-20
 
 ## Active Technologies
+- TypeScript 5+, Node.js 20+ (Next.js 16 runtime) (002-rag-query-endpoint)
+- MongoDB 7+ for transaction data, in-memory vector index per session (existing session-manager pattern) (002-rag-query-endpoint)
 
 - TypeScript 5+ (strict mode enabled) + Next.js 16+ (Pages Router), React 19+, Material-UI v6+, Mongoose ODM, Ollama SDK (001-export-goods-analysis)
 
@@ -22,6 +24,7 @@ npm test && npm run lint
 TypeScript 5+ (strict mode enabled): Follow standard conventions
 
 ## Recent Changes
+- 002-rag-query-endpoint: Added TypeScript 5+, Node.js 20+ (Next.js 16 runtime)
 
 - 001-export-goods-analysis: Added TypeScript 5+ (strict mode enabled) + Next.js 16+ (Pages Router), React 19+, Material-UI v6+, Mongoose ODM, Ollama SDK
 

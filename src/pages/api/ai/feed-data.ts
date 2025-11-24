@@ -5,7 +5,17 @@ import {
   addTransactionData,
   getSession,
   updateSessionStatus,
+  updateSession,
 } from "@/lib/ai/session-manager";
+import { generateBatchEmbeddings } from "@/lib/ai/retrieval/embedder";
+import { buildIndex } from "@/lib/ai/retrieval/index";
+import type { TransactionEmbedding } from "@/lib/ai/retrieval/types";
+import { initializeServer } from "@/lib/server-init";
+
+// Initialize server on first import (pre-warm embedding model)
+initializeServer().catch((error) => {
+  console.error("[Server Init] Failed to initialize server:", error);
+});
 
 /**
  * Feed data response
@@ -38,7 +48,7 @@ export default async function handler(
   }
 
   try {
-    const { sessionId, filters, limit } = req.body;
+    const { sessionId, filters, limit, useRAG } = req.body;
 
     if (!sessionId) {
       return res.status(400).json({
@@ -54,6 +64,11 @@ export default async function handler(
         success: false,
         message: "Session not found or expired",
       });
+    }
+
+    // Update useRAG flag if provided
+    if (typeof useRAG === "boolean") {
+      updateSession(sessionId, { useRAG });
     }
 
     // Update status to feeding
@@ -89,7 +104,7 @@ export default async function handler(
     // Use limit from request or default to MAX_TRANSACTIONS, but never exceed MAX_TRANSACTIONS
     const effectiveLimit = Math.min(
       Math.max(1, parseInt(limit) || MAX_TRANSACTIONS),
-      MAX_TRANSACTIONS
+      MAX_TRANSACTIONS,
     );
 
     // Fetch transactions with limit
@@ -149,6 +164,67 @@ export default async function handler(
         success: false,
         message: "Failed to update session with data",
       });
+    }
+
+    // If RAG is enabled, build vector index
+    if (updatedSession.useRAG) {
+      try {
+        console.log(
+          `[Feed Data] Building RAG index for session ${sessionId} with ${formattedTransactions.length} transactions`,
+        );
+
+        // Update status to indexing
+        updateSessionStatus(sessionId, "indexing");
+
+        // Generate embeddings for all transactions
+        const embeddings: TransactionEmbedding[] =
+          await generateBatchEmbeddings(formattedTransactions, 100);
+
+        console.log(`[Feed Data] Generated ${embeddings.length} embeddings`);
+
+        // Build vector index
+        const indexResult = await buildIndex(sessionId, embeddings);
+
+        if (indexResult.error) {
+          console.error(`[Feed Data] Indexing failed: ${indexResult.error}`);
+          updateSessionStatus(sessionId, "index-failed");
+          updateSession(sessionId, {
+            vectorIndex: {
+              sessionId,
+              status: "failed",
+              transactionCount: formattedTransactions.length,
+              embeddingDimensions: 384,
+              indexedAt: new Date(),
+            },
+          });
+        } else {
+          console.log(
+            `[Feed Data] Successfully built index with ${indexResult.transactionCount} items`,
+          );
+          updateSessionStatus(sessionId, "ready");
+          updateSession(sessionId, {
+            vectorIndex: {
+              sessionId,
+              status: "ready",
+              transactionCount: indexResult.transactionCount,
+              embeddingDimensions: indexResult.embeddingDimensions,
+              indexedAt: indexResult.indexedAt,
+            },
+          });
+        }
+      } catch (indexError) {
+        console.error("[Feed Data] Error building index:", indexError);
+        updateSessionStatus(sessionId, "index-failed");
+        updateSession(sessionId, {
+          vectorIndex: {
+            sessionId,
+            status: "failed",
+            transactionCount: formattedTransactions.length,
+            embeddingDimensions: 384,
+            indexedAt: new Date(),
+          },
+        });
+      }
     }
 
     return res.status(200).json({
