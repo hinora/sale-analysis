@@ -4,6 +4,13 @@
 FROM node:20-alpine AS base
 WORKDIR /app
 
+# Install system dependencies required for onnxruntime-node
+RUN apk add --no-cache \
+    gcompat \
+    libstdc++ \
+    && ln -s /lib/libc.musl-aarch64.so.1 /lib/ld-linux-aarch64.so.1 || true \
+    && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2 || true
+
 # Install dependencies only when needed
 FROM base AS deps
 COPY package.json package-lock.json* ./
