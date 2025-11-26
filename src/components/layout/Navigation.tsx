@@ -50,10 +50,7 @@ export default function Navigation() {
           setAutoClassifyEnabled(true);
           console.log("[Navigation] Auto-classify job started");
         } else {
-          console.error(
-            "[Navigation] Failed to start job:",
-            response.status,
-          );
+          console.error("[Navigation] Failed to start job:", response.status);
           // Revert toggle on failure
           setAutoClassifyEnabled(false);
         }

@@ -11,16 +11,12 @@ export interface ShortenResult {
 }
 
 /**
- * AI name shortener using Ollama deepseek-r1
+ * AI name shortener using Ollama
  * Generates concise goods names (max 100 characters)
- * Uses deepseek-r1:1.5b for development, deepseek-r1:8b for production
+ * Model configured via AI_MODEL environment variable
  */
 export class AINameShortener {
-  private modelName =
-    process.env.AI_MODEL ||
-    (process.env.NODE_ENV === "production"
-      ? "deepseek-r1:8b"
-      : "deepseek-r1:1.5b");
+  private modelName = process.env.AI_MODEL || "deepseek-r1:1.5b";
   private ollamaClient = getOllamaClient();
   private maxLength = 100;
 

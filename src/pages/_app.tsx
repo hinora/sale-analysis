@@ -5,7 +5,6 @@ import { ThemeProvider, CssBaseline, Box } from "@mui/material";
 import { theme } from "@/styles/theme";
 import Navigation from "@/components/layout/Navigation";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
-import { useBackgroundJobTrigger } from "@/hooks/useBackgroundJobTrigger";
 
 /**
  * Root application component
@@ -18,7 +17,6 @@ import { useBackgroundJobTrigger } from "@/hooks/useBackgroundJobTrigger";
  */
 export default function App({ Component, pageProps }: AppProps) {
   // Auto-trigger background AI classification job every 5 minutes
-  useBackgroundJobTrigger(5);
 
   return (
     <ErrorBoundary>

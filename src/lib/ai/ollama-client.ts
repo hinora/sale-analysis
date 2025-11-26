@@ -59,6 +59,7 @@ export class OllamaClient {
   async generate(
     options: OllamaGenerateOptions,
   ): Promise<OllamaGenerateResponse> {
+    console.log(`[OllamaClient] Generating with prompt: ${options.prompt}`);
     const response = await fetch(`${this.baseUrl}/api/generate`, {
       method: "POST",
       headers: {

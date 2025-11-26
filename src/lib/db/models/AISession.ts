@@ -18,7 +18,7 @@ export interface IAISession extends Document {
   trainingDataCount: number; // Number of transactions fed to AI
 
   // Ollama context
-  ollamaModel: string; // e.g., 'deepseek-r1:1.5b', 'deepseek-r1:8b'
+  ollamaModel: string; // AI model name (e.g., 'deepseek-r1:1.5b')
   ollamaContext: string; // Conversation token for maintaining context
 
   // Conversation history
@@ -70,7 +70,7 @@ const AISessionSchema = new Schema<IAISession>(
     ollamaModel: {
       type: String,
       required: true,
-      default: "deepseek-r1:1.5b",
+      default: process.env.AI_MODEL || "deepseek-r1:1.5b",
     },
     ollamaContext: {
       type: String,

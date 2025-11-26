@@ -13,7 +13,7 @@ services:
     environment:
       - NODE_ENV=development
       - MONGODB_URI=mongodb://mongodb:27017/export-goods
-      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_HOST=http://host.docker.internal:11434
       - AI_MODEL=deepseek-r1:1.5b
       - NEXT_TELEMETRY_DISABLED=1
     volumes:
@@ -24,7 +24,6 @@ services:
       - /app/.next
     depends_on:
       - mongodb
-      - ollama
     networks:
       - export-goods-network
     restart: unless-stopped
@@ -49,50 +48,51 @@ services:
       timeout: 5s
       retries: 5
 
-  # Ollama AI Service
-  ollama:
-    image: ollama/ollama:latest
-    container_name: export-goods-ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama-data:/root/.ollama
-    networks:
-      - export-goods-network
-    restart: unless-stopped
-    # Uncomment for GPU support (NVIDIA)
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+  # Ollama AI Service (Disabled - Using host machine's Ollama)
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: export-goods-ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-data:/root/.ollama
+  #   networks:
+  #     - export-goods-network
+  #   restart: unless-stopped
+  #   # Uncomment for GPU support (NVIDIA)
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:11434"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
 
-  # Model Downloader (runs once to pull AI models)
-  ollama-setup:
-    image: ollama/ollama:latest
-    container_name: export-goods-ollama-setup
-    depends_on:
-      ollama:
-        condition: service_healthy
-    networks:
-      - export-goods-network
-    entrypoint: /bin/sh
-    command: >
-      -c "
-      echo 'Pulling deepseek-r1:1.5b model for development...' &&
-      ollama pull deepseek-r1:1.5b &&
-      echo 'Model downloaded successfully!'
-      "
-    environment:
-      - OLLAMA_HOST=http://ollama:11434
-    restart: "no"
+  # Model Downloader (Disabled - Using host machine's Ollama)
+  # Note: Pull models on your host machine with: ollama pull <model-name>
+  # ollama-setup:
+  #   image: ollama/ollama:latest
+  #   container_name: export-goods-ollama-setup
+  #   depends_on:
+  #     ollama:
+  #       condition: service_healthy
+  #   networks:
+  #     - export-goods-network
+  #   entrypoint: /bin/sh
+  #   command: >
+  #     -c "
+  #     echo 'Pulling deepseek-r1:1.5b model for development...' &&
+  #     ollama pull deepseek-r1:1.5b &&
+  #     echo 'Model downloaded successfully!'
+  #     "
+  #   environment:
+  #     - OLLAMA_HOST=http://ollama:11434
+  #   restart: "no"
 
 networks:
   export-goods-network:

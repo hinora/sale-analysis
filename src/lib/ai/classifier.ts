@@ -11,16 +11,12 @@ export interface ClassificationResult {
 }
 
 /**
- * AI goods classifier using Ollama deepseek-r1
+ * AI goods classifier using Ollama
  * Assigns categories to goods based on their raw names
- * Uses deepseek-r1:1.5b for development, deepseek-r1:8b for production
+ * Model configured via AI_MODEL environment variable
  */
 export class AIClassifier {
-  private modelName =
-    process.env.AI_MODEL ||
-    (process.env.NODE_ENV === "production"
-      ? "deepseek-r1:8b"
-      : "deepseek-r1:1.5b");
+  private modelName = process.env.AI_MODEL || "deepseek-r1:1.5b";
   private ollamaClient = getOllamaClient();
 
   /**

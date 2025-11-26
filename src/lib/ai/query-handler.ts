@@ -214,13 +214,8 @@ export class QueryHandler {
 
   constructor(model?: string) {
     this.ollamaClient = new OllamaClient();
-    // Use environment variable or default based on NODE_ENV
-    this.model =
-      model ||
-      process.env.AI_MODEL ||
-      (process.env.NODE_ENV === "production"
-        ? "deepseek-r1:8b"
-        : "deepseek-r1:1.5b");
+    // Use environment variable or default
+    this.model = model || process.env.AI_MODEL || "deepseek-r1:1.5b";
   }
 
   /**
@@ -357,12 +352,7 @@ Filters:`,
         "between",
         "in",
       ];
-      const dateOperators = [
-        "equals",
-        "greaterThan",
-        "lessThan",
-        "between",
-      ];
+      const dateOperators = ["equals", "greaterThan", "lessThan", "between"];
 
       const validatedFilters: FilterExpression[] = [];
       for (const filter of filters) {
