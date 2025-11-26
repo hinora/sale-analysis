@@ -89,7 +89,7 @@ export default async function handler(
     // Use limit from request or default to MAX_TRANSACTIONS, but never exceed MAX_TRANSACTIONS
     const effectiveLimit = Math.min(
       Math.max(1, parseInt(limit) || MAX_TRANSACTIONS),
-      MAX_TRANSACTIONS
+      MAX_TRANSACTIONS,
     );
 
     // Fetch transactions with limit

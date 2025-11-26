@@ -364,7 +364,10 @@ export default function AIAnalysisPage() {
                 type="number"
                 value={transactionLimit}
                 onChange={(e) => {
-                  const value = Math.min(10000, Math.max(1, parseInt(e.target.value) || 1000));
+                  const value = Math.min(
+                    10000,
+                    Math.max(1, parseInt(e.target.value) || 1000),
+                  );
                   setTransactionLimit(value);
                 }}
                 size="small"
@@ -434,7 +437,9 @@ export default function AIAnalysisPage() {
 
           {transactionCount >= transactionLimit && (
             <Alert severity="warning" sx={{ mt: 2 }}>
-              Đã đạt giới hạn {transactionLimit.toLocaleString()} giao dịch. Vui lòng thu hẹp bộ lọc hoặc tăng giới hạn để có kết quả chính xác hơn.
+              Đã đạt giới hạn {transactionLimit.toLocaleString()} giao dịch. Vui
+              lòng thu hẹp bộ lọc hoặc tăng giới hạn để có kết quả chính xác
+              hơn.
             </Alert>
           )}
         </Grid>

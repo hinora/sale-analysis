@@ -29,19 +29,34 @@ function formatTransactionDataForContext(
   // Calculate aggregated statistics for context
   const stats = {
     totalTransactions: transactions.length,
-    totalValue: transactions.reduce((sum, tx) => sum + (Number(tx.totalValueUSD) || 0), 0),
-    companies: new Set(transactions.map(tx => tx.companyName).filter(Boolean)),
-    categories: new Set(transactions.map(tx => tx.categoryName).filter(Boolean)),
-    countries: new Set(transactions.map(tx => tx.importCountry).filter(Boolean)),
+    totalValue: transactions.reduce(
+      (sum, tx) => sum + (Number(tx.totalValueUSD) || 0),
+      0,
+    ),
+    companies: new Set(
+      transactions.map((tx) => tx.companyName).filter(Boolean),
+    ),
+    categories: new Set(
+      transactions.map((tx) => tx.categoryName).filter(Boolean),
+    ),
+    countries: new Set(
+      transactions.map((tx) => tx.importCountry).filter(Boolean),
+    ),
     dateRange: {
-      earliest: transactions.reduce((min, tx) => {
-        const date = new Date(tx.date as string);
-        return !min || date < min ? date : min;
-      }, null as Date | null),
-      latest: transactions.reduce((max, tx) => {
-        const date = new Date(tx.date as string);
-        return !max || date > max ? date : max;
-      }, null as Date | null),
+      earliest: transactions.reduce(
+        (min, tx) => {
+          const date = new Date(tx.date as string);
+          return !min || date < min ? date : min;
+        },
+        null as Date | null,
+      ),
+      latest: transactions.reduce(
+        (max, tx) => {
+          const date = new Date(tx.date as string);
+          return !max || date > max ? date : max;
+        },
+        null as Date | null,
+      ),
     },
   };
 
@@ -59,7 +74,7 @@ TÓM TẮT DỮ LIỆU:
 - Số công ty: ${stats.companies.size}
 - Số danh mục: ${stats.categories.size}
 - Số nước: ${stats.countries.size}
-- Khoảng thời gian: ${stats.dateRange.earliest?.toISOString().split('T')[0]} đến ${stats.dateRange.latest?.toISOString().split('T')[0]}
+- Khoảng thời gian: ${stats.dateRange.earliest?.toISOString().split("T")[0]} đến ${stats.dateRange.latest?.toISOString().split("T")[0]}
 
 ĐỊNH DẠNG DỮ LIỆU: STT|Công ty|Nước|Danh mục|Số lượng|Đơn giá|Tổng giá trị|Ngày
 
@@ -159,13 +174,8 @@ export class QueryHandler {
 
   constructor(model?: string) {
     this.ollamaClient = new OllamaClient();
-    // Use environment variable or default based on NODE_ENV
-    this.model =
-      model ||
-      process.env.AI_MODEL ||
-      (process.env.NODE_ENV === "production"
-        ? "deepseek-r1:8b"
-        : "deepseek-r1:1.5b");
+    // Use environment variable or default
+    this.model = model || process.env.AI_MODEL || "deepseek-r1:1.5b";
   }
 
   /**
