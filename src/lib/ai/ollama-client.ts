@@ -14,6 +14,7 @@ export interface OllamaGenerateOptions {
   temperature?: number;
   top_p?: number;
   top_k?: number;
+  keep_alive?: string; // How long to keep model loaded (e.g., "5m", "1h", "0" to unload immediately)
 }
 
 /**
@@ -59,24 +60,28 @@ export class OllamaClient {
   async generate(
     options: OllamaGenerateOptions,
   ): Promise<OllamaGenerateResponse> {
-    console.log(`[OllamaClient] Generating with prompt: ${options.prompt}`);
+    // console.log(`[OllamaClient] Generating with prompt: ${options.prompt}`);
+
+    const requestBody: Record<string, unknown> = {
+      model: options.model,
+      prompt: options.prompt,
+      context: options.context,
+      stream: options.stream ?? false,
+      keep_alive: options.keep_alive ?? "30m", // Default: 30 minutes
+      options: {
+        temperature: options.temperature ?? 0.7,
+        top_p: options.top_p ?? 0.9,
+        top_k: options.top_k ?? 40,
+        num_ctx: 65536, // 64K context window for deepseek-r1:8b (native limit)
+      },
+    };
+
     const response = await fetch(`${this.baseUrl}/api/generate`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: options.model,
-        prompt: options.prompt,
-        context: options.context,
-        stream: options.stream ?? false,
-        options: {
-          temperature: options.temperature ?? 0.7,
-          top_p: options.top_p ?? 0.9,
-          top_k: options.top_k ?? 40,
-          num_ctx: 65536, // 64K context window for deepseek-r1:8b (native limit)
-        },
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {

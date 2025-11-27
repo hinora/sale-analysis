@@ -10,7 +10,7 @@ const mockSession = {
   id: "test-session",
   transactionData: [
     {
-      companyName: "ABC Corporation",
+      importCompanyName: "ABC Corporation",
       importCountry: "United States",
       categoryName: "Electronics",
       totalValueUSD: 50000,
@@ -20,7 +20,7 @@ const mockSession = {
       date: "2024-01-15",
     },
     {
-      companyName: "XYZ Import Ltd",
+      importCompanyName: "XYZ Import Ltd",
       importCountry: "Vietnam",
       categoryName: "Machinery",
       totalValueUSD: 75000,
@@ -30,7 +30,7 @@ const mockSession = {
       date: "2024-02-20",
     },
     {
-      companyName: "Global Trading Co",
+      importCompanyName: "Global Trading Co",
       importCountry: "China",
       categoryName: "Electronics",
       totalValueUSD: 120000,
@@ -136,18 +136,18 @@ describe("QueryHandler - Intent Classification", () => {
   });
 
   describe("Aggregation spec extraction", () => {
-    test('Extracts count operation from "How many companies?"', () => {
-      const specs = queryHandler.extractAggregationSpecs(
+    test('Extracts count operation from "How many"', async () => {
+      const specs = await queryHandler.extractAggregationSpecs(
         "How many companies are there?",
       );
 
       expect(specs).toHaveLength(1);
       expect(specs[0].operation).toBe("count");
-      expect(specs[0].field).toBe("companyName");
+      expect(specs[0].field).toBe("importCompanyName");
     });
 
-    test('Extracts sum operation from "Total value"', () => {
-      const specs = queryHandler.extractAggregationSpecs(
+    test('Extracts sum operation from "Total value"', async () => {
+      const specs = await queryHandler.extractAggregationSpecs(
         "What is the total value of imports?",
       );
 
@@ -156,8 +156,8 @@ describe("QueryHandler - Intent Classification", () => {
       expect(specs[0].field).toBe("totalValueUSD");
     });
 
-    test('Extracts average operation from "Average price"', () => {
-      const specs = queryHandler.extractAggregationSpecs(
+    test('Extracts average operation from "Average price"', async () => {
+      const specs = await queryHandler.extractAggregationSpecs(
         "What is the average price?",
       );
 
@@ -165,17 +165,18 @@ describe("QueryHandler - Intent Classification", () => {
       expect(specs[0].operation).toBe("average");
     });
 
-    test('Extracts groupBy from "by company"', () => {
-      const specs = queryHandler.extractAggregationSpecs(
+    test('Extracts groupBy from "by company"', async () => {
+      const specs = await queryHandler.extractAggregationSpecs(
         "Total imports by company",
       );
 
       expect(specs).toHaveLength(1);
-      expect(specs[0].groupBy).toBe("companyName");
+      expect(specs[0].groupBy).toBe("importCompanyName");
     });
 
-    test('Extracts groupBy from "by category"', () => {
-      const specs = queryHandler.extractAggregationSpecs("Sum by category");
+    test('Extracts groupBy from "by category"', async () => {
+      const specs =
+        await queryHandler.extractAggregationSpecs("Sum by category");
 
       expect(specs).toHaveLength(1);
       expect(specs[0].groupBy).toBe("categoryName");

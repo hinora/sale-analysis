@@ -15,7 +15,7 @@ export interface ITransaction extends Document {
   day: number;
 
   // References
-  company: Schema.Types.ObjectId; // Reference to Company
+  importCompany: Schema.Types.ObjectId; // Reference to Company (importer)
   goods: Schema.Types.ObjectId; // Reference to Goods
 
   // Product identification
@@ -85,7 +85,7 @@ const TransactionSchema = new Schema<ITransaction>(
       min: 1,
       max: 31,
     },
-    company: {
+    importCompany: {
       type: Schema.Types.ObjectId,
       ref: "Company",
       required: true,

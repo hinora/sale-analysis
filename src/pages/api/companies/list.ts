@@ -109,7 +109,7 @@ export default async function handler(
     // Stage 3: Group by company and calculate aggregations
     pipeline.push({
       $group: {
-        _id: "$company",
+        _id: "$importCompany",
         totalTransactions: { $sum: 1 },
         totalImportValue: { $sum: { $toDouble: "$totalValueUSD" } },
         totalQuantity: { $sum: { $toDouble: "$quantity" } },

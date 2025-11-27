@@ -106,7 +106,7 @@ export interface AggregationCacheEntry {
  *     {
  *       "field": "totalValueUSD",
  *       "operation": "sum",
- *       "groupBy": "companyName"
+ *       "groupBy": "importCompanyName"
  *     }
  *   ]
  * }
@@ -121,7 +121,7 @@ export interface AggregationCacheEntry {
  *     {
  *       "type": "groupBy",
  *       "field": "totalValueUSD",
- *       "groupByField": "companyName",
+ *       "groupByField": "importCompanyName",
  *       "data": [
  *         { "key": "CÔNG TY ABC", "count": 450, "sum": 2500000 },
  *         { "key": "XYZ Corporation", "count": 380, "sum": 1800000 },

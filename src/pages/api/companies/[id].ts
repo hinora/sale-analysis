@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { connectToDatabase } from "@/lib/db/connection";
 import { Transaction } from "@/lib/db/models/Transaction";
 import { Company } from "@/lib/db/models/Company";
+import "@/lib/db/models/Goods";
+import "@/lib/db/models/Category";
 import { Types } from "mongoose";
 
 /**
@@ -79,7 +81,7 @@ export default async function handler(
     }
 
     // Fetch transactions for this company
-    const transactions = await Transaction.find({ company: id })
+    const transactions = await Transaction.find({ importCompany: id })
       .populate("goods", "rawName shortName category hsCode")
       .sort({ date: -1 })
       .limit(1000) // Limit to last 1000 transactions
@@ -87,7 +89,7 @@ export default async function handler(
 
     // Calculate aggregated statistics
     const stats = await Transaction.aggregate([
-      { $match: { company: new Types.ObjectId(id) } },
+      { $match: { importCompany: new Types.ObjectId(id) } },
       {
         $group: {
           _id: null,

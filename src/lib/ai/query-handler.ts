@@ -74,7 +74,7 @@ function formatTransactionDataForContext(
       0,
     ),
     companies: new Set(
-      transactions.map((tx) => tx.companyName).filter(Boolean),
+      transactions.map((tx) => tx.importCompanyName).filter(Boolean),
     ),
     categories: new Set(
       transactions.map((tx) => tx.categoryName).filter(Boolean),
@@ -103,7 +103,7 @@ function formatTransactionDataForContext(
   // Use compact CSV-like format instead of verbose text
   const formatted = transactions
     .map((tx, index) => {
-      return `${index + 1}|${tx.declarationNumber}|${tx.date}|${tx.companyName}|${tx.companyAddress}|${tx.importCountry}|${tx.goodsName}|${tx.goodsShortName}|${tx.categoryName}|${tx.quantity} ${tx.unit}|$${tx.unitPriceUSD}|$${tx.totalValueUSD}`;
+      return `${index + 1}|${tx.declarationNumber}|${tx.date}|${tx.importCompanyName}|${tx.importCompanyAddress}|${tx.importCountry}|${tx.goodsName}|${tx.goodsShortName}|${tx.categoryName}|${tx.quantity} ${tx.unit}|$${tx.unitPriceUSD}|$${tx.totalValueUSD}`;
     })
     .join("\n");
 
@@ -116,7 +116,7 @@ TÓM TẮT DỮ LIỆU:
 - Số nước: ${stats.countries.size}
 - Khoảng thời gian: ${stats.dateRange.earliest?.toISOString().split("T")[0]} đến ${stats.dateRange.latest?.toISOString().split("T")[0]}
 
-ĐỊNH DẠNG DỮ LIỆU: STT|Số tờ khai|Ngày|Công ty|Địa chỉ công ty|Nước nhập khẩu|Tên hàng hóa|Tên rút gọn|Danh mục|Số lượng|Đơn giá|Tổng giá trị
+ĐỊNH DẠNG DỮ LIỆU: STT|Số tờ khai|Ngày|Công ty nhập khẩu|Địa chỉ công ty nhập khẩu|Nước nhập khẩu|Tên hàng hóa|Tên rút gọn|Danh mục|Số lượng|Đơn giá|Tổng giá trị
 
 DỮ LIỆU GIAO DỊCH:
 ${formatted}
@@ -223,14 +223,14 @@ export class QueryHandler {
    * Analyzes natural language to identify field filters (company, country, category, date range, etc.)
    */
   async extractFilters(userQuestion: string): Promise<FilterExpression[]> {
-    const systemPrompt = `You are a filter extraction system. Analyze the user's question and extract structured filters.
+    const systemPrompt = `Bạn là hệ thống trích xuất bộ lọc. Phân tích câu hỏi của người dùng và trích xuất các bộ lọc có cấu trúc.
 
-Transaction fields available (12 columns):
+Các trường giao dịch khả dụng (12 cột):
 1. declarationNumber: string (e.g., "DEC-2024-001", "VN123456")
 2. date: string (YYYY-MM-DD format, e.g., "2024-01-15")
-3. companyName: string (e.g., "CÔNG TY ABC", "XYZ Corporation")
-4. companyAddress: string (e.g., "123 Main St, Hanoi", "456 Business Ave")
-5. importCountry: string (e.g., "United States", "Vietnam", "China")
+3. importCompanyName: string (e.g., "CÔNG TY ABC", "XYZ Corporation") - Tên công ty nhập khẩu
+4. importCompanyAddress: string (e.g., "123 Main St, Hanoi", "456 Business Ave") - Địa chỉ công ty nhập khẩu
+5. importCountry: string (e.g., "United States", "Vietnam", "China") - Nước xuất khẩu
 6. goodsName: string (e.g., "Laptop Dell Inspiron 15", "Máy tính xách tay")
 7. goodsShortName: string (e.g., "Laptop", "Computer")
 8. categoryName: string (e.g., "Electronics", "Machinery", "Textiles")
@@ -239,30 +239,30 @@ Transaction fields available (12 columns):
 11. unitPriceUSD: number (e.g., 299.99, 1500.50)
 12. totalValueUSD: number (e.g., 50000.00, 125000.00)
 
-Operators by field type:
-**String fields (declarationNumber, companyName, companyAddress, importCountry, goodsName, goodsShortName, categoryName, unit):**
-  - equals: exact match (supports synonyms)
-  - contains: substring match (supports synonyms)
-  - startsWith: prefix match
-  - in: array membership
+Các toán tử theo loại trường:
+**Trường chuỗi (declarationNumber, importCompanyName, importCompanyAddress, importCountry, goodsName, goodsShortName, categoryName, unit):**
+  - equals: khớp chính xác (hỗ trợ từ đồng nghĩa)
+  - contains: khớp chuỗi con (hỗ trợ từ đồng nghĩa)
+  - startsWith: khớp tiền tố
+  - in: thuộc mảng
 
-**Number fields (quantity, unitPriceUSD, totalValueUSD):**
-  - equals: exact numeric match
-  - greaterThan: numeric comparison >
-  - lessThan: numeric comparison <
-  - between: range [min, max]
-  - in: array membership
+**Trường số (quantity, unitPriceUSD, totalValueUSD):**
+  - equals: khớp số chính xác
+  - greaterThan: so sánh số >
+  - lessThan: so sánh số <
+  - between: khoảng [min, max]
+  - in: thuộc mảng
 
-**Date fields (date):**
-  - equals: exact date match
-  - greaterThan: date after >
-  - lessThan: date before <
-  - between: date range [start, end]
+**Trường ngày (date):**
+  - equals: khớp ngày chính xác
+  - greaterThan: sau ngày >
+  - lessThan: trước ngày <
+  - between: khoảng ngày [bắt đầu, kết thúc]
 
-IMPORTANT: Do NOT use numeric operators (greaterThan, lessThan, between) with string fields!
-IMPORTANT: Do NOT use string operators (contains, startsWith) with numeric fields!
+QUAN TRỌNG: KHÔNG sử dụng toán tử số (greaterThan, lessThan, between) với trường chuỗi!
+QUAN TRỌNG: KHÔNG sử dụng toán tử chuỗi (contains, startsWith) với trường số!
 
-Return ONLY a valid JSON array of filter objects. Each filter must have:
+Chỉ trả về mảng JSON hợp lệ của các đối tượng bộ lọc. Mỗi bộ lọc phải có:
 {
   "field": "fieldName",
   "operator": "operatorName",
@@ -272,34 +272,34 @@ Return ONLY a valid JSON array of filter objects. Each filter must have:
   "logicalOperator": "AND" | "OR" (optional, default AND)
 }
 
-Examples:
-Question: "Show me US companies"
-Response: [{"field":"importCountry","operator":"contains","value":"US","matchStrategy":"case-insensitive"}]
+Ví dụ:
+Câu hỏi: "Hiển thị công ty từ Mỹ"
+Phản hồi: [{"field":"importCountry","operator":"contains","value":"US","matchStrategy":"case-insensitive"}]
 
-Question: "Electronics from Vietnam in Q1 2024"
-Response: [{"field":"categoryName","operator":"contains","value":"Electronics","matchStrategy":"case-insensitive"},{"field":"importCountry","operator":"contains","value":"Vietnam","matchStrategy":"case-insensitive"},{"field":"date","operator":"between","value":["2024-01-01","2024-03-31"]}]
+Câu hỏi: "Điện tử từ Việt Nam trong quý 1 năm 2024"
+Phản hồi: [{"field":"categoryName","operator":"contains","value":"Electronics","matchStrategy":"case-insensitive"},{"field":"importCountry","operator":"contains","value":"Vietnam","matchStrategy":"case-insensitive"},{"field":"date","operator":"between","value":["2024-01-01","2024-03-31"]}]
 
-Question: "Companies with sales over $50,000"
-Response: [{"field":"totalValueUSD","operator":"greaterThan","value":"50000"}]
+Câu hỏi: "Công ty có doanh số trên $50,000"
+Phản hồi: [{"field":"totalValueUSD","operator":"greaterThan","value":"50000"}]
 
-Question: "Declarations starting with DEC-2024"
-Response: [{"field":"declarationNumber","operator":"startsWith","value":"DEC-2024","matchStrategy":"case-insensitive"}]
+Câu hỏi: "Tờ khai bắt đầu bằng DEC-2024"
+Phản hồi: [{"field":"declarationNumber","operator":"startsWith","value":"DEC-2024","matchStrategy":"case-insensitive"}]
 
-Question: "Laptops with quantity greater than 100"
-Response: [{"field":"goodsShortName","operator":"contains","value":"Laptop","matchStrategy":"case-insensitive"},{"field":"quantity","operator":"greaterThan","value":"100"}]
+Câu hỏi: "Laptop với số lượng lớn hơn 100"
+Phản hồi: [{"field":"goodsShortName","operator":"contains","value":"Laptop","matchStrategy":"case-insensitive"},{"field":"quantity","operator":"greaterThan","value":"100"}]
 
-If no filters can be extracted, return an empty array: []
+Nếu không trích xuất được bộ lọc nào, trả về mảng rỗng: []
 
-Respond ONLY with the JSON array, no other text.`;
+Chỉ trả lời bằng mảng JSON, không có văn bản khác.`;
 
     try {
       const response = await this.ollamaClient.generate({
         model: this.model,
         prompt: `${systemPrompt}
 
-Question: ${userQuestion}
+Câu hỏi: ${userQuestion}
 
-Filters:`,
+Bộ lọc:`,
         stream: false,
         temperature: 0.3, // Lower temperature for more structured output
       });
@@ -333,8 +333,8 @@ Filters:`,
       // Define field types for validation
       const stringFields = [
         "declarationNumber",
-        "companyName",
-        "companyAddress",
+        "importCompanyName",
+        "importCompanyAddress",
         "importCountry",
         "goodsName",
         "goodsShortName",
@@ -435,7 +435,9 @@ Filters:`,
     }
 
     // Check for missing critical fields
-    const hasCompanyNames = filteredTransactions.some((tx) => tx.companyName);
+    const hasCompanyNames = filteredTransactions.some(
+      (tx) => tx.importCompanyName,
+    );
     const hasValues = filteredTransactions.some((tx) => tx.totalValueUSD);
     const hasCategories = filteredTransactions.some((tx) => tx.categoryName);
 
@@ -455,34 +457,34 @@ Filters:`,
    * Uses AI to determine optimal data strategy
    */
   async classifyQueryIntent(userQuestion: string): Promise<QueryIntent> {
-    const systemPrompt = `You are a query intent classifier for transaction data analysis. Analyze the user's question and classify it into one of these types:
+    const systemPrompt = `Bạn là bộ phân loại ý định truy vấn cho phân tích dữ liệu giao dịch. Phân tích câu hỏi của người dùng và phân loại vào một trong các loại sau:
 
-1. **aggregation**: Questions asking for totals, counts, sums, averages, min/max values
-   Examples: "What's the total value?", "How many transactions?", "Tổng giá trị là bao nhiêu?"
+1. **aggregation**: Câu hỏi yêu cầu tổng, đếm, tổng cộng, trung bình, giá trị min/max
+   Ví dụ: "Tổng giá trị là bao nhiêu?", "Có bao nhiêu giao dịch?", "What's the total value?"
 
-2. **detail**: Questions asking for specific transaction details or lists
-   Examples: "Show me all transactions", "List electronics imports", "Hiển thị chi tiết"
+2. **detail**: Câu hỏi yêu cầu chi tiết giao dịch cụ thể hoặc danh sách
+   Ví dụ: "Hiển thị tất cả giao dịch", "Liệt kê nhập khẩu điện tử", "Show me all transactions"
 
-3. **trend**: Questions about changes over time, growth, patterns
-   Examples: "What's the trend?", "How did sales grow?", "Xu hướng theo thời gian?"
+3. **trend**: Câu hỏi về thay đổi theo thời gian, tăng trưởng, mô hình
+   Ví dụ: "Xu hướng thế nào?", "Doanh số tăng như thế nào?", "What's the trend?"
 
-4. **comparison**: Questions comparing entities, time periods, or categories
-   Examples: "Compare US and China imports", "So sánh giữa các công ty"
+4. **comparison**: Câu hỏi so sánh các thực thể, khoảng thời gian hoặc danh mục
+   Ví dụ: "So sánh nhập khẩu từ Mỹ và Trung Quốc", "Compare US and China imports"
 
-5. **recommendation**: Questions asking for suggestions or advice
-   Examples: "Which companies should I focus on?", "Đề xuất chiến lược"
+5. **recommendation**: Câu hỏi yêu cầu gợi ý hoặc lời khuyên
+   Ví dụ: "Nên tập trung vào công ty nào?", "Đề xuất chiến lược", "Which companies should I focus on?"
 
-6. **ranking**: Questions asking for top/bottom performers or sorted lists
-   Examples: "Top 10 companies", "Highest value exports", "Công ty hàng đầu"
+6. **ranking**: Câu hỏi về top/bottom hoặc danh sách sắp xếp
+   Ví dụ: "Top 10 công ty", "Xuất khẩu giá trị cao nhất", "Công ty hàng đầu"
 
-Return ONLY a valid JSON object with this structure:
+Chỉ trả về đối tượng JSON hợp lệ với cấu trúc này:
 {
   "type": "aggregation|detail|trend|comparison|recommendation|ranking",
   "confidence": 0.0-1.0,
-  "reasoning": "brief explanation of why this type was chosen"
+  "reasoning": "giải thích ngắn gọn tại sao chọn loại này"
 }
 
-Be precise and confident in your classification. Consider both English and Vietnamese questions.`;
+Hãy chính xác và tự tin trong phân loại của bạn. Xem xét cả câu hỏi tiếng Anh và tiếng Việt.`;
 
     try {
       // Use AI to classify query type
@@ -490,9 +492,9 @@ Be precise and confident in your classification. Consider both English and Vietn
         model: this.model,
         prompt: `${systemPrompt}
 
-Question: ${userQuestion}
+Câu hỏi: ${userQuestion}
 
-Classification:`,
+Phân loại:`,
         stream: false,
         temperature: 0.3, // Lower temperature for more consistent classification
       });
@@ -530,7 +532,7 @@ Classification:`,
       // Extract aggregations if type is aggregation or ranking
       let aggregations: QueryIntent["aggregations"];
       if (type === "aggregation" || type === "ranking") {
-        aggregations = this.extractAggregationSpecs(userQuestion);
+        aggregations = await this.extractAggregationSpecs(userQuestion);
       }
 
       // Extract limit from question (e.g., "top 5", "10 companies")
@@ -596,7 +598,7 @@ Classification:`,
 
       let aggregations: QueryIntent["aggregations"];
       if (type === "aggregation" || type === "ranking") {
-        aggregations = this.extractAggregationSpecs(userQuestion);
+        aggregations = await this.extractAggregationSpecs(userQuestion);
       }
 
       const limitMatch = userQuestion.match(
@@ -625,10 +627,201 @@ Classification:`,
   }
 
   /**
-   * Extract aggregation specifications from user question
+   * Extract aggregation specifications from user question using AI
    * Identifies field, operation, and groupBy for aggregation queries
    */
-  extractAggregationSpecs(userQuestion: string): Array<{
+  async extractAggregationSpecs(userQuestion: string): Promise<
+    Array<{
+      field: string;
+      operation: "count" | "sum" | "average" | "min" | "max";
+      groupBy?: string;
+    }>
+  > {
+    const systemPrompt = `Bạn là hệ thống trích xuất thông số tổng hợp dữ liệu. Phân tích câu hỏi và xác định các phép tính tổng hợp cần thiết.
+
+CÁC TRƯỜNG KHẢ DỤNG VÀ LOẠI DỮ LIỆU:
+
+**Trường chuỗi (string) - CHỈ dùng với count:**
+- importCompanyName: Tên công ty nhập khẩu (string) - CHỈ dùng để đếm (count) hoặc nhóm (groupBy)
+- categoryName: Danh mục hàng hóa (string) - CHỈ dùng để đếm (count) hoặc nhóm (groupBy)
+- importCountry: Nước nhập khẩu (string) - CHỈ dùng để đếm (count) hoặc nhóm (groupBy)
+- goodsName: Tên hàng hóa (string) - CHỈ dùng để đếm (count) hoặc nhóm (groupBy)
+- goodsShortName: Tên rút gọn hàng hóa (string) - CHỈ dùng để đếm (count) hoặc nhóm (groupBy)
+
+**Trường số (number) - Dùng với ALL operations:**
+- quantity: Số lượng (number) - Dùng với count, sum, average, min, max
+- unitPriceUSD: Đơn giá USD (number) - Dùng với count, sum, average, min, max
+- totalValueUSD: Tổng giá trị USD (number) - Dùng với count, sum, average, min, max
+
+QUY TẮC QUAN TRỌNG:
+1. KHÔNG BAO GIỜ dùng sum, average, min, max với trường chuỗi (importCompanyName, categoryName, importCountry, goodsName, goodsShortName)
+2. CHỈ dùng count với trường chuỗi
+3. Trường số (quantity, unitPriceUSD, totalValueUSD) có thể dùng với TẤT CẢ phép toán
+4. Khi muốn tìm "công ty có giá trị cao nhất", dùng: field="totalValueUSD", operation="sum", groupBy="importCompanyName"
+5. Khi muốn "đếm số công ty", dùng: field="importCompanyName", operation="count"
+
+Các phép toán:
+- count: Đếm số lượng (dùng với MỌI trường)
+- sum: Tổng cộng (CHỈ dùng với quantity, unitPriceUSD, totalValueUSD)
+- average: Trung bình (CHỈ dùng với quantity, unitPriceUSD, totalValueUSD)
+- min: Giá trị nhỏ nhất (CHỈ dùng với quantity, unitPriceUSD, totalValueUSD)
+- max: Giá trị lớn nhất (CHỈ dùng với quantity, unitPriceUSD, totalValueUSD)
+
+Các trường groupBy (nhóm theo):
+- importCompanyName: Nhóm theo công ty nhập khẩu
+- categoryName: Nhóm theo danh mục
+- importCountry: Nhóm theo nước
+- month: Nhóm theo tháng
+- year: Nhóm theo năm
+
+Trả về mảng JSON của các thông số tổng hợp:
+{
+  "field": "tên trường để tính toán",
+  "operation": "count|sum|average|min|max",
+  "groupBy": "tên trường để nhóm (optional)"
+}
+
+Ví dụ ĐÚNG:
+Câu hỏi: "Tổng giá trị xuất khẩu theo công ty"
+Phản hồi: [{"field":"totalValueUSD","operation":"sum","groupBy":"importCompanyName"}]
+
+Câu hỏi: "Có bao nhiêu giao dịch của mỗi danh mục?"
+Phản hồi: [{"field":"categoryName","operation":"count","groupBy":"categoryName"}]
+
+Câu hỏi: "Công ty nào có giá trị xuất khẩu cao nhất?"
+Phản hồi: [{"field":"totalValueUSD","operation":"sum","groupBy":"importCompanyName"}]
+
+Câu hỏi: "Giá trị trung bình theo tháng"
+Phản hồi: [{"field":"totalValueUSD","operation":"average","groupBy":"month"}]
+
+Câu hỏi: "Top 5 danh mục có doanh số cao nhất"
+Phản hồi: [{"field":"totalValueUSD","operation":"sum","groupBy":"categoryName"}]
+
+Câu hỏi: "Đếm số công ty"
+Phản hồi: [{"field":"importCompanyName","operation":"count"}]
+
+Câu hỏi: "Số lượng trung bình mỗi giao dịch"
+Phản hồi: [{"field":"quantity","operation":"average"}]
+
+Ví dụ SAI (TRÁNH):
+❌ {"field":"importCompanyName","operation":"sum"} - SAI vì importCompanyName là chuỗi
+❌ {"field":"categoryName","operation":"max"} - SAI vì categoryName là chuỗi
+❌ {"field":"goodsName","operation":"average"} - SAI vì goodsName là chuỗi
+
+Nếu không xác định được, trả về: [{"field":"totalValueUSD","operation":"sum"}]
+
+Chỉ trả lời bằng mảng JSON, không có văn bản khác.`;
+
+    try {
+      const response = await this.ollamaClient.generate({
+        model: this.model,
+        prompt: `${systemPrompt}
+
+Câu hỏi: ${userQuestion}
+
+Thông số tổng hợp:`,
+        stream: false,
+        temperature: 0.3,
+      });
+
+      // Parse JSON response
+      let aggregationJson = response.response.trim();
+
+      // Remove markdown code blocks if present
+      aggregationJson = aggregationJson
+        .replace(/```json\n?/g, "")
+        .replace(/```\n?/g, "")
+        .trim();
+
+      // Extract JSON array if wrapped in text
+      const jsonMatch = aggregationJson.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        aggregationJson = jsonMatch[0];
+      }
+
+      const aggregations = JSON.parse(aggregationJson);
+
+      // Validate response
+      if (!Array.isArray(aggregations) || aggregations.length === 0) {
+        console.warn(
+          "[QueryHandler] extractAggregationSpecs returned invalid data, using fallback",
+        );
+        return this.fallbackAggregationSpecs(userQuestion);
+      }
+
+      // Validate each aggregation spec
+      const validOperations = ["count", "sum", "average", "min", "max"];
+      const validFields = [
+        "importCompanyName",
+        "categoryName",
+        "importCountry",
+        "goodsName",
+        "goodsShortName",
+        "quantity",
+        "unitPriceUSD",
+        "totalValueUSD",
+      ];
+      const validGroupBy = [
+        "importCompanyName",
+        "categoryName",
+        "importCountry",
+        "month",
+        "year",
+        "goodsName",
+      ];
+
+      const validatedAggregations = aggregations.filter((agg) => {
+        if (!agg.field || !agg.operation) {
+          console.warn(
+            "[QueryHandler] Invalid aggregation spec missing field or operation:",
+            agg,
+          );
+          return false;
+        }
+
+        if (!validOperations.includes(agg.operation)) {
+          console.warn(
+            `[QueryHandler] Invalid operation '${agg.operation}':`,
+            agg,
+          );
+          return false;
+        }
+
+        if (!validFields.includes(agg.field)) {
+          console.warn(`[QueryHandler] Invalid field '${agg.field}':`, agg);
+          return false;
+        }
+
+        if (agg.groupBy && !validGroupBy.includes(agg.groupBy)) {
+          console.warn(`[QueryHandler] Invalid groupBy '${agg.groupBy}':`, agg);
+          return false;
+        }
+
+        return true;
+      });
+
+      if (validatedAggregations.length === 0) {
+        console.warn(
+          "[QueryHandler] No valid aggregation specs after validation, using fallback",
+        );
+        return this.fallbackAggregationSpecs(userQuestion);
+      }
+
+      return validatedAggregations;
+    } catch (error) {
+      console.error(
+        "[QueryHandler] Error extracting aggregation specs:",
+        error,
+      );
+      return this.fallbackAggregationSpecs(userQuestion);
+    }
+  }
+
+  /**
+   * Fallback pattern-based aggregation extraction
+   * Used when AI extraction fails
+   */
+  private fallbackAggregationSpecs(userQuestion: string): Array<{
     field: string;
     operation: "count" | "sum" | "average" | "min" | "max";
     groupBy?: string;
@@ -654,7 +847,7 @@ Classification:`,
     // Detect field
     let field = "totalValueUSD"; // default
     if (/công ty|company|companies/i.test(userQuestion)) {
-      field = "companyName";
+      field = "importCompanyName";
     } else if (
       /mặt hàng|goods|category|categories|danh mục/i.test(userQuestion)
     ) {
@@ -670,7 +863,7 @@ Classification:`,
     // Detect groupBy
     let groupBy: string | undefined;
     if (/theo công ty|by company|per company/i.test(userQuestion)) {
-      groupBy = "companyName";
+      groupBy = "importCompanyName";
     } else if (/theo mặt hàng|by category|per category/i.test(userQuestion)) {
       groupBy = "categoryName";
     } else if (/theo quốc gia|by country|per country/i.test(userQuestion)) {
@@ -703,6 +896,7 @@ Classification:`,
       const queryIntent = await this.classifyQueryIntent(userQuestion);
       console.log(
         `[QueryHandler] Query intent: ${queryIntent.type} (confidence: ${queryIntent.confidence})`,
+        queryIntent,
       );
 
       // Extract filters from query intent
@@ -713,6 +907,7 @@ Classification:`,
       if (filters.length > 0) {
         const filterStartTime = Date.now();
 
+        console.log("[QueryHandler] Applying filters:", filters);
         filteredTransactions = executeFilters(
           session.transactionData as Array<Record<string, unknown>>,
           filters,
@@ -775,7 +970,8 @@ Classification:`,
 
         // If no aggregations specified, infer from question
         if (aggregations.length === 0) {
-          const inferredSpecs = this.extractAggregationSpecs(userQuestion);
+          const inferredSpecs =
+            await this.extractAggregationSpecs(userQuestion);
           aggregations.push(...inferredSpecs);
         }
 
@@ -880,7 +1076,7 @@ Trả lời:`;
     // Extract unique companies
     const companies = new Set(
       session.transactionData
-        .map((tx) => tx.companyName as string)
+        .map((tx) => tx.importCompanyName as string)
         .filter(Boolean),
     );
 

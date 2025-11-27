@@ -101,7 +101,7 @@ export default async function handler(
       {
         $lookup: {
           from: "companies",
-          localField: "company",
+          localField: "importCompany",
           foreignField: "_id",
           as: "companyData",
         },

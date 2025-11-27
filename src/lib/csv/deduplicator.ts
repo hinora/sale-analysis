@@ -38,13 +38,13 @@ export class CSVDeduplicator {
     const declarationNumber = row["Số tờ khai"]?.trim() || "";
     const hsCode = row["HS code"]?.trim() || "";
     const goodsName = row["Tên hàng"]?.trim() || "";
-    const companyName = row["Tên Cty nhập khẩu"]?.trim() || "";
+    const importCompanyName = row["Tên Cty nhập khẩu"]?.trim() || "";
     const totalValueUSD = row["Trị giá USD"]?.trim() || "";
     const usdRate = row["Tỷ giá USD"]?.trim() || "";
     const paymentMethod = row["Mã phương thức thanh toán"]?.trim() || "";
     const deliveryTerms = row["Điều kiện giao hàng"]?.trim() || "";
 
-    return `${declarationNumber}|${hsCode}|${goodsName}|${companyName}|${totalValueUSD}|${usdRate}|${paymentMethod}|${deliveryTerms}`;
+    return `${declarationNumber}|${hsCode}|${goodsName}|${importCompanyName}|${totalValueUSD}|${usdRate}|${paymentMethod}|${deliveryTerms}`;
   }
 
   /**

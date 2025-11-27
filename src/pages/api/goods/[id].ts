@@ -106,7 +106,7 @@ export default async function handler(
     // Fetch transactions for this goods
     const skip = (page - 1) * pageSize;
     const transactions = await Transaction.find({ goods: id })
-      .populate("company", "name address")
+      .populate("importCompany", "name address")
       .sort({ [sortBy]: sortOrder })
       .skip(skip)
       .limit(pageSize)
@@ -155,9 +155,9 @@ export default async function handler(
         declarationNumber: tx.declarationNumber || "",
         date: tx.date ? new Date(tx.date).toISOString() : "",
         company: {
-          _id: tx.company?._id?.toString() || "",
-          name: tx.company?.name || "",
-          address: tx.company?.address || "",
+          _id: tx.importCompany?._id?.toString() || "",
+          name: tx.importCompany?.name || "",
+          address: tx.importCompany?.address || "",
         },
         quantity: convertDecimal(tx.quantity),
         unit: tx.unit || "",

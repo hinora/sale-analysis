@@ -38,7 +38,7 @@ export interface AggregationResult {
  * Aggregation cache for fast retrieval
  */
 export interface AggregationCache {
-  byCompany: Map<string, AggregationDataPoint>;
+  byImportCompany: Map<string, AggregationDataPoint>;
   byCategory: Map<string, AggregationDataPoint>;
   byCountry: Map<string, AggregationDataPoint>;
   byMonth: Map<string, AggregationDataPoint>;
@@ -228,20 +228,20 @@ export function buildAggregationCache(
   transactions: Array<Record<string, unknown>>,
 ): AggregationCache {
   // Precompute common aggregations
-  const byCompany = new Map<string, AggregationDataPoint>();
+  const byImportCompany = new Map<string, AggregationDataPoint>();
   const byCategory = new Map<string, AggregationDataPoint>();
   const byCountry = new Map<string, AggregationDataPoint>();
   const byMonth = new Map<string, AggregationDataPoint>();
 
-  // Group by company
+  // Group by import company
   const companyData = groupBy(
     transactions,
-    "companyName",
+    "importCompanyName",
     "totalValueUSD",
     "sum",
   );
   for (const dp of companyData) {
-    byCompany.set(dp.key, dp);
+    byImportCompany.set(dp.key, dp);
   }
 
   // Group by category
@@ -296,7 +296,7 @@ export function buildAggregationCache(
   }
 
   return {
-    byCompany,
+    byImportCompany,
     byCategory,
     byCountry,
     byMonth,
@@ -309,14 +309,14 @@ export function buildAggregationCache(
  */
 export function queryCacheTopN(
   cache: AggregationCache,
-  groupBy: "company" | "category" | "country" | "month",
+  groupBy: "importCompany" | "category" | "country" | "month",
   n: number,
 ): AggregationDataPoint[] {
   let cacheMap: Map<string, AggregationDataPoint>;
 
   switch (groupBy) {
-    case "company":
-      cacheMap = cache.byCompany;
+    case "importCompany":
+      cacheMap = cache.byImportCompany;
       break;
     case "category":
       cacheMap = cache.byCategory;

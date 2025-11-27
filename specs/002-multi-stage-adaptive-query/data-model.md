@@ -241,7 +241,7 @@ interface Transaction {
   declarationNumber: string; // Số tờ khai (unique key)
   date: string; // ISO 8601
   companyName: string;
-  companyAddress: string;
+  importCompanyAddress: string;
   hsCode: string;
   goodsName: string;
   goodsNameShort: string;

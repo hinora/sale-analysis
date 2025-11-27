@@ -10,7 +10,7 @@ import type { FilterExpression } from "@/lib/utils/validation";
 const sampleTransactions = [
   {
     id: "1",
-    companyName: "CÔNG TY ABC",
+    importCompanyName: "CÔNG TY ABC",
     importCountry: "United States",
     categoryName: "Electronics",
     totalValueUSD: 50000,
@@ -18,7 +18,7 @@ const sampleTransactions = [
   },
   {
     id: "2",
-    companyName: "XYZ Corporation",
+    importCompanyName: "XYZ Corporation",
     importCountry: "USA",
     categoryName: "electronic devices",
     totalValueUSD: 75000,
@@ -26,7 +26,7 @@ const sampleTransactions = [
   },
   {
     id: "3",
-    companyName: "DEF Import Ltd",
+    importCompanyName: "DEF Import Ltd",
     importCountry: "Vietnam",
     categoryName: "Machinery",
     totalValueUSD: 30000,
@@ -34,7 +34,7 @@ const sampleTransactions = [
   },
   {
     id: "4",
-    companyName: "Cty ABC",
+    importCompanyName: "Cty ABC",
     importCountry: "Hoa Kỳ",
     categoryName: "điện tử",
     totalValueUSD: 45000,
@@ -46,7 +46,7 @@ describe("filter-engine", () => {
   describe("applyFilter - case-insensitive matching", () => {
     it("should match case-insensitively with contains operator", () => {
       const filter: FilterExpression = {
-        field: "companyName",
+        field: "importCompanyName",
         operator: "contains",
         value: "abc",
       };
@@ -59,7 +59,7 @@ describe("filter-engine", () => {
 
     it("should match company name variations", () => {
       const filter: FilterExpression = {
-        field: "companyName",
+        field: "importCompanyName",
         operator: "contains",
         value: "XYZ",
       };
@@ -105,7 +105,7 @@ describe("filter-engine", () => {
 
     it("should match company synonyms (CÔNG TY / Cty)", () => {
       const filter: FilterExpression = {
-        field: "companyName",
+        field: "importCompanyName",
         operator: "contains",
         value: "CÔNG TY",
       };
@@ -296,12 +296,12 @@ describe("filter-engine", () => {
   describe("applyFilter - edge cases", () => {
     it("should handle null/undefined field values", () => {
       const transactionsWithNull = [
-        { id: "1", companyName: null },
-        { id: "2", companyName: "ABC" },
+        { id: "1", importCompanyName: null },
+        { id: "2", importCompanyName: "ABC" },
       ];
 
       const filter: FilterExpression = {
-        field: "companyName",
+        field: "importCompanyName",
         operator: "contains",
         value: "ABC",
       };

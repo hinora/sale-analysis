@@ -20,7 +20,7 @@ describe("Aggregation Engine", () => {
   // Sample transaction data
   const sampleTransactions = [
     {
-      companyName: "ABC Corp",
+      importCompanyName: "ABC Corp",
       categoryName: "Electronics",
       importCountry: "United States",
       totalValueUSD: 50000,
@@ -28,7 +28,7 @@ describe("Aggregation Engine", () => {
       date: "2024-01-15",
     },
     {
-      companyName: "XYZ Ltd",
+      importCompanyName: "XYZ Ltd",
       categoryName: "Machinery",
       importCountry: "Vietnam",
       totalValueUSD: 75000,
@@ -36,7 +36,7 @@ describe("Aggregation Engine", () => {
       date: "2024-01-20",
     },
     {
-      companyName: "ABC Corp",
+      importCompanyName: "ABC Corp",
       categoryName: "Electronics",
       importCountry: "China",
       totalValueUSD: 30000,
@@ -44,7 +44,7 @@ describe("Aggregation Engine", () => {
       date: "2024-02-10",
     },
     {
-      companyName: "Global Inc",
+      importCompanyName: "Global Inc",
       categoryName: "Textiles",
       importCountry: "United States",
       totalValueUSD: 40000,
@@ -52,7 +52,7 @@ describe("Aggregation Engine", () => {
       date: "2024-02-15",
     },
     {
-      companyName: "XYZ Ltd",
+      importCompanyName: "XYZ Ltd",
       categoryName: "Machinery",
       importCountry: "Japan",
       totalValueUSD: 90000,
@@ -65,7 +65,7 @@ describe("Aggregation Engine", () => {
     test("groups by company and computes sum", () => {
       const result = groupBy(
         sampleTransactions,
-        "companyName",
+        "importCompanyName",
         "totalValueUSD",
         "sum",
       );
@@ -111,7 +111,7 @@ describe("Aggregation Engine", () => {
     test("computes min value by group", () => {
       const result = groupBy(
         sampleTransactions,
-        "companyName",
+        "importCompanyName",
         "totalValueUSD",
         "min",
       );
@@ -123,7 +123,7 @@ describe("Aggregation Engine", () => {
     test("computes max value by group", () => {
       const result = groupBy(
         sampleTransactions,
-        "companyName",
+        "importCompanyName",
         "totalValueUSD",
         "max",
       );
@@ -135,7 +135,7 @@ describe("Aggregation Engine", () => {
     test("sorts results by value descending", () => {
       const result = groupBy(
         sampleTransactions,
-        "companyName",
+        "importCompanyName",
         "totalValueUSD",
         "sum",
       );
@@ -217,7 +217,7 @@ describe("Aggregation Engine", () => {
       const spec: AggregationSpec = {
         field: "totalValueUSD",
         operation: "sum",
-        groupBy: "companyName",
+        groupBy: "importCompanyName",
       };
 
       const result = computeAggregation(sampleTransactions, spec);
@@ -245,7 +245,11 @@ describe("Aggregation Engine", () => {
   describe("computeAggregations", () => {
     test("computes multiple aggregations", () => {
       const specs: AggregationSpec[] = [
-        { field: "totalValueUSD", operation: "sum", groupBy: "companyName" },
+        {
+          field: "totalValueUSD",
+          operation: "sum",
+          groupBy: "importCompanyName",
+        },
         { field: "quantity", operation: "count", groupBy: "categoryName" },
       ];
 
@@ -261,8 +265,8 @@ describe("Aggregation Engine", () => {
     test("builds cache with company aggregations", () => {
       const cache = buildAggregationCache(sampleTransactions);
 
-      expect(cache.byCompany.size).toBe(3);
-      expect(cache.byCompany.get("XYZ Ltd")?.value).toBe(165000);
+      expect(cache.byImportCompany.size).toBe(3);
+      expect(cache.byImportCompany.get("XYZ Ltd")?.value).toBe(165000);
     });
 
     test("builds cache with category aggregations", () => {
@@ -302,7 +306,7 @@ describe("Aggregation Engine", () => {
     });
 
     test("returns top 2 companies", () => {
-      const top2 = queryCacheTopN(cache, "company", 2);
+      const top2 = queryCacheTopN(cache, "importCompany", 2);
 
       expect(top2).toHaveLength(2);
       expect(top2[0].key).toBe("XYZ Ltd");
@@ -333,13 +337,13 @@ describe("Aggregation Engine", () => {
       const spec: AggregationSpec = {
         field: "totalValueUSD",
         operation: "sum",
-        groupBy: "companyName",
+        groupBy: "importCompanyName",
       };
 
       const result = computeAggregation(sampleTransactions, spec);
       const formatted = formatAggregationForAI(result);
 
-      expect(formatted).toContain("Total by companyName");
+      expect(formatted).toContain("Total by importCompanyName");
       expect(formatted).toContain("XYZ Ltd");
       expect(formatted).toContain("$165,000");
       expect(formatted).toContain("Total records: 5");
@@ -347,7 +351,7 @@ describe("Aggregation Engine", () => {
 
     test("formats count operation correctly", () => {
       const spec: AggregationSpec = {
-        field: "companyName",
+        field: "importCompanyName",
         operation: "count",
         groupBy: "categoryName",
       };
@@ -361,7 +365,7 @@ describe("Aggregation Engine", () => {
     test("limits output to top 20 results", () => {
       // Create 25 transactions
       const manyTransactions = Array.from({ length: 25 }, (_, i) => ({
-        companyName: `Company ${i}`,
+        importCompanyName: `Company ${i}`,
         totalValueUSD: (i + 1) * 1000,
         date: "2024-01-01",
       }));
@@ -369,7 +373,7 @@ describe("Aggregation Engine", () => {
       const spec: AggregationSpec = {
         field: "totalValueUSD",
         operation: "sum",
-        groupBy: "companyName",
+        groupBy: "importCompanyName",
       };
 
       const result = computeAggregation(manyTransactions, spec);
@@ -383,7 +387,7 @@ describe("Aggregation Engine", () => {
     test("processes 10K transactions in under 100ms", () => {
       // Generate 10,000 transactions
       const largeDataset = Array.from({ length: 10000 }, (_, i) => ({
-        companyName: `Company ${i % 100}`, // 100 unique companies
+        importCompanyName: `Company ${i % 100}`, // 100 unique companies
         categoryName: `Category ${i % 20}`, // 20 categories
         totalValueUSD: Math.floor(Math.random() * 100000),
         quantity: Math.floor(Math.random() * 1000),
@@ -395,7 +399,7 @@ describe("Aggregation Engine", () => {
       const spec: AggregationSpec = {
         field: "totalValueUSD",
         operation: "sum",
-        groupBy: "companyName",
+        groupBy: "importCompanyName",
       };
 
       const result = computeAggregation(largeDataset, spec);
@@ -408,7 +412,7 @@ describe("Aggregation Engine", () => {
 
     test("cache build completes quickly for 10K transactions", () => {
       const largeDataset = Array.from({ length: 10000 }, (_, i) => ({
-        companyName: `Company ${i % 100}`,
+        importCompanyName: `Company ${i % 100}`,
         categoryName: `Category ${i % 20}`,
         importCountry: `Country ${i % 10}`,
         totalValueUSD: Math.floor(Math.random() * 100000),
@@ -419,7 +423,7 @@ describe("Aggregation Engine", () => {
       const cache = buildAggregationCache(largeDataset);
       const duration = Date.now() - startTime;
 
-      expect(cache.byCompany.size).toBe(100);
+      expect(cache.byImportCompany.size).toBe(100);
       expect(duration).toBeLessThan(100); // Cache build under 100ms
     });
   });

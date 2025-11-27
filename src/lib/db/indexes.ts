@@ -6,9 +6,11 @@ import { Transaction } from "./models/Transaction";
  */
 export async function createTransactionIndexes(): Promise<void> {
   try {
-    // Compound index: company + date (for company transactions sorted by date)
-    await Transaction.collection.createIndex({ company: 1, date: -1 });
-    console.log("[Indexes] Created compound index: { company: 1, date: -1 }");
+    // Compound index: importCompany + date (for company transactions sorted by date)
+    await Transaction.collection.createIndex({ importCompany: 1, date: -1 });
+    console.log(
+      "[Indexes] Created compound index: { importCompany: 1, date: -1 }",
+    );
 
     // Compound index: goods + date (for goods transactions sorted by date)
     await Transaction.collection.createIndex({ goods: 1, date: -1 });
@@ -49,7 +51,7 @@ export async function verifyTransactionIndexes(): Promise<boolean> {
     );
 
     const requiredIndexes = [
-      "company_1_date_-1",
+      "importCompany_1_date_-1",
       "goods_1_date_-1",
       "date_-1_totalValueUSD_-1",
       "hsCode_1_date_-1",

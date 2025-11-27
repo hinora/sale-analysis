@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { connectToDatabase } from "@/lib/db/connection";
 import { Transaction } from "@/lib/db/models/Transaction";
+import { Company } from "@/lib/db/models/Company";
+import { Goods } from "@/lib/db/models/Goods";
+import { Category } from "@/lib/db/models/Category";
 import {
   addTransactionData,
   getSession,
@@ -62,11 +65,17 @@ export default async function handler(
     // Connect to database
     await connectToDatabase();
 
+    // Ensure models are registered (prevents "Schema hasn't been registered" errors)
+    // These references force the model modules to execute and register with Mongoose
+    void Company;
+    void Goods;
+    void Category;
+
     // Build query based on filters
     const query: Record<string, unknown> = {};
 
     if (filters?.company) {
-      query.company = filters.company;
+      query.importCompany = filters.company;
     }
 
     if (filters?.category) {
@@ -94,7 +103,7 @@ export default async function handler(
 
     // Fetch transactions with limit
     const transactions = await Transaction.find(query)
-      .populate("company", "name address")
+      .populate("importCompany", "name address")
       .populate("goods", "rawName shortName category")
       .populate({
         path: "goods",
@@ -119,10 +128,10 @@ export default async function handler(
     const formattedTransactions = transactions.map((tx) => ({
       declarationNumber: tx.declarationNumber,
       date: tx.date,
-      companyName:
-        (tx.company as unknown as { name: string })?.name || "Unknown",
-      companyAddress:
-        (tx.company as unknown as { address: string })?.address || "",
+      importCompanyName:
+        (tx.importCompany as unknown as { name: string })?.name || "Unknown",
+      importCompanyAddress:
+        (tx.importCompany as unknown as { address: string })?.address || "",
       importCountry: tx.importCountry || "N/A",
       goodsName:
         (tx.goods as unknown as { rawName: string })?.rawName || "Unknown",

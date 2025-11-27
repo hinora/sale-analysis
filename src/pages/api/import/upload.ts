@@ -134,16 +134,16 @@ export default async function handler(
       .select(
         "declarationNumber hsCode goodsRawName totalValueUSD usdRate paymentMethod deliveryTerms",
       )
-      .populate("company", "name");
+      .populate("importCompany", "name");
 
     // Build composite key set from existing transactions (8 columns)
     const existingCompositeKeys = new Set(
       existingTransactions.map((t) => {
-        const companyDoc = t.company as { name?: string } | null;
-        const companyName = companyDoc?.name || "";
+        const companyDoc = t.importCompany as { name?: string } | null;
+        const importCompanyName = companyDoc?.name || "";
         const totalValueUSD = t.totalValueUSD?.toString() || "";
         const usdRate = t.usdRate?.toString() || "";
-        return `${t.declarationNumber}|${t.hsCode}|${t.goodsRawName}|${companyName}|${totalValueUSD}|${usdRate}|${t.paymentMethod}|${t.deliveryTerms}`;
+        return `${t.declarationNumber}|${t.hsCode}|${t.goodsRawName}|${importCompanyName}|${totalValueUSD}|${usdRate}|${t.paymentMethod}|${t.deliveryTerms}`;
       }),
     );
 
@@ -193,7 +193,7 @@ export default async function handler(
           year: yearVal,
           month: monthVal,
           day: dayVal,
-          company: company.id,
+          importCompany: company.id,
           goods: goods.id,
           hsCode: row["HS code"] || "",
           goodsRawName: row["Tên hàng"] || "",
@@ -245,19 +245,19 @@ export default async function handler(
 async function processCompany(
   row: CSVRow,
 ): Promise<{ id: string; isNew: boolean }> {
-  const companyName = row["Tên Cty nhập khẩu"] || "";
-  const companyAddress = row["Địa chỉ Cty nhập khẩu"] || "";
+  const importCompanyName = row["Tên Cty nhập khẩu"] || "";
+  const importCompanyAddress = row["Địa chỉ Cty nhập khẩu"] || "";
 
   let company = await Company.findOne({
-    name: companyName,
-    address: companyAddress,
+    name: importCompanyName,
+    address: importCompanyAddress,
   });
 
   let isNew = false;
   if (!company) {
     company = await Company.create({
-      name: companyName,
-      address: companyAddress,
+      name: importCompanyName,
+      address: importCompanyAddress,
       taxCode: "", // Not available in CSV
     });
     isNew = true;
