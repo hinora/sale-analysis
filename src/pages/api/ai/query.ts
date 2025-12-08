@@ -5,7 +5,8 @@ import {
   updateSessionStatus,
 } from "@/lib/ai/session-manager";
 import { queryHandler } from "@/lib/ai/query-handler";
-import type { FilterLog, QueryIntent } from "@/lib/ai/query-handler";
+
+import type { IterativeQueryResponse } from '@/types/iterative-ai';
 
 /**
  * Query response
@@ -13,12 +14,9 @@ import type { FilterLog, QueryIntent } from "@/lib/ai/query-handler";
 interface QueryResponse {
   success: boolean;
   answer?: string;
-  citations?: string[];
-  confidence?: "high" | "medium" | "low";
   processingTime?: number;
-  filterLogs?: FilterLog[];
-  queryIntent?: QueryIntent;
   message?: string;
+  iterativeResult?: IterativeQueryResponse;
 }
 
 /**
@@ -37,7 +35,7 @@ export default async function handler(
   }
 
   try {
-    const { sessionId, question } = req.body;
+    const { sessionId, question, iterativeConfig } = req.body;
 
     if (!sessionId) {
       return res.status(400).json({
@@ -85,23 +83,27 @@ export default async function handler(
     // Add user message to history
     addMessage(sessionId, "user", question);
 
-    // Process query
-    const result = await queryHandler.processQuery(session, question);
+    // Process iterative query
+    console.log(`[AI Query] Processing iterative query for session ${sessionId}`);
+    const iterativeResult = await queryHandler.processIterativeQuery(
+      session,
+      question,
+      iterativeConfig
+    );
 
-    // Add assistant response to history
-    addMessage(sessionId, "assistant", result.answer);
+    // Add final answer to conversation history if available
+    if (iterativeResult.answer) {
+      addMessage(sessionId, "assistant", iterativeResult.answer);
+    }
 
     // Update status to ready
     updateSessionStatus(sessionId, "ready");
 
     return res.status(200).json({
       success: true,
-      answer: result.answer,
-      citations: result.citations,
-      confidence: result.confidence,
-      processingTime: result.processingTime,
-      filterLogs: result.filterLogs,
-      queryIntent: result.queryIntent,
+      answer: iterativeResult.answer || "Quá trình xử lý đã hoàn tất nhưng chưa có câu trả lời cuối cùng",
+      processingTime: iterativeResult.session.totalProcessingTimeMs,
+      iterativeResult,
     });
   } catch (error) {
     // Update status to error

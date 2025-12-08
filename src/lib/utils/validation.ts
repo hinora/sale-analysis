@@ -175,8 +175,68 @@ export const FilterOptionsSchema = z.object({
   logExecution: z.boolean().optional(),
 });
 
+// Zod schemas for Iterative AI Query System entities
+
+export const DataValidationResultSchema = z.object({
+  isSufficient: z.boolean(),
+  isComplete: z.boolean(),
+  isValid: z.boolean(),
+  recordCount: z.number().int().nonnegative(),
+  missingFields: z.array(z.string()),
+  issues: z.array(z.string()),
+  suggestions: z.array(z.string()),
+  confidence: z.number().min(0).max(1),
+});
+
+export const DataRequestLogSchema = z.object({
+  requestId: z.string(),
+  timestamp: z.date(),
+  queryIntent: QueryIntentSchema,
+  response: z.object({
+    answer: z.string(),
+    citations: z.array(z.string()),
+    confidence: z.enum(["high", "medium", "low"]),
+    processingTime: z.number(),
+  }),
+  validationResult: DataValidationResultSchema,
+  reasoning: z.string(),
+  processingTimeMs: z.number().nonnegative(),
+  error: z.string().optional(),
+});
+
+export const IterativeQuerySessionSchema = z.object({
+  sessionId: z.string(),
+  userQuestion: z.string(),
+  startTime: z.date(),
+  endTime: z.date().nullable(),
+  iterationCount: z.number().int().nonnegative(),
+  maxIterations: z.number().int().positive(),
+  requestLog: z.array(DataRequestLogSchema),
+  status: z.enum(['active', 'completed', 'failed', 'timeout']),
+  result: z.string().optional(),
+  completionReason: z.string().optional(),
+  totalProcessingTimeMs: z.number().nonnegative(),
+});
+
+export const IterationConfigurationSchema = z.object({
+  maxIterations: z.number().int().positive(),
+  maxSessionTimeMs: z.number().int().positive(),
+  enableLoopDetection: z.boolean(),
+  minValidationConfidence: z.number().min(0).max(1),
+  enableRequestLogging: z.boolean(),
+  enableDataValidation: z.boolean(),
+  minRecordThreshold: z.number().int().nonnegative(),
+  allowEmptyResults: z.boolean(),
+});
+
 // Export types for multi-stage query system
 export type FilterExpression = z.infer<typeof FilterExpressionSchema>;
 export type QueryIntent = z.infer<typeof QueryIntentSchema>;
 export type AggregationSpec = z.infer<typeof AggregationSpecSchema>;
 export type FilterOptions = z.infer<typeof FilterOptionsSchema>;
+
+// Export types for iterative AI query system
+export type DataValidationResult = z.infer<typeof DataValidationResultSchema>;
+export type DataRequestLog = z.infer<typeof DataRequestLogSchema>;
+export type IterativeQuerySession = z.infer<typeof IterativeQuerySessionSchema>;
+export type IterationConfiguration = z.infer<typeof IterationConfigurationSchema>;
