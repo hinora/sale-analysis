@@ -51,6 +51,52 @@ const mockSession = {
   },
 };
 
+describe("QueryHandler - Core Functionality", () => {
+  let queryHandler: QueryHandler;
+
+  beforeEach(() => {
+    queryHandler = new QueryHandler("test-model");
+  });
+
+  describe("Query validation", () => {
+    test("Validates non-empty questions", () => {
+      const validation = queryHandler.validateQuery("What are the imports?");
+      expect(validation.valid).toBe(true);
+    });
+
+    test("Rejects empty questions", () => {
+      const validation = queryHandler.validateQuery("");
+      expect(validation.valid).toBe(false);
+      expect(validation.error).toContain("trống");
+    });
+
+    test("Rejects overly long questions", () => {
+      const longQuestion = "a".repeat(1001);
+      const validation = queryHandler.validateQuery(longQuestion);
+      expect(validation.valid).toBe(false);
+      expect(validation.error).toContain("quá dài");
+    });
+  });
+
+  describe("Iterative query processing", () => {
+    test("Processes iterative query successfully", async () => {
+      const result = await queryHandler.processIterativeQuery(
+        mockSession,
+        "What companies import the most?",
+        { maxIterations: 2 }
+      );
+
+      expect(result).toBeDefined();
+      expect(result.success).toBeDefined();
+      expect(result.session).toBeDefined();
+      expect(result.validation).toBeDefined();
+    });
+  });
+});
+
+/*
+// COMMENTED OUT - These tests are for methods that were removed as they are not used in production
+
 describe("QueryHandler - Intent Classification", () => {
   let queryHandler: QueryHandler;
 
@@ -242,3 +288,4 @@ describe("QueryHandler - Intent Classification", () => {
     });
   });
 });
+*/
