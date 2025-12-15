@@ -194,6 +194,7 @@ export default async function handler(
           month: monthVal,
           day: dayVal,
           importCompany: company.id,
+          importCompanyRawName: row["Tên Cty nhập khẩu"] || "",
           goods: goods.id,
           hsCode: row["HS code"] || "",
           goodsRawName: row["Tên hàng"] || "",

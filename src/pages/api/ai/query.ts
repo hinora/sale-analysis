@@ -1,12 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import {
-  getSession,
-  addMessage,
-  updateSessionStatus,
-} from "@/lib/ai/session-manager";
+import { AIMessage, getSession, updateSessionStatus } from "@/lib/ai/session-manager";
 import { queryHandler } from "@/lib/ai/query-handler";
-
-import type { IterativeQueryResponse } from '@/types/iterative-ai';
 
 /**
  * Query response
@@ -16,7 +10,7 @@ interface QueryResponse {
   answer?: string;
   processingTime?: number;
   message?: string;
-  iterativeResult?: IterativeQueryResponse;
+  sessionsQuestions?: AIMessage[];
 }
 
 /**
@@ -35,7 +29,7 @@ export default async function handler(
   }
 
   try {
-    const { sessionId, question, iterativeConfig } = req.body;
+    const { sessionId, question } = req.body;
 
     if (!sessionId) {
       return res.status(400).json({
@@ -69,41 +63,30 @@ export default async function handler(
       });
     }
 
-    // Check if session has data
-    if (session.transactionData.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Session has no data. Please feed data first.",
-      });
-    }
-
     // Update status to querying
     updateSessionStatus(sessionId, "querying");
 
-    // Add user message to history
-    addMessage(sessionId, "user", question);
-
     // Process iterative query
-    console.log(`[AI Query] Processing iterative query for session ${sessionId}`);
-    const iterativeResult = await queryHandler.processIterativeQuery(
+    console.log(
+      `[AI Query] Processing iterative query for session ${sessionId}`,
+    );
+    const startTime = Date.now();
+    const iterativeResult = await queryHandler.processUserQuestion(
       session,
       question,
-      iterativeConfig
     );
-
-    // Add final answer to conversation history if available
-    if (iterativeResult.answer) {
-      addMessage(sessionId, "assistant", iterativeResult.answer);
-    }
+    const endTime = Date.now();
 
     // Update status to ready
     updateSessionStatus(sessionId, "ready");
 
     return res.status(200).json({
       success: true,
-      answer: iterativeResult.answer || "Quá trình xử lý đã hoàn tất nhưng chưa có câu trả lời cuối cùng",
-      processingTime: iterativeResult.session.totalProcessingTimeMs,
-      iterativeResult,
+      answer:
+        iterativeResult.answer ||
+        "Quá trình xử lý đã hoàn tất nhưng chưa có câu trả lời cuối cùng",
+      processingTime: endTime - startTime,
+      sessionsQuestions: session.conversationHistory,
     });
   } catch (error) {
     // Update status to error

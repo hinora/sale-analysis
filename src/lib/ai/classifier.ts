@@ -1,4 +1,4 @@
-import { getOllamaClient } from "./ollama-client";
+import { getProvider, type AIProvider } from "./providers";
 import { Category } from "../db/models/Category";
 
 /**
@@ -13,11 +13,13 @@ export interface ClassificationResult {
 /**
  * AI goods classifier using Ollama
  * Assigns categories to goods based on their raw names
- * Model configured via AI_MODEL environment variable
  */
 export class AIClassifier {
-  private modelName = process.env.AI_MODEL || "deepseek-r1:1.5b";
-  private ollamaClient = getOllamaClient();
+  private provider: AIProvider;
+
+  constructor() {
+    this.provider = getProvider();
+  }
 
   /**
    * Classify a single goods name into a category
@@ -26,13 +28,12 @@ export class AIClassifier {
     const prompt = this.buildClassificationPrompt(goodsName);
 
     try {
-      const response = await this.ollamaClient.generate({
-        model: this.modelName,
+      const response = await this.provider.generate({
         prompt,
         temperature: 0.3, // Lower temperature for more consistent results
       });
 
-      return this.parseClassificationResponse(response.response);
+      return this.parseClassificationResponse(response.text);
     } catch (error) {
       console.error("[AIClassifier] Classification error:", error);
       return {
@@ -161,11 +162,12 @@ Phân loại:`;
   }
 
   /**
-   * Check if Ollama service is available
+   * Check if AI provider service is available
    */
   async checkAvailability(): Promise<boolean> {
     try {
-      return await this.ollamaClient.healthCheck();
+      const result = await this.provider.healthCheck();
+      return result.healthy;
     } catch {
       return false;
     }

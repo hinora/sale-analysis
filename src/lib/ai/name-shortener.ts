@@ -1,4 +1,4 @@
-import { getOllamaClient } from "./ollama-client";
+import { getProvider, type AIProvider } from "./providers";
 
 /**
  * Name shortening result
@@ -13,12 +13,14 @@ export interface ShortenResult {
 /**
  * AI name shortener using Ollama
  * Generates concise goods names (max 100 characters)
- * Model configured via AI_MODEL environment variable
  */
 export class AINameShortener {
-  private modelName = process.env.AI_MODEL || "deepseek-r1:1.5b";
-  private ollamaClient = getOllamaClient();
+  private provider: AIProvider;
   private maxLength = 100;
+
+  constructor() {
+    this.provider = getProvider();
+  }
 
   /**
    * Shorten a single goods name
@@ -37,13 +39,12 @@ export class AINameShortener {
     const prompt = this.buildShorteningPrompt(goodsName);
 
     try {
-      const response = await this.ollamaClient.generate({
-        model: this.modelName,
+      const response = await this.provider.generate({
         prompt,
         temperature: 0.3,
       });
 
-      const shortName = this.extractShortName(response.response);
+      const shortName = this.extractShortName(response.text);
 
       return {
         shortName,
@@ -155,11 +156,12 @@ Chỉ cung cấp tên đã rút gọn, không có gì khác:`;
   }
 
   /**
-   * Check if Ollama service is available
+   * Check if AI provider service is available
    */
   async checkAvailability(): Promise<boolean> {
     try {
-      return await this.ollamaClient.healthCheck();
+      const result = await this.provider.healthCheck();
+      return result.healthy;
     } catch {
       return false;
     }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -11,7 +11,6 @@ import {
   CircularProgress,
   Alert,
   Chip,
-  Divider,
   List,
   ListItem,
   IconButton,
@@ -25,12 +24,11 @@ import {
   Info as InfoIcon,
 } from "@mui/icons-material";
 import PageHeader from "@/components/layout/PageHeader";
-import CategorySelect from "@/components/common/CategorySelect";
 
 /**
  * AI Session status type
  */
-type SessionStatus = "idle" | "feeding" | "ready" | "querying" | "error";
+type SessionStatus = "idle" | "ready" | "querying" | "error";
 
 /**
  * Message in conversation
@@ -44,16 +42,6 @@ interface Message {
 }
 
 /**
- * Data filters for transaction selection
- */
-interface DataFilters {
-  category: string;
-  dateFrom: string;
-  dateTo: string;
-  company: string;
-}
-
-/**
  * AI Analysis Page
  * Enables natural language queries over transaction data
  */
@@ -61,18 +49,6 @@ export default function AIAnalysisPage() {
   // Session state
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>("idle");
-  const [transactionCount, setTransactionCount] = useState(0);
-
-  // Filters for data selection
-  const [filters, setFilters] = useState<DataFilters>({
-    category: "",
-    dateFrom: "",
-    dateTo: "",
-    company: "",
-  });
-
-  // Transaction limit (default 10000, max 10000)
-  const [transactionLimit, setTransactionLimit] = useState(10000);
 
   // Conversation state
   const [messages, setMessages] = useState<Message[]>([]);
@@ -92,13 +68,13 @@ export default function AIAnalysisPage() {
   // Auto-scroll to bottom of messages
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
   /**
    * Create a new AI session
@@ -117,59 +93,16 @@ export default function AIAnalysisPage() {
       }
 
       setSessionId(data.sessionId);
-      setSessionStatus("idle");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create session");
-    }
-  };
-
-  /**
-   * Feed data to AI session
-   */
-  const feedData = async () => {
-    if (!sessionId) {
-      await createSession();
-      return;
-    }
-
-    try {
-      setError(null);
-      setSessionStatus("feeding");
-
-      const response = await fetch("/api/ai/feed-data", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sessionId,
-          filters: {
-            ...(filters.category && { category: filters.category }),
-            ...(filters.dateFrom && { dateFrom: filters.dateFrom }),
-            ...(filters.dateTo && { dateTo: filters.dateTo }),
-            ...(filters.company && { company: filters.company }),
-          },
-          limit: transactionLimit,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to feed data");
-      }
-
-      setTransactionCount(data.transactionCount);
       setSessionStatus("ready");
       setMessages([
         {
           role: "assistant",
-          content: `Đã tải ${data.transactionCount} giao dịch vào phiên phân tích. Bạn có thể đặt câu hỏi về dữ liệu này.`,
+          content: `Phiên phân tích đã sẵn sàng. AI sẽ truy vấn trực tiếp vào cơ sở dữ liệu. Bạn có thể đặt câu hỏi về dữ liệu xuất khẩu.`,
           timestamp: new Date(),
         },
       ]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to feed data");
+      setError(err instanceof Error ? err.message : "Failed to create session");
       setSessionStatus("error");
     }
   };
@@ -202,6 +135,14 @@ export default function AIAnalysisPage() {
       setMessages((prev) => [...prev, userMessage]);
       setCurrentQuestion("");
 
+      // Add typing indicator
+      const typingMessage: Message = {
+        role: "assistant",
+        content: "typing",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, typingMessage]);
+
       // Send query to API
       const response = await fetch("/api/ai/query", {
         method: "POST",
@@ -220,27 +161,27 @@ export default function AIAnalysisPage() {
         throw new Error(data.message || "Failed to process query");
       }
 
-      // Add assistant response
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: data.answer,
-        citations: data.citations,
-        confidence: data.confidence,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      // Remove typing indicator and add assistant response
+      setMessages((prev) => {
+        const withoutTyping = prev.filter((msg) => msg.content !== "typing");
+        return [
+          ...withoutTyping,
+          {
+            role: "assistant",
+            content: data.answer,
+            citations: data.citations,
+            confidence: data.confidence,
+            timestamp: new Date(),
+          },
+        ];
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send question");
+      // Remove typing indicator on error
+      setMessages((prev) => prev.filter((msg) => msg.content !== "typing"));
     } finally {
       setIsQuerying(false);
     }
-  };
-
-  /**
-   * Handle filter change
-   */
-  const handleFilterChange = (key: keyof DataFilters, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   /**
@@ -250,7 +191,6 @@ export default function AIAnalysisPage() {
     setSessionId(null);
     setSessionStatus("idle");
     setMessages([]);
-    setTransactionCount(0);
     setError(null);
     await createSession();
   };
@@ -258,6 +198,7 @@ export default function AIAnalysisPage() {
   // Create initial session on mount
   useEffect(() => {
     createSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**
@@ -267,8 +208,6 @@ export default function AIAnalysisPage() {
     switch (sessionStatus) {
       case "idle":
         return "default";
-      case "feeding":
-        return "warning";
       case "ready":
         return "success";
       case "querying":
@@ -286,11 +225,9 @@ export default function AIAnalysisPage() {
   const getStatusText = () => {
     switch (sessionStatus) {
       case "idle":
-        return "Chọn dữ liệu và nhấn 'Tải dữ liệu vào AI'";
-      case "feeding":
-        return "Đang tải dữ liệu...";
+        return "Đang khởi tạo...";
       case "ready":
-        return `Sẵn sàng (${transactionCount} giao dịch)`;
+        return "Sẵn sàng";
       case "querying":
         return "Đang xử lý câu hỏi...";
       case "error":
@@ -313,139 +250,58 @@ export default function AIAnalysisPage() {
         </Alert>
       )}
 
-      <Grid container spacing={3}>
-        {/* Left Panel: Data Selection */}
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              1. Chọn dữ liệu
-            </Typography>
-
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}
-            >
-              <CategorySelect
-                value={filters.category}
-                onChange={(value) => handleFilterChange("category", value)}
-                label="Danh mục (tùy chọn)"
-              />
-
-              <TextField
-                label="Từ ngày"
-                type="date"
-                value={filters.dateFrom}
-                onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                size="small"
-                fullWidth
-              />
-
-              <TextField
-                label="Đến ngày"
-                type="date"
-                value={filters.dateTo}
-                onChange={(e) => handleFilterChange("dateTo", e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                size="small"
-                fullWidth
-              />
-
-              <TextField
-                label="Công ty (tùy chọn)"
-                value={filters.company}
-                onChange={(e) => handleFilterChange("company", e.target.value)}
-                size="small"
-                fullWidth
-                placeholder="Nhập tên công ty"
-              />
-
-              <TextField
-                label="Giới hạn giao dịch"
-                type="number"
-                value={transactionLimit}
-                onChange={(e) => {
-                  const value = Math.min(
-                    10000,
-                    Math.max(1, parseInt(e.target.value) || 1000),
-                  );
-                  setTransactionLimit(value);
-                }}
-                size="small"
-                fullWidth
-                inputProps={{ min: 1, max: 10000, step: 100 }}
-                helperText="Tối đa 10,000 giao dịch (nhiều hơn có thể gây lỗi vượt quá ngữ cảnh)"
-              />
-
-              <Button
-                variant="contained"
-                onClick={feedData}
-                disabled={sessionStatus === "feeding"}
-                startIcon={
-                  sessionStatus === "feeding" ? (
-                    <CircularProgress size={20} />
-                  ) : undefined
-                }
-                fullWidth
-              >
-                {sessionStatus === "feeding"
-                  ? "Đang tải..."
-                  : "Tải dữ liệu vào AI"}
-              </Button>
-
-              <Divider />
-
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Chip
-                  label={getStatusText()}
-                  color={getStatusColor()}
-                  size="small"
-                  icon={<InfoIcon />}
-                />
-                <IconButton
-                  size="small"
-                  onClick={resetSession}
-                  title="Tạo phiên mới"
-                >
-                  <RefreshIcon />
-                </IconButton>
-              </Box>
-            </Box>
-
-            {sessionStatus === "ready" && suggestedQueries.length > 0 && (
-              <>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="subtitle2" gutterBottom>
-                  Câu hỏi gợi ý:
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {suggestedQueries.map((query, index) => (
-                    <Button
-                      key={index}
-                      variant="outlined"
-                      size="small"
-                      onClick={() => sendQuestion(query)}
-                      disabled={isQuerying}
-                      sx={{ justifyContent: "flex-start", textAlign: "left" }}
-                    >
-                      {query}
-                    </Button>
-                  ))}
-                </Box>
-              </>
+      {/* Status Bar */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Chip
+              label={getStatusText()}
+              color={getStatusColor()}
+              icon={<InfoIcon />}
+            />
+            {sessionStatus === "ready" && (
+              <Typography variant="body2" color="text.secondary">
+                AI sẽ truy vấn trực tiếp vào cơ sở dữ liệu
+              </Typography>
             )}
-          </Paper>
+          </Box>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <IconButton
+              size="small"
+              onClick={resetSession}
+              title="Tạo phiên mới"
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Box>
+        </Box>
+      </Paper>
 
-          {transactionCount >= transactionLimit && (
-            <Alert severity="warning" sx={{ mt: 2 }}>
-              Đã đạt giới hạn {transactionLimit.toLocaleString()} giao dịch. Vui
-              lòng thu hẹp bộ lọc hoặc tăng giới hạn để có kết quả chính xác
-              hơn.
-            </Alert>
-          )}
-        </Grid>
+      {/* Suggested Queries */}
+      {sessionStatus === "ready" && suggestedQueries.length > 0 && messages.length === 0 && (
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            Câu hỏi gợi ý:
+          </Typography>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            {suggestedQueries.map((query, index) => (
+              <Button
+                key={index}
+                variant="outlined"
+                size="small"
+                onClick={() => sendQuestion(query)}
+                disabled={isQuerying}
+              >
+                {query}
+              </Button>
+            ))}
+          </Box>
+        </Paper>
+      )}
 
-        {/* Right Panel: Chat Interface */}
-        <Grid item xs={12} md={8}>
+      <Grid container spacing={3}>
+        {/* Chat Interface */}
+        <Grid item xs={12}>
           <Paper
             sx={{
               p: 3,
@@ -525,46 +381,93 @@ export default function AIAnalysisPage() {
                               />
                             )}
                           </Typography>
-                          <Box
-                            sx={{
-                              "& p": { mb: 1 },
-                              "& ul, & ol": { pl: 2, mb: 1 },
-                              "& li": { mb: 0.5 },
-                              "& code": {
-                                bgcolor: "grey.100",
-                                px: 0.5,
-                                py: 0.25,
-                                borderRadius: 0.5,
-                                fontFamily: "monospace",
-                                fontSize: "0.9em",
-                              },
-                              "& pre": {
-                                bgcolor: "grey.100",
-                                p: 1,
-                                borderRadius: 1,
-                                overflow: "auto",
-                              },
-                              "& table": {
-                                borderCollapse: "collapse",
-                                width: "100%",
-                                mb: 1,
-                              },
-                              "& th, & td": {
-                                border: "1px solid",
-                                borderColor: "grey.300",
-                                p: 1,
-                                textAlign: "left",
-                              },
-                              "& th": {
-                                bgcolor: "grey.100",
-                                fontWeight: "bold",
-                              },
-                            }}
-                          >
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {message.content}
-                            </ReactMarkdown>
-                          </Box>
+                          {message.content === "typing" ? (
+                            <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+                              <Box
+                                sx={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: "50%",
+                                  bgcolor: "grey.500",
+                                  animation: "bounce 1.4s infinite ease-in-out",
+                                  animationDelay: "0s",
+                                  "@keyframes bounce": {
+                                    "0%, 80%, 100%": { transform: "scale(0)" },
+                                    "40%": { transform: "scale(1)" },
+                                  },
+                                }}
+                              />
+                              <Box
+                                sx={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: "50%",
+                                  bgcolor: "grey.500",
+                                  animation: "bounce 1.4s infinite ease-in-out",
+                                  animationDelay: "0.2s",
+                                  "@keyframes bounce": {
+                                    "0%, 80%, 100%": { transform: "scale(0)" },
+                                    "40%": { transform: "scale(1)" },
+                                  },
+                                }}
+                              />
+                              <Box
+                                sx={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: "50%",
+                                  bgcolor: "grey.500",
+                                  animation: "bounce 1.4s infinite ease-in-out",
+                                  animationDelay: "0.4s",
+                                  "@keyframes bounce": {
+                                    "0%, 80%, 100%": { transform: "scale(0)" },
+                                    "40%": { transform: "scale(1)" },
+                                  },
+                                }}
+                              />
+                            </Box>
+                          ) : (
+                            <Box
+                              sx={{
+                                "& p": { mb: 1 },
+                                "& ul, & ol": { pl: 2, mb: 1 },
+                                "& li": { mb: 0.5 },
+                                "& code": {
+                                  bgcolor: "grey.100",
+                                  px: 0.5,
+                                  py: 0.25,
+                                  borderRadius: 0.5,
+                                  fontFamily: "monospace",
+                                  fontSize: "0.9em",
+                                },
+                                "& pre": {
+                                  bgcolor: "grey.100",
+                                  p: 1,
+                                  borderRadius: 1,
+                                  overflow: "auto",
+                                },
+                                "& table": {
+                                  borderCollapse: "collapse",
+                                  width: "100%",
+                                  mb: 1,
+                                },
+                                "& th, & td": {
+                                  border: "1px solid",
+                                  borderColor: "grey.300",
+                                  p: 1,
+                                  textAlign: "left",
+                                },
+                                "& th": {
+                                  bgcolor: "grey.100",
+                                  fontWeight: "bold",
+                                },
+                              }}
+                            >
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {message.content}
+                              </ReactMarkdown>
+                            </Box>
+                          )}
                           {message.citations &&
                             message.citations.length > 0 && (
                               <Box sx={{ mt: 1 }}>

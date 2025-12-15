@@ -13,8 +13,16 @@ services:
     environment:
       - NODE_ENV=development
       - MONGODB_URI=mongodb://mongodb:27017/export-goods
+      # AI Provider Configuration
+      # AI_PROVIDER: ollama (default) | gemini
+      - AI_PROVIDER=ollama
+      # Ollama Configuration
       - OLLAMA_HOST=http://host.docker.internal:11434
       - AI_MODEL=deepseek-r1:1.5b
+      # Gemini Configuration (uncomment to use Gemini)
+      # - AI_PROVIDER=gemini
+      # - GEMINI_API_KEY=your-gemini-api-key
+      # - GEMINI_MODEL=gemini-2.5-flash
       - NEXT_TELEMETRY_DISABLED=1
     volumes:
       - ./src:/app/src

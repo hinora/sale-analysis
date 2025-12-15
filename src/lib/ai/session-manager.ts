@@ -12,7 +12,7 @@ import type { FilterExpression } from "./filter-engine";
 import type { AggregationCache } from "./aggregation-engine";
 
 export interface AIMessage {
-  role: "user" | "assistant" | "system";
+  role: "user" | "assistant" | "system" | "tool";
   content: string;
   timestamp: Date;
 }
@@ -39,17 +39,11 @@ export interface ContextState {
 
 export interface AISession {
   id: string;
-  transactionData: Array<Record<string, unknown>>;
   conversationHistory: AIMessage[];
-  status: "idle" | "feeding" | "ready" | "querying" | "error";
+  status: "idle" | "ready" | "querying" | "error";
   createdAt: Date;
   lastAccessedAt: Date;
   expiresAt: Date;
-  metadata: {
-    transactionCount: number;
-    dataSize: number;
-    filters?: Record<string, unknown>;
-  };
   contextState?: ContextState;
 }
 
@@ -81,16 +75,11 @@ export function createSession(): AISession {
 
   const session: AISession = {
     id: sessionId,
-    transactionData: [],
     conversationHistory: [],
     status: "idle",
     createdAt: now,
     lastAccessedAt: now,
     expiresAt: new Date(now.getTime() + SESSION_TTL),
-    metadata: {
-      transactionCount: 0,
-      dataSize: 0,
-    },
   };
 
   sessions.set(sessionId, session);
@@ -154,35 +143,7 @@ export function updateSession(
   return session;
 }
 
-/**
- * Add transaction data to session
- */
-export function addTransactionData(
-  sessionId: string,
-  transactions: Array<Record<string, unknown>>,
-  filters?: Record<string, unknown>,
-): AISession | null {
-  const session = getSession(sessionId);
 
-  if (!session) {
-    return null;
-  }
-
-  // Calculate data size (rough estimate in bytes)
-  const dataSize = JSON.stringify(transactions).length;
-
-  session.transactionData = transactions;
-  session.metadata = {
-    transactionCount: transactions.length,
-    dataSize,
-    filters,
-  };
-  session.status = "ready";
-  session.lastAccessedAt = new Date();
-  session.expiresAt = new Date(Date.now() + SESSION_TTL);
-
-  return session;
-}
 
 /**
  * Add message to conversation history
@@ -238,8 +199,8 @@ export function updateFilterView(
   // Initialize contextState if not exists
   if (!session.contextState) {
     session.contextState = {
-      loadedTransactions: session.transactionData,
-      currentFilterView: session.transactionData,
+      loadedTransactions: [],
+      currentFilterView: [],
       appliedFilters: [],
       iterationCount: 0,
       filterLogs: [],
@@ -264,7 +225,7 @@ export function updateFilterView(
   session.expiresAt = new Date(Date.now() + SESSION_TTL);
 
   console.log(
-    `[SessionManager] Updated filter view: ${session.transactionData.length} → ${filteredTransactions.length} transactions (iteration ${session.contextState.iterationCount}/10)`,
+    `[SessionManager] Updated filter view to ${filteredTransactions.length} transactions (iteration ${session.contextState.iterationCount}/10)`,
   );
 
   return session;
@@ -289,8 +250,8 @@ export function addFilterLog(
   // Initialize contextState if not exists
   if (!session.contextState) {
     session.contextState = {
-      loadedTransactions: session.transactionData,
-      currentFilterView: session.transactionData,
+      loadedTransactions: [],
+      currentFilterView: [],
       appliedFilters: [],
       iterationCount: 0,
       filterLogs: [],

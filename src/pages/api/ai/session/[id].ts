@@ -9,13 +9,10 @@ interface SessionDetailResponse {
   session?: {
     id: string;
     status: string;
-    transactionCount: number;
-    dataSize: number;
     conversationLength: number;
     createdAt: string;
     lastAccessedAt: string;
     expiresAt: string;
-    filters?: Record<string, unknown>;
   };
   message?: string;
 }
@@ -61,13 +58,10 @@ export default async function handler(
       session: {
         id: session.id,
         status: session.status,
-        transactionCount: session.metadata.transactionCount,
-        dataSize: session.metadata.dataSize,
         conversationLength: session.conversationHistory.length,
         createdAt: session.createdAt.toISOString(),
         lastAccessedAt: session.lastAccessedAt.toISOString(),
         expiresAt: session.expiresAt.toISOString(),
-        filters: session.metadata.filters,
       },
     });
   } catch (error) {
