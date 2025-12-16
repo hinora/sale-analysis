@@ -252,7 +252,13 @@ export default function AIAnalysisPage() {
 
       {/* Status Bar */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Chip
               label={getStatusText()}
@@ -278,26 +284,28 @@ export default function AIAnalysisPage() {
       </Paper>
 
       {/* Suggested Queries */}
-      {sessionStatus === "ready" && suggestedQueries.length > 0 && messages.length === 0 && (
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Câu hỏi gợi ý:
-          </Typography>
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-            {suggestedQueries.map((query, index) => (
-              <Button
-                key={index}
-                variant="outlined"
-                size="small"
-                onClick={() => sendQuestion(query)}
-                disabled={isQuerying}
-              >
-                {query}
-              </Button>
-            ))}
-          </Box>
-        </Paper>
-      )}
+      {sessionStatus === "ready" &&
+        suggestedQueries.length > 0 &&
+        messages.length === 0 && (
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Câu hỏi gợi ý:
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              {suggestedQueries.map((query, index) => (
+                <Button
+                  key={index}
+                  variant="outlined"
+                  size="small"
+                  onClick={() => sendQuestion(query)}
+                  disabled={isQuerying}
+                >
+                  {query}
+                </Button>
+              ))}
+            </Box>
+          </Paper>
+        )}
 
       <Grid container spacing={3}>
         {/* Chat Interface */}
@@ -382,7 +390,13 @@ export default function AIAnalysisPage() {
                             )}
                           </Typography>
                           {message.content === "typing" ? (
-                            <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                gap: 0.5,
+                                alignItems: "center",
+                              }}
+                            >
                               <Box
                                 sx={{
                                   width: 8,

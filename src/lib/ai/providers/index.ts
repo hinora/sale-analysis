@@ -49,7 +49,7 @@ function getProviderType(): ProviderType {
     console.warn(
       `[AIProvider] Invalid AI_PROVIDER value: "${envValue}". ` +
         `Valid values are: ${VALID_PROVIDERS.join(", ")}. ` +
-        `Falling back to default: ${DEFAULT_PROVIDER}`
+        `Falling back to default: ${DEFAULT_PROVIDER}`,
     );
     return DEFAULT_PROVIDER;
   }
@@ -71,7 +71,7 @@ export function getProviderConfig(): ProviderConfig {
     if (!apiKey) {
       console.error(
         `[AIProvider] GEMINI_API_KEY is required when AI_PROVIDER=gemini. ` +
-          `Falling back to Ollama provider.`
+          `Falling back to Ollama provider.`,
       );
       // Fall back to Ollama if Gemini key is missing
       return {

@@ -212,7 +212,7 @@ export const IterativeQuerySessionSchema = z.object({
   iterationCount: z.number().int().nonnegative(),
   maxIterations: z.number().int().positive(),
   requestLog: z.array(DataRequestLogSchema),
-  status: z.enum(['active', 'completed', 'failed', 'timeout']),
+  status: z.enum(["active", "completed", "failed", "timeout"]),
   result: z.string().optional(),
   completionReason: z.string().optional(),
   totalProcessingTimeMs: z.number().nonnegative(),
@@ -239,4 +239,6 @@ export type FilterOptions = z.infer<typeof FilterOptionsSchema>;
 export type DataValidationResult = z.infer<typeof DataValidationResultSchema>;
 export type DataRequestLog = z.infer<typeof DataRequestLogSchema>;
 export type IterativeQuerySession = z.infer<typeof IterativeQuerySessionSchema>;
-export type IterationConfiguration = z.infer<typeof IterationConfigurationSchema>;
+export type IterationConfiguration = z.infer<
+  typeof IterationConfigurationSchema
+>;

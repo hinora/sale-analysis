@@ -1,5 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getProvider, getProviderName, type HealthCheckResult } from "@/lib/ai/providers";
+import {
+  getProvider,
+  getProviderName,
+  type HealthCheckResult,
+} from "@/lib/ai/providers";
 
 /**
  * AI Provider health check response
@@ -62,7 +66,7 @@ interface ErrorResponse {
  */
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<AIHealthResponse | ErrorResponse>
+  res: NextApiResponse<AIHealthResponse | ErrorResponse>,
 ) {
   // Only allow GET requests
   if (req.method !== "GET") {

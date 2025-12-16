@@ -1,9 +1,9 @@
 /**
  * AI Provider Interface Contract
- * 
+ *
  * This file defines the contract that all AI providers must implement.
  * It is the reference specification for the multi-provider architecture.
- * 
+ *
  * @module ai-provider-contract
  * @version 1.0.0
  * @created December 8, 2025
@@ -277,19 +277,19 @@ export type ProviderConfig = OllamaProviderConfig | GeminiProviderConfig;
 
 /**
  * Abstract interface for AI providers
- * 
+ *
  * All AI providers must implement this interface to be compatible with
  * the multi-provider architecture.
- * 
+ *
  * @example
  * ```typescript
  * class MyProvider implements AIProvider {
  *   readonly name = "my-provider";
- *   
+ *
  *   async generate(options: GenerateOptions): Promise<GenerateResponse> {
  *     // Implementation
  *   }
- *   
+ *
  *   async healthCheck(): Promise<HealthCheckResult> {
  *     // Implementation
  *   }
@@ -305,7 +305,7 @@ export interface AIProvider {
 
   /**
    * Generate text completion from a prompt
-   * 
+   *
    * @param options - Generation parameters
    * @returns Generated response with text and metadata
    * @throws AIProviderError on failure
@@ -314,14 +314,14 @@ export interface AIProvider {
 
   /**
    * Check if the provider is healthy and reachable
-   * 
+   *
    * @returns Health status with latency information
    */
   healthCheck(): Promise<HealthCheckResult>;
 
   /**
    * List available models (optional)
-   * 
+   *
    * @returns Array of available model information
    */
   listModels?(): Promise<ModelInfo[]>;
@@ -375,7 +375,7 @@ export interface AIProviderError extends Error {
 
 /**
  * Factory function signature for getting the active provider
- * 
+ *
  * @returns The configured AIProvider singleton instance
  * @throws Error if provider configuration is invalid
  */

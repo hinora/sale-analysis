@@ -18,6 +18,7 @@ services:
       - AI_PROVIDER=ollama
       # Ollama Configuration
       - OLLAMA_HOST=http://host.docker.internal:11434
+      - OLLAMA_API_KEY=
       - AI_MODEL=deepseek-r1:1.5b
       # Gemini Configuration (uncomment to use Gemini)
       # - AI_PROVIDER=gemini

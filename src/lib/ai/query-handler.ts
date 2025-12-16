@@ -275,8 +275,10 @@ CRITICAL: Your answer to the user must always be in Vietnamese.
             if (toolFunction) {
               try {
                 console.log(`[IterativeQuery] Calling ${toolRequest.toolName}`);
-                toolResult = await toolFunction(toolRequest.parameters as never);
-                
+                toolResult = await toolFunction(
+                  toolRequest.parameters as never,
+                );
+
                 console.log(
                   `[IterativeQuery] Tool ${toolRequest.toolName} returned:`,
                   toolResult,

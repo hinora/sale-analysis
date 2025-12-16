@@ -143,8 +143,6 @@ export function updateSession(
   return session;
 }
 
-
-
 /**
  * Add message to conversation history
  */

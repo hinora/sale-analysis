@@ -224,6 +224,12 @@ export interface OllamaProviderConfig extends BaseProviderConfig {
   host?: string;
 
   /**
+   * Ollama API key for authentication (optional)
+   * @default process.env.OLLAMA_API_KEY
+   */
+  apiKey?: string;
+
+  /**
    * Default model to use
    * @default "deepseek-r1:1.5b" or process.env.AI_MODEL
    */
@@ -344,7 +350,7 @@ export class AIProviderError extends Error {
     message: string,
     code: AIProviderErrorCode,
     provider: string,
-    options?: { status?: number; cause?: unknown }
+    options?: { status?: number; cause?: unknown },
   ) {
     super(message);
     this.name = "AIProviderError";

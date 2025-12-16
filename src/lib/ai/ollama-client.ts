@@ -49,9 +49,11 @@ export interface OllamaModel {
  */
 export class OllamaClient {
   private baseUrl: string;
+  private apiKey?: string;
 
-  constructor(baseUrl?: string) {
+  constructor(baseUrl?: string, apiKey?: string) {
     this.baseUrl = baseUrl || process.env.OLLAMA_HOST || "http://ollama:11434";
+    this.apiKey = apiKey || process.env.OLLAMA_API_KEY;
   }
 
   /**
@@ -76,11 +78,17 @@ export class OllamaClient {
       },
     };
 
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (this.apiKey) {
+      headers["Authorization"] = `Bearer ${this.apiKey}`;
+    }
+
     const response = await fetch(`${this.baseUrl}/api/generate`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify(requestBody),
     });
 
@@ -98,8 +106,15 @@ export class OllamaClient {
    * List available models
    */
   async listModels(): Promise<OllamaModel[]> {
+    const headers: Record<string, string> = {};
+
+    if (this.apiKey) {
+      headers["Authorization"] = `Bearer ${this.apiKey}`;
+    }
+
     const response = await fetch(`${this.baseUrl}/api/tags`, {
       method: "GET",
+      headers,
     });
 
     if (!response.ok) {
@@ -128,11 +143,17 @@ export class OllamaClient {
    * Pull a model from Ollama registry
    */
   async pullModel(modelName: string): Promise<void> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (this.apiKey) {
+      headers["Authorization"] = `Bearer ${this.apiKey}`;
+    }
+
     const response = await fetch(`${this.baseUrl}/api/pull`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({
         name: modelName,
       }),
@@ -175,8 +196,15 @@ export class OllamaClient {
    */
   async healthCheck(): Promise<boolean> {
     try {
+      const headers: Record<string, string> = {};
+
+      if (this.apiKey) {
+        headers["Authorization"] = `Bearer ${this.apiKey}`;
+      }
+
       const response = await fetch(`${this.baseUrl}/api/tags`, {
         method: "GET",
+        headers,
       });
       return response.ok;
     } catch {

@@ -42,9 +42,12 @@ export class OllamaProvider implements AIProvider {
    * @param config - Ollama configuration options
    */
   constructor(config?: OllamaProviderConfig) {
-    const host = config?.host || process.env.OLLAMA_HOST || DEFAULTS.OLLAMA_HOST;
-    this.defaultModel = config?.model || process.env.AI_MODEL || DEFAULTS.OLLAMA_MODEL;
-    this.client = new OllamaClient(host);
+    const host =
+      config?.host || process.env.OLLAMA_HOST || DEFAULTS.OLLAMA_HOST;
+    const apiKey = config?.apiKey || process.env.OLLAMA_API_KEY;
+    this.defaultModel =
+      config?.model || process.env.AI_MODEL || DEFAULTS.OLLAMA_MODEL;
+    this.client = new OllamaClient(host, apiKey);
   }
 
   /**
@@ -164,7 +167,7 @@ export class OllamaProvider implements AIProvider {
         `Cannot connect to Ollama: ${message}`,
         AIProviderErrorCode.CONNECTION_FAILED,
         this.name,
-        { cause: error }
+        { cause: error },
       );
     }
 
@@ -173,7 +176,7 @@ export class OllamaProvider implements AIProvider {
         `Ollama request timed out: ${message}`,
         AIProviderErrorCode.TIMEOUT,
         this.name,
-        { cause: error }
+        { cause: error },
       );
     }
 
@@ -182,7 +185,7 @@ export class OllamaProvider implements AIProvider {
         `Model not found: ${message}`,
         AIProviderErrorCode.MODEL_NOT_FOUND,
         this.name,
-        { cause: error }
+        { cause: error },
       );
     }
 
@@ -190,7 +193,7 @@ export class OllamaProvider implements AIProvider {
       `Ollama error: ${message}`,
       AIProviderErrorCode.PROVIDER_ERROR,
       this.name,
-      { cause: error }
+      { cause: error },
     );
   }
 }

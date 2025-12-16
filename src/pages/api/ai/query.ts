@@ -1,5 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { AIMessage, getSession, updateSessionStatus } from "@/lib/ai/session-manager";
+import {
+  AIMessage,
+  getSession,
+  updateSessionStatus,
+} from "@/lib/ai/session-manager";
 import { queryHandler } from "@/lib/ai/query-handler";
 
 /**

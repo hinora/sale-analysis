@@ -42,7 +42,7 @@ export class GeminiProvider implements AIProvider {
       throw new AIProviderError(
         "GEMINI_API_KEY is required for Gemini provider",
         AIProviderErrorCode.AUTH_FAILED,
-        this.name
+        this.name,
       );
     }
 
@@ -189,7 +189,7 @@ export class GeminiProvider implements AIProvider {
         "Invalid or missing Gemini API key. Please check GEMINI_API_KEY environment variable.",
         AIProviderErrorCode.AUTH_FAILED,
         this.name,
-        { cause: error }
+        { cause: error },
       );
     }
 
@@ -202,7 +202,7 @@ export class GeminiProvider implements AIProvider {
         "Gemini API rate limit exceeded. Please wait and try again.",
         AIProviderErrorCode.RATE_LIMITED,
         this.name,
-        { cause: error }
+        { cause: error },
       );
     }
 
@@ -215,7 +215,7 @@ export class GeminiProvider implements AIProvider {
         "Gemini API quota exceeded. Please check your billing settings.",
         AIProviderErrorCode.QUOTA_EXCEEDED,
         this.name,
-        { cause: error }
+        { cause: error },
       );
     }
 
@@ -227,7 +227,7 @@ export class GeminiProvider implements AIProvider {
         `Gemini model not found: ${message}`,
         AIProviderErrorCode.MODEL_NOT_FOUND,
         this.name,
-        { cause: error }
+        { cause: error },
       );
     }
 
@@ -240,7 +240,7 @@ export class GeminiProvider implements AIProvider {
         `Cannot connect to Gemini API: ${message}`,
         AIProviderErrorCode.CONNECTION_FAILED,
         this.name,
-        { cause: error }
+        { cause: error },
       );
     }
 
@@ -249,7 +249,7 @@ export class GeminiProvider implements AIProvider {
         `Gemini request timed out: ${message}`,
         AIProviderErrorCode.TIMEOUT,
         this.name,
-        { cause: error }
+        { cause: error },
       );
     }
 
@@ -257,7 +257,7 @@ export class GeminiProvider implements AIProvider {
       `Gemini error: ${message}`,
       AIProviderErrorCode.PROVIDER_ERROR,
       this.name,
-      { cause: error }
+      { cause: error },
     );
   }
 }

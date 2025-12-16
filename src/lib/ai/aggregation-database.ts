@@ -378,8 +378,14 @@ export async function getTopByField(options: {
   limit?: number;
   match?: Record<string, unknown>;
 }): Promise<AggregationResult[]> {
-  const { field, groupBy, operation = AggregationType.SUM, limit = 10, match } = options;
-  
+  const {
+    field,
+    groupBy,
+    operation = AggregationType.SUM,
+    limit = 10,
+    match,
+  } = options;
+
   validateNumericField(field);
   for (const f of groupBy) {
     validateGroupableField(f);
@@ -643,7 +649,8 @@ export function getTools() {
             },
             limit: {
               type: "number",
-              description: "Optional number of top results to return. Defaults to 10",
+              description:
+                "Optional number of top results to return. Defaults to 10",
             },
             match: {
               type: "object",
