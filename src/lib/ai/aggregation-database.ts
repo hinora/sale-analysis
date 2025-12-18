@@ -39,7 +39,6 @@ export const GROUPABLE_FIELDS = [
   "paymentMethod",
   "deliveryTerms",
   "transportMode",
-  "exportCountry",
   "importCountry",
   "customsOffice",
   "exportType",
@@ -255,7 +254,7 @@ function convertDecimalFields(result: AggregationResult): AggregationResult {
  *     { field: 'quantity', operation: AggregationType.SUM, alias: 'totalQty' }
  *   ],
  *   groupBy: ['goodsRawName', 'unit'],
- *   match: { year: 2024, exportCountry: 'China' },
+ *   match: { year: 2024, importCountry: 'China' },
  *   sort: { avgPrice: -1 }
  * });
  */
@@ -403,6 +402,83 @@ export async function getTopByField(options: {
 }
 
 /**
+ * Helper function to count the number of distinct groups
+ * Returns the total number of unique combinations of the grouped fields
+ * Similar to SQL: SELECT COUNT(*) FROM (SELECT field1, field2 FROM transactions GROUP BY field1, field2)
+ */
+export async function countAndGroup(options: {
+  groupBy: GroupableField[];
+  match?: Record<string, unknown>;
+}): Promise<number> {
+  const { groupBy, match } = options;
+
+  if (!groupBy || groupBy.length === 0) {
+    throw new AggregationValidationError(
+      "groupBy",
+      "count and group",
+      "At least one groupBy field is required",
+    );
+  }
+
+  for (const field of groupBy) {
+    validateGroupableField(field);
+  }
+
+  const results = await aggregateTransactions({
+    aggregations: [
+      { field: "quantity", operation: AggregationType.COUNT, alias: "count" },
+    ],
+    groupBy: [...groupBy],
+    match,
+  });
+
+  return results.length;
+}
+
+/**
+ * Helper function to get distinct values for a specific field
+ * Returns an array of unique values that exist in the database for the given field
+ * Use this to discover what data is available before filtering
+ */
+export async function getDistinctValues(options: {
+  field: GroupableField;
+  match?: Record<string, unknown>;
+  limit?: number;
+}): Promise<Array<string | number>> {
+  const { field, match, limit = 100 } = options;
+
+  validateGroupableField(field);
+
+  const pipeline: PipelineStage[] = [];
+
+  // Apply match filter if provided
+  if (match && Object.keys(match).length > 0) {
+    pipeline.push({ $match: match });
+  }
+
+  // Group by the field to get distinct values
+  pipeline.push({
+    $group: {
+      _id: `$${field}`,
+    },
+  });
+
+  // Sort by the value
+  pipeline.push({ $sort: { _id: 1 } });
+
+  // Limit results
+  if (limit > 0) {
+    pipeline.push({ $limit: limit });
+  }
+
+  const results = await Transaction.aggregate<{ _id: string | number }>(
+    pipeline,
+  );
+
+  return results.map((r) => r._id).filter((val) => val != null);
+}
+
+/**
  * Returns OpenAI function calling tool definitions for all aggregation functions
  */
 export function getTools() {
@@ -468,7 +544,6 @@ export function getTools() {
                   "paymentMethod",
                   "deliveryTerms",
                   "transportMode",
-                  "exportCountry",
                   "importCountry",
                   "customsOffice",
                   "exportType",
@@ -481,7 +556,7 @@ export function getTools() {
             match: {
               type: "object",
               description:
-                "Optional MongoDB query filter to apply before aggregation. Example: {year: 2024, exportCountry: 'China'}",
+                "Optional MongoDB query filter to apply before aggregation. Example: {year: 2024, importCountry: 'China'}",
             },
             sort: {
               type: "object",
@@ -530,7 +605,7 @@ export function getTools() {
             match: {
               type: "object",
               description:
-                "Optional MongoDB query filter. Example: {year: 2024, exportCountry: 'China'}",
+                "Optional MongoDB query filter. Example: {year: 2024, importCountry: 'China'}",
             },
           },
           required: ["field"],
@@ -565,7 +640,7 @@ export function getTools() {
             match: {
               type: "object",
               description:
-                "Optional MongoDB query filter. Example: {year: 2024, exportCountry: 'China'}",
+                "Optional MongoDB query filter. Example: {year: 2024, importCountry: 'China'}",
             },
           },
           required: ["field"],
@@ -631,7 +706,6 @@ export function getTools() {
                   "paymentMethod",
                   "deliveryTerms",
                   "transportMode",
-                  "exportCountry",
                   "importCountry",
                   "customsOffice",
                   "exportType",
@@ -662,6 +736,94 @@ export function getTools() {
         },
       },
     },
+    {
+      type: "function",
+      function: {
+        name: "countAndGroup",
+        description:
+          "Counts the number of distinct groups based on specified fields. Returns a single number representing how many unique combinations exist. Use this for questions like 'how many different countries', 'how many unique companies', 'count distinct products', etc.",
+        parameters: {
+          type: "object",
+          properties: {
+            groupBy: {
+              type: "array",
+              description:
+                "Fields to group by (e.g., ['importCountry'] to count distinct countries, ['importCompanyRawName'] to count unique companies)",
+              items: {
+                type: "string",
+                enum: [
+                  "importCompanyRawName",
+                  "goodsRawName",
+                  "hsCode",
+                  "unit",
+                  "originalCurrency",
+                  "paymentMethod",
+                  "deliveryTerms",
+                  "transportMode",
+                  "importCountry",
+                  "customsOffice",
+                  "exportType",
+                  "year",
+                  "month",
+                  "day",
+                ],
+              },
+            },
+            match: {
+              type: "object",
+              description:
+                "Optional MongoDB query filter to apply before grouping. Example: {year: 2024, importCountry: 'China'}",
+            },
+          },
+          required: ["groupBy"],
+        },
+      },
+    },
+    {
+      type: "function",
+      function: {
+        name: "getDistinctValues",
+        description:
+          "Gets all distinct/unique values that exist in the database for a specific field. CRITICAL: Use this tool BEFORE filtering by any field value to discover what data actually exists. For example, before filtering by importCountry='Mỹ', use this to see the database might contain 'US', 'USA', or 'United States' instead. Essential for matching user terms with actual database values.",
+        parameters: {
+          type: "object",
+          properties: {
+            field: {
+              type: "string",
+              enum: [
+                "importCompanyRawName",
+                "goodsRawName",
+                "hsCode",
+                "unit",
+                "originalCurrency",
+                "paymentMethod",
+                "deliveryTerms",
+                "transportMode",
+                "importCountry",
+                "customsOffice",
+                "exportType",
+                "year",
+                "month",
+                "day",
+              ],
+              description:
+                "The field to get distinct values for (e.g., 'importCountry' to see all countries, 'importCompanyRawName' to see all companies)",
+            },
+            match: {
+              type: "object",
+              description:
+                "Optional MongoDB query filter to apply before getting distinct values. Example: {year: 2024}",
+            },
+            limit: {
+              type: "number",
+              description:
+                "Optional maximum number of distinct values to return. Defaults to 100",
+            },
+          },
+          required: ["field"],
+        },
+      },
+    },
   ];
 }
 
@@ -672,5 +834,7 @@ export function toolMapper() {
     avgField,
     countTransactions,
     getTopByField,
+    countAndGroup,
+    getDistinctValues,
   };
 }

@@ -83,18 +83,48 @@ export class QueryHandler {
     try {
       parsedResponse = JSON.parse(responseText);
     } catch (jsonError) {
-      console.error(
-        "[IterativeQuery] Failed to parse JSON response:",
-        jsonError,
+      // Try to extract JSON from the end of the response
+      console.log(
+        "[IterativeQuery] Direct JSON parse failed, attempting to extract JSON from text",
       );
 
-      session.conversationHistory.push({
-        role: "system",
-        content: `ERROR: Invalid JSON. Required format: {"answer": "..."} or {"tools": [...]}`,
-        timestamp: new Date(),
-      });
+      // Look for JSON object at the end (matches { ... } or [ ... ])
+      const jsonMatch = responseText.match(/(\{[\s\S]*\}|\[[\s\S]*\])$/);
 
-      return { valid: false };
+      if (jsonMatch) {
+        try {
+          parsedResponse = JSON.parse(jsonMatch[1]);
+          console.log(
+            "[IterativeQuery] Successfully extracted JSON from response text",
+          );
+        } catch (extractError) {
+          console.error(
+            "[IterativeQuery] Failed to parse extracted JSON:",
+            extractError,
+          );
+
+          session.conversationHistory.push({
+            role: "system",
+            content: `ERROR: Invalid JSON. Required format: {"answer": "..."} or {"tools": [...]}`,
+            timestamp: new Date(),
+          });
+
+          return { valid: false };
+        }
+      } else {
+        console.error(
+          "[IterativeQuery] No JSON structure found in response:",
+          jsonError,
+        );
+
+        session.conversationHistory.push({
+          role: "system",
+          content: `ERROR: Invalid JSON. Required format: {"answer": "..."} or {"tools": [...]}`,
+          timestamp: new Date(),
+        });
+
+        return { valid: false };
+      }
     }
 
     // Validate JSON structure
@@ -173,7 +203,21 @@ export class QueryHandler {
     return [
       {
         role: "system",
-        content: `You are an AI assistant specialized in analyzing import/export trade data. Your task is to answer questions based on the provided transaction data, using the available tools to retrieve necessary information. Always respond in Vietnamese, do not use any other language.
+        content: `You are an AI assistant specialized in analyzing import trade data. Your task is to answer questions based on the provided transaction data, using the available tools to retrieve necessary information. Always respond in Vietnamese, do not use any other language.
+CRITICAL RULES FOR DATA MATCHING:
+1. NEVER assume the exact format of data in the database (e.g., country names, company names, product names)
+2. BEFORE filtering by any field value (importCountry, importCompany, goodsName, etc.), you MUST first use getDistinctValues tool to check what values actually exist in the database
+3. Example: If user asks about "Mỹ" (America), first use getDistinctValues for importCountry to see the database contains "US", "USA", "United States", etc.
+4. If a filter returns no results, use getDistinctValues to check what values are available, then retry with the correct value
+5. Do NOT tell user "no data found" without first checking what data exists in the database
+
+WORKFLOW FOR QUERIES WITH FILTERING:
+Step 1: Use getDistinctValues to discover actual values in database
+Step 2: Match user's query terms with actual database values
+Step 3: Use appropriate query tools with correct database values
+Step 4: Provide answer based on results
+
+non negotiable: All company inside the database is import company. Do NOT mention import company in your answer.
 
 Available tools for querying transaction data:
         ${JSON.stringify(getTools())}
@@ -181,7 +225,7 @@ Available tools for querying transaction data:
 Transaction data fields reference:
         ${JSON.stringify(transactionColumnExplanations())}
 
-CRITICAL: Your response MUST be in one of these 2 JSON formats:
+non negotiable: Your response MUST be in one of these 2 JSON formats:
 1. If the question can be answered directly without tools:
 {
   "answer": "Your answer string for the user's question"
@@ -197,8 +241,8 @@ CRITICAL: Your response MUST be in one of these 2 JSON formats:
   ]
 }
 
-CRITICAL: Only respond in one of the two JSON formats above. Do NOT respond in any other format. Do NOT include any text outside the JSON structure. If you don't have enough information to answer, use the tools to retrieve the necessary data.
-CRITICAL: Your answer to the user must always be in Vietnamese.
+non negotiable: Only respond in one of the two JSON formats above. Do NOT respond in any other format. Do NOT include any text outside the JSON structure. If you don't have enough information to answer, use the tools to retrieve the necessary data.
+non negotiable: Your answer to the user must always be in Vietnamese.
         `,
         timestamp: new Date(),
       },
@@ -237,11 +281,33 @@ CRITICAL: Your answer to the user must always be in Vietnamese.
           timestamp: new Date(),
         });
 
+        // Track the current history length before validation
+        const historyLengthBeforeValidation =
+          session.conversationHistory.length;
+
         // Validate AI response
         const validation = this.validateAIResponse(response.text, session);
 
         if (!validation.valid || !validation.parsedResponse) {
+          // Error message was added to history by validateAIResponse
+          // Continue to let AI see the error, but we'll remove it in the next iteration
           continue; // Retry with error feedback
+        }
+
+        // If validation passed, remove any error messages that were added in previous iteration
+        // Find and remove system error messages that came after the previous assistant response
+        const errorMessageIndex = session.conversationHistory.findIndex(
+          (msg, idx) =>
+            idx >= historyLengthBeforeValidation - 1 &&
+            msg.role === "system" &&
+            msg.content.startsWith("ERROR:"),
+        );
+
+        if (errorMessageIndex !== -1) {
+          console.log(
+            "[IterativeQuery] Removing previous error message from context",
+          );
+          session.conversationHistory.splice(errorMessageIndex, 1);
         }
 
         const parsedResponse = validation.parsedResponse;
